@@ -1,0 +1,68 @@
+name: 朝礼情報更新・本番公開
+on:
+  schedule:
+    # 16:10 UTC = 01:10 JST on the following day
+    - cron: '10 16 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - app.js
+      - styles.css
+      - scripts/**
+      - requirements.txt
+      - data/**
+      - tests/**
+      - overrides/**
+      - .github/workflows/refresh.yml
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: assembly-pages
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install --disable-pip-version-check -r requirements.txt
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Gather today's information
+        run: python scripts/update.py
+      - name: Save snapshot in repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/today.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh morning board"
+            git push
+          fi
+      - name: Prepare static site
+        run: |
+          mkdir -p dist/data
+          cp index.html app.js styles.css .nojekyll dist/
+          cp data/today.json dist/data/today.json
+      # One-time prerequisite: Settings > Pages > Source = GitHub Actions
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
