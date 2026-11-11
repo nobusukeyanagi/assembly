@@ -1,6 +1,6 @@
 {
   "date": "2026-11-11",
-  "updatedAt": "2026-11-11T12:11+09:00",
+  "updatedAt": "2026-11-11T12:20+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "auto": "https://www.winticket.jp/autorace/schedules/",
@@ -16,41 +16,49 @@
         {
           "name": "大宮",
           "grade": "F2",
+          "timeType": "モーニング",
           "day": "2日目"
         },
         {
           "name": "松戸",
           "grade": "F1",
+          "timeType": "ナイター",
           "day": "最終日"
         },
         {
           "name": "富山",
           "grade": "F2",
+          "timeType": "デイ",
           "day": "2日目"
         },
         {
           "name": "松阪",
           "grade": "F2",
+          "timeType": "ミッドナイト",
           "day": "初日"
         },
         {
           "name": "四日市",
           "grade": "F1",
+          "timeType": "ナイター",
           "day": "初日"
         },
         {
           "name": "福井",
           "grade": "F1",
+          "timeType": "デイ",
           "day": "初日"
         },
         {
           "name": "武雄",
           "grade": "F1",
+          "timeType": "デイ",
           "day": "最終日"
         },
         {
           "name": "佐世保",
           "grade": "F2",
+          "timeType": "ミッドナイト",
           "day": "初日"
         }
       ]
@@ -114,8 +122,7 @@
         "name": "川口",
         "type": "next",
         "unconfirmed": true
-      },
-      "note": "次回あっせん予定（出走Rは未確定）"
+      }
     }
   }
 }
