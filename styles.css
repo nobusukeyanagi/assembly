@@ -11,10 +11,13 @@ h1{font-size:85px;font-weight:900;line-height:1;margin:0;letter-spacing:-.03em;f
 .panel-head{height:68px;flex:none;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px}
 .title-group{display:flex;align-items:center;gap:14px}
 .stripe{width:6px;height:46px;border-radius:5px;display:block}
-.s-gold{background:var(--gold)}
-.s-blue{background:#48748d}
-.s-teal{background:#519084}
+.s-gold{background:#477A94}
+.s-blue{background:#AC605A}
+.s-teal{background:#17a2b8}
 .s-rose{background:#ac6b85}
+.keirin h2{color:#477A94}
+.auto h2{color:#AC605A}
+.soda h2{color:#17a2b8}
 h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .count{color:#88999c;font-size:17px}
 .count b{font-size:34px;color:var(--ink);font-variant-numeric:tabular-nums}
