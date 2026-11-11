@@ -31,7 +31,18 @@ function error(root,message,detail){
 function isMajorGrade(grade){
   return /^(?:GP|SG|G[123]|特G1)$/.test(String(grade||'').replaceAll('Ⅰ','1').replaceAll('Ⅱ','2').replaceAll('Ⅲ','3'));
 }
-const timeIcons={'モーニング':'☀','ナイター':'☾','ミッドナイト':'★'};
+const timeIcons={'モーニング':'☀','ミッドナイト':'★'};
+function filledMoon(){
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('viewBox','0 0 24 24');
+  svg.setAttribute('class','moon-symbol');
+  svg.setAttribute('aria-hidden','true');
+  const path=document.createElementNS(ns,'path');
+  path.setAttribute('d','M20.985 12.486A9 9 0 0 1 11.514 3.015a9 9 0 1 0 9.47 9.47Z');
+  svg.append(path);
+  return svg;
+}
 function card(item,id){
   const el=node('article','entry');
   const title=node('div','venue',item.name||'—');
@@ -41,13 +52,21 @@ function card(item,id){
   meta.append(grade);
   if(id==='keirin'){
     const type=item.timeType||'確認中';
-    const tag=node('span','time-type');
-    tag.dataset.type=type;
-    const symbol=timeIcons[type];
-    if(symbol)tag.append(node('span','time-icon',symbol));
-    if(type==='デイ'||type==='確認中')tag.append(node('span','time-text',type));
-    tag.setAttribute('aria-label',type);
-    meta.append(tag);
+    if(type!=='デイ'){
+      const tag=node('span','time-type');
+      tag.dataset.type=type;
+      if(type==='ナイター'){
+        const icon=node('span','time-icon');
+        icon.append(filledMoon());
+        tag.append(icon);
+      } else if(timeIcons[type]){
+        tag.append(node('span','time-icon',timeIcons[type]));
+      } else {
+        tag.append(node('span','time-text',type));
+      }
+      tag.setAttribute('aria-label',type);
+      meta.append(tag);
+    }
     if(item.girls) {
       const heart=node('span','girls','♥');
       heart.setAttribute('aria-label','ガールズ');
@@ -64,9 +83,6 @@ function entries(id,section,stale){
   const max=limits[id];
   get(id+'-count').textContent=stale||!section||section.status==='error'?'—':records.length;
   const tiles=records.slice(0,max);
-  const rows=Math.max(1,Math.ceil(tiles.length/4));
-  const grid=id==='auto'?get('auto-tiles'):root;
-  grid.style.setProperty('--rows',String(rows));
   if(stale){error(root,'本日の情報を確認中');return}
   if(!section||section.status==='error'){
     error(root,'開催情報を確認できません');return;
