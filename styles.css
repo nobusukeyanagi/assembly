@@ -25,10 +25,10 @@ h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .keirin .entries{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .auto .entries{grid-template-columns:minmax(0,1fr)}
 .soda .entries{grid-template-columns:minmax(0,1fr)}
-.entry{display:flex;align-items:center;gap:6px;border:1px solid #e8ecea;background:#f8faf9;border-radius:9px;padding:1px 8px;min-width:0;min-height:93px}
-.entry .venue{font-size:90px;font-weight:900;letter-spacing:-.055em;line-height:1;white-space:nowrap;flex:none}
+.entry{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px solid #e8ecea;background:#f8faf9;border-radius:9px;padding:8px 4px 9px;min-width:0;min-height:166px}
+.entry .venue{font-size:90px;font-weight:900;letter-spacing:-.055em;line-height:1.08;white-space:nowrap;flex:none;max-width:100%;text-align:center}
 .entry .grade,.entry .day{flex:none;white-space:nowrap}
-.entry .meta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-left:auto;min-width:55px}
+.entry .meta{display:flex;flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin-left:0;min-width:0}
 .entry .grade{font-size:14px;font-weight:900;min-width:45px;text-align:center;color:#647478;background:#e8eded;border-radius:5px;padding:6px 4px}
 .entry .day{font-size:14px;color:#6e7e83;font-weight:700}
 .entry .grade[data-grade="GP"],.entry .grade[data-grade="SG"],.entry .grade[data-grade="G1"],.entry .grade[data-grade="特G1"]{background:#fae9f0;color:#ac3165}
@@ -37,11 +37,7 @@ h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .entry .grade[data-grade="F1"]{background:#f8f0dd;color:#987223}
 .entry .grade[data-grade="F2"]{background:#f7ebe2;color:#ac7549}
 .entries.crowded,.entries.more{gap:5px}
-.entries.crowded .entry,.entries.more .entry{padding:1px 8px;min-height:93px}
-.soda .entry{padding:1px 8px}
-.soda .entry .meta{min-width:46px}
-.soda .entry .grade{font-size:13px;min-width:40px}
-.soda .entry .day{font-size:12px}
+.entries.crowded .entry,.entries.more .entry{padding:8px 4px 9px;min-height:166px}
 .mori-inline{flex:none;min-height:0;border-top:1px solid var(--line);margin-top:12px;padding:14px 4px 0}.mori-inline h3{margin:0 0 8px;color:#AC605A;font-size:25px;font-weight:900}.auto .entries{flex:0 1 auto;max-height:62%;min-height:0}.mori-body{min-height:0;display:flex;flex-direction:column;justify-content:center;padding:8px 0;font-size:20px}
 .mori-caption{color:#7d8c91;font-size:19px;margin-bottom:13px}
 .mori-primary{font-size:49px;font-weight:900;letter-spacing:-.025em;white-space:nowrap}
@@ -50,10 +46,5 @@ h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .message{color:#829093;font-size:20px;grid-column:1/-1;align-self:start;margin:13px 0}
 .detail{color:#b27450;font-size:13px;grid-column:1/-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Keirin: two columns; venue is always 90px, followed by grade / time / day. */
-.keirin .entry{flex-direction:column;align-items:center;justify-content:center;min-height:166px;padding:8px 4px 9px;gap:8px}
-.keirin .entry .venue{font-size:90px;line-height:1.08;flex:none;max-width:100%;text-align:center}
-.keirin .entry .meta{flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin-left:0;min-width:0}
-.keirin .entry .time-type{font-size:14px;font-weight:700;color:#65757b;white-space:nowrap}
-.keirin .entry .day{font-size:14px}
-.keirin .entries.crowded .entry,.keirin .entries.more .entry{min-height:166px;padding:8px 4px 9px}
+/* All sports use the same venue / metadata hierarchy. */
+.entry .time-type{font-size:14px;font-weight:700;color:#65757b;white-space:nowrap}
