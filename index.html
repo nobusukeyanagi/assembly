@@ -1,10 +1,36 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f6f7f4"><title>朝礼モニター｜ASSEMBLY</title><link rel="stylesheet" href="./styles.css"><script defer src="./app.js"></script></head>
-<body><main id="stage" class="stage">
-<header class="header"><h1><span id="date">--月--日</span><span id="weekday">（--）</span></h1></header>
-<div class="dashboard">
-<section class="panel keirin"><header class="panel-head"><div class="title-group"><i class="stripe s-gold"></i><div><h2>競輪</h2></div></div><span class="count"><b id="keirin-count">—</b> 場</span></header><div class="entries" id="keirin-entries">読み込み中…</div></section>
-<section class="panel auto"><header class="panel-head"><div class="title-group"><i class="stripe s-blue"></i><div><h2>オートレース</h2></div></div><span class="count"><b id="auto-count">—</b> 場</span></header><div class="entries" id="auto-entries">読み込み中…</div><section class="mori-inline" aria-label="森且行選手の出走情報"><h3>森 且行 選手</h3><div id="mori-body" class="mori-body">読み込み中…</div></section></section>
-<section class="panel soda"><header class="panel-head"><div class="title-group"><i class="stripe s-teal"></i><div><h2>SODA場</h2></div></div><span class="count"><b id="soda-count">—</b> 場</span></header><div class="entries" id="soda-entries">読み込み中…</div></section>
-
-</div></main></body></html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5f6f3">
+<title>朝礼モニター｜ASSEMBLY</title>
+<link rel="stylesheet" href="./styles.css">
+<script defer src="./app.js"></script>
+</head>
+<body>
+<main id="stage" class="stage">
+  <header class="header"><h1><span id="date">--月--日</span><span id="weekday">（--）</span></h1></header>
+  <div class="dashboard">
+    <section class="panel keirin" aria-label="競輪開催情報">
+      <header class="panel-head"><div class="title-group"><i class="stripe s-keirin"></i><h2>競輪</h2></div><span class="count"><b id="keirin-count">—</b> 場</span></header>
+      <div class="entries" id="keirin-entries">読み込み中…</div>
+    </section>
+    <section class="panel auto" aria-label="オートレース開催情報">
+      <header class="panel-head"><div class="title-group"><i class="stripe s-auto"></i><h2>オートレース</h2></div><span class="count"><b id="auto-count">—</b> 場</span></header>
+      <div class="entries auto-tiles">
+        <div class="auto-items" id="auto-entries">読み込み中…</div>
+        <section class="entry mori-tile" aria-label="森且行選手の出走予定">
+          <h3>森 且行 選手</h3>
+          <div id="mori-body" class="mori-body">読み込み中…</div>
+        </section>
+      </div>
+    </section>
+    <section class="panel soda" aria-label="SODA開催場情報">
+      <header class="panel-head"><div class="title-group"><i class="stripe s-soda"></i><h2>SODA場</h2></div><span class="count"><b id="soda-count">—</b> 場</span></header>
+      <div class="entries" id="soda-entries">読み込み中…</div>
+    </section>
+  </div>
+</main>
+</body>
+</html>

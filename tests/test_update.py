@@ -10,7 +10,7 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(grade('特GI'),'特G1')
     def test_keirin(self):
         t='<html><body>'+('<h2>松戸</h2><img alt="F1"><img alt="3"><div>11/09(月)～11/11(水)</div>'*20)+'</body></html>'
-        self.assertEqual(parse_keirin(t,D)[0],{'name':'松戸','grade':'F1','timeType':'ナイター','day':'最終日'})
+        self.assertEqual(parse_keirin(t,D)[0],{'name':'松戸','grade':'F1','timeType':'ナイター','girls':False,'day':'最終日'})
     def test_keirin_time_categories(self):
         categories={'1':'デイ','3':'ナイター','5':'ミッドナイト','8':'モーニング'}
         for code,category in categories.items():
@@ -19,15 +19,27 @@ class ParserTests(unittest.TestCase):
                 result=parse_keirin('<html><body>'+row*20+'</body></html>',D)
                 self.assertEqual(result[0]['timeType'],category)
                 self.assertEqual(result[0]['day'],'2日目')
+                self.assertFalse(result[0]['girls'])
     def test_keirin_missing_category(self):
         row='<h2>大宮</h2><img alt="F2"><div>11/10(火)～11/12(木)</div>'
         self.assertEqual(parse_keirin('<html><body>'+row*20+'</body></html>',D)[0]['timeType'],'確認中')
+    def test_keirin_girls_and_time_order(self):
+        rows=[]
+        cases=[('松阪','5','02'),('四日市','3','02'),('富山','1','02'),('大宮','8','')]
+        for name,code,girls in cases:
+            rows.append(f'<h2>{name}</h2><img alt="F2"><img alt="{code}">'+
+                        (f'<img alt="{girls}">' if girls else '')+
+                        '<div>11/10(火)～11/12(木)</div>')
+        html='<html><body>'+''.join(rows)*4+'</body></html>'
+        result=parse_keirin(html,D)
+        self.assertEqual([x['name'] for x in result[:4]],['大宮','富山','四日市','松阪'])
+        self.assertEqual([x['girls'] for x in result[:4]],[False,True,True,True])
     def test_auto(self):
         h='<h2>GII 山陽</h2><p>開催期間：2026年11月11日(水)～15日(日) 開催 第1日目</p>'
         self.assertEqual(parse_auto(h,'山陽',D),{'name':'山陽','grade':'G2','day':'初日'})
     def test_boat(self):
         h='<table><tr><td><img alt="蒲郡"></td><td><img alt="G1"></td><td>11/9-11/14 ３日目</td></tr></table>'
-        self.assertEqual(parse_boat(h,D),[{'name':'蒲郡','grade':'G1','day':'３日目'}])
+        self.assertEqual(parse_boat(h,D),[{'name':'蒲郡','grade':'G1','day':'3日目'}])
     def test_autorace_calendar(self):
         names=['川口','伊勢崎','浜松','飯塚','山陽']
         blocks=[]

@@ -1,1 +1,123 @@
-(()=>{'use strict';const ids=['keirin','auto','soda'];const names=['日','月','火','水','木','金','土'];let latest=null;const get=id=>document.getElementById(id);const node=(tag,cls,value)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e};function today(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day}function resize(){get('stage').style.setProperty('--scale',String(Math.min(innerWidth/1920,innerHeight/1080)))}function dateDisplay(d){const [y,m,day]=d.split('-').map(Number);get('date').textContent=y+'年'+m+'月'+day+'日';get('weekday').textContent='（'+names[new Date(Date.UTC(y,m-1,day)).getUTCDay()]+'）'}function error(root,head,detail){root.replaceChildren(node('p','message',head));if(detail)root.append(node('div','detail',detail))}function entries(id,section,stale){const root=get(id+'-entries'),items=section&&Array.isArray(section.items)?section.items:[];root.classList.toggle('crowded',items.length>(id==='soda'?6:id==='auto'?4:9));root.classList.toggle('more',items.length>(id==='soda'?10:id==='auto'?8:16));get(id+'-count').textContent=stale||!section||section.status==='error'?'—':items.length;if(stale){error(root,'本日の情報を確認中','前日以前の開催情報は表示しません');return}if(!section||section.status==='error'){error(root,'開催情報を確認できません',section&&section.message);return}if(!items.length){error(root,section.status==='ok'?'本日の開催はありません':'情報を確認中',section.message);return}root.replaceChildren();for(const i of items){const e=node('div','entry');const g=node('span','grade',i.grade||'—');g.dataset.grade=i.grade||'';const meta=node('span','meta');meta.append(g);if(id==='keirin')meta.append(node('span','time-type',i.timeType||'確認中'));meta.append(node('span','day',i.day||'—'));e.append(node('span','venue',i.name||'—'),meta);root.append(e)}if(section.status==='partial')root.append(node('div','detail',section.message||'一部確認中'))}function mori(s,stale){const root=get('mori-body');root.classList.remove('mori-today');if(stale){error(root,'本日の情報を確認中','前日以前の情報は表示しません');return}if(!s||s.status==='error'||!s.item){error(root,'出走情報を確認できません',s&&s.message);return}const x=s.item;const isToday=x.type==='today'&&x.date===today(),same=isToday&&Number.isInteger(x.race);const date=/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';root.replaceChildren(node('div','mori-caption',isToday?(same?'本日出走':'本日の出走R確認中'):x.unconfirmed?'次回予定':'次回出走予定'),node('div','mori-primary',same?x.name+' '+x.race+'R':isToday?x.name+' / R未確認':date+' '+(x.name||'')));if(isToday&&s.note)root.append(node('div','mori-meta',s.note));if(isToday)root.classList.add('mori-today')}function render(data){latest=data;const d=today(),stale=data.date!==d;dateDisplay(d);const s=data.sections||{};for(const id of ids)entries(id,s[id],stale);mori(s.mori,stale);}async function refresh(){try{const r=await fetch('./data/today.json?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const d=await r.json();if(!d.date||!d.sections)throw Error('missing fields');render(d)}catch(e){if(!(latest&&latest.date===today()))render({date:'',sections:{}});console.warn(e)}}resize();addEventListener('resize',resize);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});refresh();setInterval(refresh,600000)})();
+(() => {
+'use strict';
+const weekday=['日','月','火','水','木','金','土'];
+const limits={keirin:12,auto:3,soda:8};
+let latest=null;
+const get=id=>document.getElementById(id);
+function node(tag,cls,text){
+  const el=document.createElement(tag);
+  if(cls)el.className=cls;
+  if(text!==undefined)el.textContent=text;
+  return el;
+}
+function today(){
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{
+    timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  return parts.year+'-'+parts.month+'-'+parts.day;
+}
+function resize(){
+  get('stage').style.setProperty('--scale',String(Math.min(innerWidth/1920,innerHeight/1080)));
+}
+function dateDisplay(d){
+  const [y,m,day]=d.split('-').map(Number);
+  get('date').textContent=y+'年'+m+'月'+day+'日';
+  get('weekday').textContent='（'+weekday[new Date(Date.UTC(y,m-1,day)).getUTCDay()]+'）';
+}
+function error(root,message,detail){
+  root.replaceChildren(node('p','message',message));
+  if(detail)root.append(node('p','detail',detail));
+}
+function isMajorGrade(grade){
+  return /^(?:GP|SG|G[123]|特G1)$/.test(String(grade||'').replaceAll('Ⅰ','1').replaceAll('Ⅱ','2').replaceAll('Ⅲ','3'));
+}
+const timeIcons={'モーニング':'☀','ナイター':'☾','ミッドナイト':'★'};
+function card(item,id){
+  const el=node('article','entry');
+  const title=node('div','venue',item.name||'—');
+  const meta=node('div','meta');
+  const grade=node('span','grade',item.grade||'—');
+  grade.dataset.tier=isMajorGrade(item.grade)?'major':'regular';
+  meta.append(grade);
+  if(id==='keirin'){
+    const type=item.timeType||'確認中';
+    const tag=node('span','time-type');
+    tag.dataset.type=type;
+    const symbol=timeIcons[type];
+    if(symbol)tag.append(node('span','time-icon',symbol));
+    if(type==='デイ'||type==='確認中')tag.append(node('span','time-text',type));
+    tag.setAttribute('aria-label',type);
+    meta.append(tag);
+    if(item.girls) {
+      const heart=node('span','girls','♥');
+      heart.setAttribute('aria-label','ガールズ');
+      meta.append(heart);
+    }
+  }
+  meta.append(node('span','day',String(item.day||'—').normalize('NFKC')));
+  el.append(title,meta);
+  return el;
+}
+function entries(id,section,stale){
+  const root=get(id+'-entries');
+  const records=section&&Array.isArray(section.items)?section.items:[];
+  const max=limits[id];
+  get(id+'-count').textContent=stale||!section||section.status==='error'?'—':records.length;
+  const tiles=records.slice(0,max);
+  const rows=Math.max(1,Math.ceil(tiles.length/4));
+  const grid=id==='auto'?get('auto-tiles'):root;
+  grid.style.setProperty('--rows',String(rows));
+  if(stale){error(root,'本日の情報を確認中');return}
+  if(!section||section.status==='error'){
+    error(root,'開催情報を確認できません');return;
+  }
+  if(!records.length){
+    error(root,section.status==='ok'?'本日の開催はありません':'情報を確認中');return;
+  }
+  root.replaceChildren(...tiles.map(i=>card(i,id)));
+  if(records.length>max)console.warn(id+' : maximum displayed entries exceeded');
+}
+function mori(section,stale){
+  const root=get('mori-body');
+  root.classList.remove('mori-today');
+  if(stale){error(root,'情報確認中');return}
+  if(!section||section.status==='error'||!section.item){
+    error(root,'出走予定確認中');return;
+  }
+  const x=section.item;
+  const isToday=x.type==='today'&&x.date===today();
+  const hasRace=isToday&&Number.isInteger(x.race);
+  const d=/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?
+    Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';
+  const caption=hasRace?'本日出走':isToday?'出走R確認中':'次回予定';
+  const primary=hasRace?x.name+' '+x.race+'R':isToday?x.name+' R確認中':d+' '+(x.name||'');
+  root.replaceChildren(node('div','mori-caption',caption),node('div','mori-primary',primary));
+  if(isToday)root.classList.add('mori-today');
+}
+function render(data){
+  latest=data;
+  const d=today(),stale=data.date!==d,s=data.sections||{};
+  dateDisplay(d);
+  entries('keirin',s.keirin,stale);
+  entries('auto',s.auto,stale);
+  entries('soda',s.soda,stale);
+  mori(s.mori,stale);
+}
+async function refresh(){
+  try{
+    const response=await fetch('./data/today.json?v='+Date.now(),{cache:'no-store'});
+    if(!response.ok)throw Error('HTTP '+response.status);
+    const data=await response.json();
+    if(!data.date||!data.sections)throw Error('Missing schedule fields');
+    render(data);
+  }catch(err){
+    if(!(latest&&latest.date===today()))render({date:'',sections:{}});
+    console.warn(err);
+  }
+}
+resize();
+addEventListener('resize',resize);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+refresh();
+setInterval(refresh,600000);
+})();

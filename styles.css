@@ -1,50 +1,88 @@
-:root{--ink:#25323a;--muted:#7c8c91;--line:#e3e9e7;--gold:#b89544}
+:root{
+  --ink:#25323a;
+  --muted:#6f7e83;
+  --line:#e1e8e6;
+  --keirin:#477A94;
+  --auto:#AC605A;
+  --soda:#17a2b8;
+  --grade-major:hsl(345 44.31% 50%);
+  --grade-regular:hsl(175 41.67% 32.94%);
+}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden}
 body{background:#e5ebe8;font-family:"Noto Sans JP","Yu Gothic",Meiryo,sans-serif;color:var(--ink);font-weight:600}
-.stage{width:1920px;height:1080px;position:absolute;left:50%;top:50%;margin-left:-960px;margin-top:-540px;transform:scale(var(--scale,1));transform-origin:center;padding:30px 46px;display:flex;flex-direction:column;background:#f5f6f3;overflow:hidden}
-.header{height:104px;flex:none;display:flex;align-items:center;justify-content:center;text-align:center;margin-bottom:16px;border-bottom:1px solid #d0d9d7}
-h1{font-size:85px;font-weight:900;line-height:1;margin:0;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-#weekday{font-size:52px;margin-left:15px;letter-spacing:0;vertical-align:6px}
-.dashboard{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:18px;flex:1;min-height:0}
-.panel{background:#fff;border:1px solid #e1e7e4;border-radius:18px;box-shadow:0 5px 18px #263d3b08;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;padding:16px 20px 14px}
-.panel-head{height:68px;flex:none;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px}
-.title-group{display:flex;align-items:center;gap:14px}
-.stripe{width:6px;height:46px;border-radius:5px;display:block}
-.s-gold{background:#477A94}
-.s-blue{background:#AC605A}
-.s-teal{background:#17a2b8}
-.s-rose{background:#ac6b85}
-.keirin h2{color:#477A94}
-.auto h2{color:#AC605A}
-.soda h2{color:#17a2b8}
-h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
-.count{color:#88999c;font-size:17px}
-.count b{font-size:34px;color:var(--ink);font-variant-numeric:tabular-nums}
-.entries{flex:1;min-height:0;display:grid;grid-auto-rows:auto;align-content:start;gap:5px;padding:8px 0 1px;overflow:auto;scrollbar-width:thin}
-.keirin .entries{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.auto .entries{grid-template-columns:minmax(0,1fr)}
-.soda .entries{grid-template-columns:minmax(0,1fr)}
-.entry{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px solid #e8ecea;background:#f8faf9;border-radius:9px;padding:8px 4px 9px;min-width:0;min-height:166px}
-.entry .venue{font-size:90px;font-weight:900;letter-spacing:-.055em;line-height:1.08;white-space:nowrap;flex:none;max-width:100%;text-align:center}
-.entry .grade,.entry .day{flex:none;white-space:nowrap}
-.entry .meta{display:flex;flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin-left:0;min-width:0}
-.entry .grade{font-size:30px;font-weight:900;min-width:45px;text-align:center;color:#647478;background:#e8eded;border-radius:5px;padding:6px 4px}
-.entry .day{font-size:30px;color:#6e7e83;font-weight:700}
-.entry .grade[data-grade="GP"],.entry .grade[data-grade="SG"],.entry .grade[data-grade="G1"],.entry .grade[data-grade="特G1"]{background:#fae9f0;color:#ac3165}
-.entry .grade[data-grade="G2"]{background:#e8f0fa;color:#366ca4}
-.entry .grade[data-grade="G3"]{background:#e7f4ec;color:#34825c}
-.entry .grade[data-grade="F1"]{background:#f8f0dd;color:#987223}
-.entry .grade[data-grade="F2"]{background:#f7ebe2;color:#ac7549}
-.entries.crowded,.entries.more{gap:5px}
-.entries.crowded .entry,.entries.more .entry{padding:8px 4px 9px;min-height:166px}
-.mori-inline{flex:none;min-height:0;border-top:1px solid var(--line);margin-top:12px;padding:14px 4px 0}.mori-inline h3{margin:0 0 8px;color:#AC605A;font-size:25px;font-weight:900}.auto .entries{flex:0 1 auto;max-height:62%;min-height:0}.mori-body{min-height:0;display:flex;flex-direction:column;justify-content:center;padding:8px 0;font-size:20px}
-.mori-caption{color:#7d8c91;font-size:19px;margin-bottom:13px}
-.mori-primary{font-size:49px;font-weight:900;letter-spacing:-.025em;white-space:nowrap}
+.stage{
+  width:1920px;height:1080px;position:absolute;left:50%;top:50%;
+  margin-left:-960px;margin-top:-540px;transform:scale(var(--scale,1));
+  transform-origin:center;padding:16px 30px;display:flex;flex-direction:column;
+  background:#f5f6f3;overflow:hidden
+}
+.header{
+  height:78px;flex:none;display:flex;align-items:center;justify-content:center;
+  text-align:center;border-bottom:1px solid #d0d9d7;margin-bottom:10px
+}
+h1{font-size:72px;font-weight:900;line-height:1;margin:0;letter-spacing:-.025em;white-space:nowrap;font-variant-numeric:tabular-nums}
+#weekday{font-size:46px;vertical-align:4px;margin-left:15px;letter-spacing:0}
+.dashboard{
+  display:grid;grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1.40fr) minmax(0,.59fr) minmax(0,1.01fr);
+  gap:9px;flex:1;min-height:0
+}
+.panel{
+  background:#fff;border:1px solid #e0e7e4;border-radius:14px;
+  display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;
+  padding:7px 10px 9px
+}
+.panel-head{
+  height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line);padding:0 8px 4px
+}
+.title-group{display:flex;align-items:center;gap:12px}
+.stripe{display:block;width:6px;height:31px;border-radius:4px}
+.s-keirin{background:var(--keirin)}.s-auto{background:var(--auto)}.s-soda{background:var(--soda)}
+h2{font-size:30px;line-height:1;margin:0;font-weight:900}
+.keirin h2{color:var(--keirin)}.auto h2{color:var(--auto)}.soda h2{color:var(--soda)}
+.count{color:#86969b;font-size:18px}.count b{font-size:30px;color:var(--ink);font-variant-numeric:tabular-nums}
+.entries{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-rows:repeat(var(--rows,1),minmax(0,1fr));
+  align-content:stretch;gap:5px;padding-top:5px;flex:1;min-width:0;min-height:0;overflow:hidden
+}
+.auto-items{display:contents}
+.entry{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:0;min-height:0;border:1px solid #e5ebe8;border-radius:9px;
+  background:#f8faf9;padding:1px 4px;gap:1px;overflow:hidden
+}
+.entry .venue{
+  font-size:90px;font-weight:900;line-height:.95;letter-spacing:-.045em;
+  white-space:nowrap;max-width:100%;flex:none;text-align:center
+}
+.entry .meta{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  min-width:0;max-width:100%;flex:none;white-space:nowrap
+}
+.entry .grade{
+  flex:none;display:inline-flex;justify-content:center;align-items:center;
+  min-width:60px;height:34px;padding:0 5px;border-radius:5px;
+  font-size:30px;font-weight:900;line-height:1;color:#fff;background:var(--grade-regular)
+}
+.entry .grade[data-tier="major"]{background:var(--grade-major)}
+.entry .time-type,.entry .day,.entry .girls{
+  flex:none;display:inline-flex;align-items:center;gap:2px;
+  font-size:30px;line-height:1.06;font-weight:700;white-space:nowrap;color:#687980
+}
+.entry .time-icon{font-size:32px;font-weight:900;line-height:1}
+.entry .girls{color:#cf4a7a;font-weight:900}
+.entry .time-type[data-type="モーニング"] .time-icon{color:#e4a529}
+.entry .time-type[data-type="ナイター"] .time-icon{color:#4a6c9b}
+.entry .time-type[data-type="ミッドナイト"] .time-icon{color:#7b57ad}
+.mori-tile{gap:6px;justify-content:center}
+.mori-tile h3{font-size:26px;color:var(--auto);font-weight:900;line-height:1;margin:0}
+.mori-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:0}
+.mori-caption{font-size:19px;font-weight:800;line-height:1;color:#76858b}
+.mori-primary{font-size:39px;font-weight:900;white-space:nowrap;line-height:1.1;letter-spacing:-.03em}
 .mori-today .mori-primary{color:#a34366}
-.mori-meta{margin-top:12px;color:#819193;font-size:14px}
-.message{color:#829093;font-size:20px;grid-column:1/-1;align-self:start;margin:13px 0}
-.detail{color:#b27450;font-size:13px;grid-column:1/-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* All sports use the same venue / metadata hierarchy. */
-.entry .time-type{font-size:30px;font-weight:700;color:#65757b;white-space:nowrap}
+.mori-meta{font-size:14px;color:#819193;white-space:nowrap}
+.message{color:#7e9092;font-size:20px;text-align:center;grid-column:1/-1;margin:0}
+.detail{color:#a66d54;font-size:15px;grid-column:1/-1;text-align:center;margin:0}

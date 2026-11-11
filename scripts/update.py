@@ -78,31 +78,33 @@ def parse_keirin(html,today):
     tokens=[re.sub(r'\s+',' ',t).strip() for t in soup.stripped_strings]
     # Schedule image alt codes: 1=day, 8=morning, 3=night, 5=midnight.
     time_codes={'1':'デイ','8':'モーニング','3':'ナイター','5':'ミッドナイト'}
-    items=[];name=None;gr=None;time_type=None
+    items=[];name=None;gr=None;time_type=None;girls=False
     for token in tokens:
         if token in KEIRIN_NAMES:
-            name=token;gr=None;time_type=None
+            name=token;gr=None;time_type=None;girls=False
             continue
         if token.startswith('開催がありません'):
-            gr=None;time_type=None
+            gr=None;time_type=None;girls=False
             continue
         g=re.search(r'\b(?:GP|SG|G[123]|F[12]|GI{1,3})\b',token,re.I)
         if g and len(token)<28:
-            gr=grade(g.group());time_type=None
+            gr=grade(g.group());time_type=None;girls=False
             continue
         if gr and time_type is None and token in time_codes:
             time_type=time_codes[token]
+        if gr and token=='02':girls=True
         m=DATE_RANGE.search(token)
         if not m or not name:continue
         bounds=period(today,*map(int,m.groups()))
         if not bounds or not bounds[0]<=today<=bounds[1]:continue
         if not gr:raise ValueError(name+' のグレードを読み取れません')
         items.append({'name':name,'grade':gr,'timeType':time_type or '確認中',
-                      'day':day_label(today,*bounds)})
-        gr=None;time_type=None
+                      'girls':girls,'day':day_label(today,*bounds)})
+        gr=None;time_type=None;girls=False
     if sum(bool(DATE_RANGE.search(t)) for t in tokens)<12:raise ValueError('競輪開催日程のDOMを解析できません')
     if not items:raise ValueError('競輪開催場を特定できません')
-    return items
+    order={'モーニング':0,'デイ':1,'ナイター':2,'ミッドナイト':3,'確認中':4}
+    return sorted(items,key=lambda item:order.get(item['timeType'],5))
 
 def parse_auto(html,name,today):
     soup=BeautifulSoup(html,'html.parser')
@@ -180,7 +182,7 @@ def parse_boat(html,today):
             bounds=period(today,*map(int,pm.groups()))
             if not bounds or not bounds[0]<=today<=bounds[1]:continue
             grades=[grade(a) for a in imgs if GRADES.fullmatch(a)]
-            result[name]={'name':name,'grade':grades[0] if grades else '一般','day':dm.group(1)}
+            result[name]={'name':name,'grade':grades[0] if grades else '一般','day':normalize('NFKC',dm.group(1))}
     if not result and len(soup.select('tr'))<12:raise ValueError('BOAT RACE公式開催表の構造を解析できません')
     return [result[name] for name in SODA_NAMES if name in result]
 
