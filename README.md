@@ -1,17 +1,43 @@
 # ASSEMBLY | 朝礼モニター
 
-朝礼用1920×1080画面。競輪・オートレース・SODA対象ボートレース場の当日開催、森且行選手の出走予定を表示します。
+朝礼向けの1920×1080固定レイアウト。大きな日付と4つの情報枠（競輪、オートレース、SODA対象ボートレース、森且行選手の出走予定）を表示します。画面サイズに応じて同じ比率で縮小表示します。
 
-- 公開予定: https://nobusukeyanagi.github.io/assembly/
-- 自動更新: 毎日01:10 JST（GitHub Actions）
-- データ: `data/today.json`
-- 更新プログラム: `scripts/update.py`
-- 手動実行: Actions → 「朝礼情報更新・本番公開」→ Run workflow
+## 公開URL
 
-**注意**: SODAはボートレース公式日程を「SODA対応場」に絞って表示します。SODA内のライブ配信を保証しません。Gambooはロボット確認画面のため、競輪・オートは公式サイトを自動取得元とします。取得失敗時には推測を表示しません。
+https://nobusukeyanagi.github.io/assembly/
 
-出典: [競輪](https://keirin.jp/sp/raceschedule) / [オート](https://autorace.jp/) / [SODA](https://so-da.jp/aud/top) / [ボートレース](https://www.boatrace.jp/owpc/pc/race/index) / [森且行](https://sp.atrc.jp/racer/racerasseninfo/player_id/2529)
+**初回だけ** リポジトリの [Settings → Pages](https://github.com/nobusukeyanagi/assembly/settings/pages) にある **Build and deployment > Source** を **GitHub Actions** に変更してください。その後、[Actions → 朝礼情報更新・本番公開](https://github.com/nobusukeyanagi/assembly/actions/workflows/refresh.yml) から `Run workflow` を実行します。初回の Pages 有効化は `GITHUB_TOKEN` だけでは行えません。
 
-毎日1時10分はGitHub Actionsの起動予定時刻であり、公開完了時刻を保証するものではありません。
+## 自動更新
 
-ローカル実行: `pip install -r requirements.txt && python scripts/update.py`。画面は `python -m http.server 8000` で確認。
+- 毎日 **01:10 JST**（cron は UTC 16:10）。GitHub Actions の実行開始には遅延があり得ます。
+- `main` ブランチの HTML / CSS / JS / 収集スクリプトの変更時も自動実行し、公開サイトを更新します。
+- 手動更新: **Actions → 朝礼情報更新・本番公開 → Run workflow**。
+- 生成データ: `data/today.json`。画面は10分ごと、再表示時にも当日のデータを取得し直します。
+- 昨日以前のデータを開催情報として表示しません。取得失敗は「情報を確認中」と表示し、推測で埋めません。
+
+## 取得元と注意点
+
+| 表示項目 | 取得元 |
+|---|---|
+| 競輪 | [KEIRIN.JP公式開催日程](https://keirin.jp/sp/raceschedule) |
+| オートレース | [WINTICKET月間開催日程](https://www.winticket.jp/autorace/schedules/)（[AUTORACE.JP](https://autorace.jp/calendar/)の個別出走表は開催日程判定に使用できないため補完） |
+| SODA対象場 | [SODA](https://so-da.jp/aud/top) の対応場を、[BOAT RACE公式開催日程](https://www.boatrace.jp/owpc/pc/race/index) と照合 |
+| 森且行選手 | [WINTICKET選手プロフィール](https://www.winticket.jp/autorace/autoracer/2529/) と、当日開催期間中は WINTICKET の出走表 |
+
+**SODA欄は「SODA対応場で開催されるレース場」です。SODAでそのレースが配信されることを保証しません。**
+
+森選手は当日出走が出走表で確かめられたときのみ場名・R番号を表示します。あっせん日程しか確認できない場合は「本日の出走R確認中」または「次回あっせん予定」と表示します。出走取消・変更の可能性があります。
+
+**Gamboo** はアクセス確認画面等のため自動取得元には利用せず、各競技の日程ソースを優先しています。
+
+## 構成
+
+- `index.html` 表示画面
+- `styles.css` 表示スタイル
+- `app.js` JSON読込、日付チェック、画面描画と自動更新
+- `scripts/update.py` 日程取得・検証・JSON保存
+- `tests/test_update.py` 基本単体テスト
+- `.github/workflows/refresh.yml` 01:10 JST自動収集と Pages 本番公開
+
+ローカルで試す場合: `pip install -r requirements.txt` → `python -m unittest discover -s tests` → `python scripts/update.py` → `python -m http.server 8000`。
