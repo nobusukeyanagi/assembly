@@ -15,7 +15,6 @@ h1{font-size:85px;font-weight:900;line-height:1;margin:0;letter-spacing:-.03em;f
 .s-blue{background:#48748d}
 .s-teal{background:#519084}
 .s-rose{background:#ac6b85}
-.title-group small{color:#9ba8a8;font-size:12px;font-weight:900;letter-spacing:.16em}
 h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .count{color:#88999c;font-size:17px}
 .count b{font-size:34px;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -24,7 +23,7 @@ h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .auto .entries{grid-template-columns:minmax(0,1fr)}
 .soda .entries{grid-template-columns:repeat(3,minmax(0,1fr))}
 .entry{display:flex;align-items:center;gap:6px;border:1px solid #e8ecea;background:#f8faf9;border-radius:9px;padding:3px 10px;min-width:0;min-height:100px}
-.entry .venue{font-size:90px!important;font-weight:900;letter-spacing:-.055em;line-height:1;white-space:nowrap;flex:none}
+.entry .venue{font-size:90px;font-weight:900;letter-spacing:-.055em;line-height:1;white-space:nowrap;flex:none}
 .entry .grade,.entry .day{flex:none;white-space:nowrap}
 .entry .meta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-left:auto;min-width:55px}
 .entry .grade{font-size:14px;font-weight:900;min-width:45px;text-align:center;color:#647478;background:#e8eded;border-radius:5px;padding:6px 4px}
@@ -40,10 +39,6 @@ h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .soda .entry .meta{min-width:46px}
 .soda .entry .grade{font-size:13px;min-width:40px}
 .soda .entry .day{font-size:12px}
-.panel-foot{height:19px;flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;color:#9aa6a8;white-space:nowrap;overflow:hidden}
-.panel-foot a{color:#7b8b8f;text-decoration:none;border-bottom:1px solid #b5c2c3}
-.panel-foot span{overflow:hidden;text-overflow:ellipsis}
-.mori-label{font-size:12px;font-weight:800;color:#a4b0af;letter-spacing:.08em}
 .mori-body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:9px 0;font-size:20px}
 .mori-caption{color:#7d8c91;font-size:19px;margin-bottom:13px}
 .mori-primary{font-size:55px;font-weight:900;letter-spacing:-.025em;white-space:nowrap}
