@@ -29,8 +29,8 @@ h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .entry .venue{font-size:90px;font-weight:900;letter-spacing:-.055em;line-height:1.08;white-space:nowrap;flex:none;max-width:100%;text-align:center}
 .entry .grade,.entry .day{flex:none;white-space:nowrap}
 .entry .meta{display:flex;flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin-left:0;min-width:0}
-.entry .grade{font-size:14px;font-weight:900;min-width:45px;text-align:center;color:#647478;background:#e8eded;border-radius:5px;padding:6px 4px}
-.entry .day{font-size:14px;color:#6e7e83;font-weight:700}
+.entry .grade{font-size:30px;font-weight:900;min-width:45px;text-align:center;color:#647478;background:#e8eded;border-radius:5px;padding:6px 4px}
+.entry .day{font-size:30px;color:#6e7e83;font-weight:700}
 .entry .grade[data-grade="GP"],.entry .grade[data-grade="SG"],.entry .grade[data-grade="G1"],.entry .grade[data-grade="特G1"]{background:#fae9f0;color:#ac3165}
 .entry .grade[data-grade="G2"]{background:#e8f0fa;color:#366ca4}
 .entry .grade[data-grade="G3"]{background:#e7f4ec;color:#34825c}
@@ -47,4 +47,4 @@ h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .detail{color:#b27450;font-size:13px;grid-column:1/-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* All sports use the same venue / metadata hierarchy. */
-.entry .time-type{font-size:14px;font-weight:700;color:#65757b;white-space:nowrap}
+.entry .time-type{font-size:30px;font-weight:700;color:#65757b;white-space:nowrap}
