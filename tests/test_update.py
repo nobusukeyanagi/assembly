@@ -9,8 +9,19 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(grade('GⅡ'),'G2')
         self.assertEqual(grade('特GI'),'特G1')
     def test_keirin(self):
-        t='<html><body>'+('<h2>松戸</h2><img alt="F1"><div>11/09(月)～11/11(水)</div>'*20)+'</body></html>'
-        self.assertEqual(parse_keirin(t,D)[0],{'name':'松戸','grade':'F1','day':'最終日'})
+        t='<html><body>'+('<h2>松戸</h2><img alt="F1"><img alt="3"><div>11/09(月)～11/11(水)</div>'*20)+'</body></html>'
+        self.assertEqual(parse_keirin(t,D)[0],{'name':'松戸','grade':'F1','timeType':'ナイター','day':'最終日'})
+    def test_keirin_time_categories(self):
+        categories={'1':'デイ','3':'ナイター','5':'ミッドナイト','8':'モーニング'}
+        for code,category in categories.items():
+            with self.subTest(code=code):
+                row=f'<h2>大宮</h2><img alt="F2"><img alt="{code}"><img alt="02"><div>11/10(火)～11/12(木)</div>'
+                result=parse_keirin('<html><body>'+row*20+'</body></html>',D)
+                self.assertEqual(result[0]['timeType'],category)
+                self.assertEqual(result[0]['day'],'2日目')
+    def test_keirin_missing_category(self):
+        row='<h2>大宮</h2><img alt="F2"><div>11/10(火)～11/12(木)</div>'
+        self.assertEqual(parse_keirin('<html><body>'+row*20+'</body></html>',D)[0]['timeType'],'確認中')
     def test_auto(self):
         h='<h2>GII 山陽</h2><p>開催期間：2026年11月11日(水)～15日(日) 開催 第1日目</p>'
         self.assertEqual(parse_auto(h,'山陽',D),{'name':'山陽','grade':'G2','day':'初日'})

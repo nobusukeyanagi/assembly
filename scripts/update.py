@@ -73,20 +73,33 @@ def soup_with_alt(html):
     return soup
 
 def parse_keirin(html,today):
+    """Read verified KEIRIN.JP schedule grade, time category, and day."""
     soup=soup_with_alt(html)
     tokens=[re.sub(r'\s+',' ',t).strip() for t in soup.stripped_strings]
-    items=[];name=None;gr=None
+    # Schedule image alt codes: 1=day, 8=morning, 3=night, 5=midnight.
+    time_codes={'1':'デイ','8':'モーニング','3':'ナイター','5':'ミッドナイト'}
+    items=[];name=None;gr=None;time_type=None
     for token in tokens:
-        if token in KEIRIN_NAMES:name=token;gr=None;continue
-        if token.startswith('開催がありません'):gr=None;continue
+        if token in KEIRIN_NAMES:
+            name=token;gr=None;time_type=None
+            continue
+        if token.startswith('開催がありません'):
+            gr=None;time_type=None
+            continue
         g=re.search(r'\b(?:GP|SG|G[123]|F[12]|GI{1,3})\b',token,re.I)
-        if g and len(token)<28:gr=grade(g.group())
+        if g and len(token)<28:
+            gr=grade(g.group());time_type=None
+            continue
+        if gr and time_type is None and token in time_codes:
+            time_type=time_codes[token]
         m=DATE_RANGE.search(token)
         if not m or not name:continue
         bounds=period(today,*map(int,m.groups()))
         if not bounds or not bounds[0]<=today<=bounds[1]:continue
         if not gr:raise ValueError(name+' のグレードを読み取れません')
-        items.append({'name':name,'grade':gr,'day':day_label(today,*bounds)})
+        items.append({'name':name,'grade':gr,'timeType':time_type or '確認中',
+                      'day':day_label(today,*bounds)})
+        gr=None;time_type=None
     if sum(bool(DATE_RANGE.search(t)) for t in tokens)<12:raise ValueError('競輪開催日程のDOMを解析できません')
     if not items:raise ValueError('競輪開催場を特定できません')
     return items
@@ -232,7 +245,7 @@ def collect(today,s):
                 sections['mori']={'status':'partial','items':[],'item':item,
                     'message':'本日の出走Rは未確認','note':'開催期間中 / 出走Rは未確認'}
             else:
-                sections['mori']=ok(item=item,note='次回あっせん予定（出走Rは未確定）')
+                sections['mori']=ok(item=item)
         else:
             sections['mori']=bad('次回の出走予定日を確認できません')
 
