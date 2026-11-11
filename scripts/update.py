@@ -199,6 +199,159 @@ def parse_assen(html,today):
             if 0<(d-today).days<180:entries.append({'date':d.isoformat(),'name':m.group(3)})
     return sorted(entries,key=lambda e:e['date'])
 
+
+def find_mori_race(today,venue,s):
+    """Only use a race number when Mori appears on today's published racecard."""
+    from urllib.parse import urljoin,urlparse
+    slug=AUTO_NAMES.get(venue)
+    if not slug:return None
+    html=fetch(s,'https://www.winticket.jp/autorace/racecard/')
+    soup=BeautifulSoup(html,'html.parser')
+    pattern=re.compile(r'/autorace/'+re.escape(slug)+r'/racecard/'+today.strftime('%Y%m%d')+r'\d{2}/\d+/(?:[1-9]|1[0-2])(?:/)?
+    d={'status':'ok','items':items or []}
+    if item:d['item']=item
+    if note:d['note']=note
+    return d
+
+def bad(error):
+    return {'status':'error','items':[],'message':str(error)[:150]}
+
+def collect(today,s):
+    out={'date':today.isoformat(),'updatedAt':datetime.now(TZ).isoformat(timespec='minutes'),'sources':SOURCES,'sections':{}}
+    sections=out['sections']
+    try:sections['keirin']=ok(parse_keirin(fetch(s,KEIRIN),today))
+    except Exception as e:log.exception('競輪取得');sections['keirin']=bad(e)
+    try:
+        auto=parse_auto_calendar(fetch(s,AUTO),today)
+        sections['auto']=ok(auto)
+    except Exception as e:
+        log.warning('オート日程取得: %s',e)
+        sections['auto']=bad('開催日程を確認できません: '+str(e))
+    
+    try:
+        sections['soda']=ok(parse_boat(fetch(s,BOAT,{'hd':today.strftime('%Y%m%d')}),today),
+            note='SODA対応場で開催。SODAライブ配信を保証するものではありません。')
+    except Exception as e:log.exception('SODA開催場');sections['soda']=bad(e)
+    try:
+        calendar=parse_mori_calendar(fetch(s,MORI),today)
+        if calendar:
+            item=calendar[0]
+            if item['type']=='today':
+                try:
+                    race=find_mori_race(today,item['name'],s)
+                except Exception as e:
+                    log.warning('森選手レース番号: %s',e)
+                    race=None
+                if race:
+                    item['race']=race
+                    item['unconfirmed']=False
+                    sections['mori']=ok(item=item)
+                else:
+                    sections['mori']={'status':'partial','items':[],'item':item,
+                        'message':'本日の出走Rは未確認','note':'開催期間中 / 出走Rは未確認'}
+            else:
+                sections['mori']=ok(item=item,note='次回あっせん予定（出走Rは未確定）')
+        else:
+            sections['mori']=bad('次回の出走予定日を確認できません')
+
+    except Exception as e:
+        log.warning('森選手の出走予定: %s',e)
+        sections['mori']=bad('出走予定を確認できません')
+    return out
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--date')
+    parser.add_argument('--output',default=str(ROOT/'data'/'today.json'))
+    args=parser.parse_args()
+    today=date.fromisoformat(args.date) if args.date else datetime.now(TZ).date()
+    out=collect(today,session())
+    override=ROOT/'overrides'/(today.isoformat()+'.json')
+    if override.exists():
+        patch=json.loads(override.read_text(encoding='utf-8'))
+        for key,value in patch.get('sections',{}).items():
+            if key in out['sections']:out['sections'][key]=value
+        out['overridden']=True
+    dst=Path(args.output);dst.parent.mkdir(parents=True,exist_ok=True)
+    dst.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    log.info('保存: %s / %s',dst,{k:(v['status'],len(v.get('items',[]))) for k,v in out['sections'].items()})
+
+if __name__=='__main__':main()
+)
+    urls=set()
+    for link in soup.select('a[href]'):
+        href=urlparse(urljoin('https://www.winticket.jp',link['href'])).path
+        if pattern.fullmatch(href):urls.add(urljoin('https://www.winticket.jp',href))
+    for url in sorted(urls):
+        text=normalize('NFKC',BeautifulSoup(fetch(s,url),'html.parser').get_text(' ',strip=True))
+        section=text.split('基本情報',1)
+        if len(section)<2:continue
+        race_part=section[1].split('オッズ一覧',1)[0]
+        if not re.search(r'森\s*且行',race_part):continue
+        m=re.search(r'/(\d{1,2})/?
+    d={'status':'ok','items':items or []}
+    if item:d['item']=item
+    if note:d['note']=note
+    return d
+
+def bad(error):
+    return {'status':'error','items':[],'message':str(error)[:150]}
+
+def collect(today,s):
+    out={'date':today.isoformat(),'updatedAt':datetime.now(TZ).isoformat(timespec='minutes'),'sources':SOURCES,'sections':{}}
+    sections=out['sections']
+    try:sections['keirin']=ok(parse_keirin(fetch(s,KEIRIN),today))
+    except Exception as e:log.exception('競輪取得');sections['keirin']=bad(e)
+    try:
+        auto=parse_auto_calendar(fetch(s,AUTO),today)
+        sections['auto']=ok(auto)
+    except Exception as e:
+        log.warning('オート日程取得: %s',e)
+        sections['auto']=bad('開催日程を確認できません: '+str(e))
+    
+    try:
+        sections['soda']=ok(parse_boat(fetch(s,BOAT,{'hd':today.strftime('%Y%m%d')}),today),
+            note='SODA対応場で開催。SODAライブ配信を保証するものではありません。')
+    except Exception as e:log.exception('SODA開催場');sections['soda']=bad(e)
+    try:
+        calendar=parse_mori_calendar(fetch(s,MORI),today)
+        if calendar:
+            item=calendar[0]
+            if item['type']=='today':
+                sections['mori']={'status':'partial','items':[],'item':item,
+                    'message':'本日の出走Rは未確認','note':'開催期間中 / 出走Rは未確認'}
+            else:
+                sections['mori']=ok(item=item,note='次回あっせん予定（出走Rは未確定）')
+        else:
+            sections['mori']=bad('次回の出走予定日を確認できません')
+
+    except Exception as e:
+        log.warning('森選手の出走予定: %s',e)
+        sections['mori']=bad('出走予定を確認できません')
+    return out
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--date')
+    parser.add_argument('--output',default=str(ROOT/'data'/'today.json'))
+    args=parser.parse_args()
+    today=date.fromisoformat(args.date) if args.date else datetime.now(TZ).date()
+    out=collect(today,session())
+    override=ROOT/'overrides'/(today.isoformat()+'.json')
+    if override.exists():
+        patch=json.loads(override.read_text(encoding='utf-8'))
+        for key,value in patch.get('sections',{}).items():
+            if key in out['sections']:out['sections'][key]=value
+        out['overridden']=True
+    dst=Path(args.output);dst.parent.mkdir(parents=True,exist_ok=True)
+    dst.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    log.info('保存: %s / %s',dst,{k:(v['status'],len(v.get('items',[]))) for k,v in out['sections'].items()})
+
+if __name__=='__main__':main()
+,url)
+        if m:return int(m.group(1))
+    return None
+
 def ok(items=None,item=None,note=None):
     d={'status':'ok','items':items or []}
     if item:d['item']=item
