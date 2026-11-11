@@ -160,18 +160,21 @@ def bad(error):
     return {'status':'error','items':[],'message':str(error)[:150]}
 
 def collect(today,s):
-    out={'date':today.isoformat(),'updatedAt':datetime.now(TZ).isoformat(timespec='minutes'),'sources':SOURCES,'sections':{}}
+    out={'date':today.isoformat(),'updatedAt':datetime.now(TZ).isoformat(timespec='minutes'),'sources':SOURCES,'sections':{},'diagnostics':{'autorace':{},'mori':{}}}
     sections=out['sections']
     try:sections['keirin']=ok(parse_keirin(fetch(s,KEIRIN),today))
     except Exception as e:log.exception('競輪取得');sections['keirin']=bad(e)
     auto=[];errors=[]
     for name,slug in AUTO_NAMES.items():
         try:
-            item=parse_auto(fetch(s,AUTO+'/'+slug+'/'+today.isoformat()),name,today)
+            html=fetch(s,AUTO+'/'+slug+'/'+today.isoformat())
+            visible=BeautifulSoup(html,'html.parser').get_text(' ',strip=True)
+            out['diagnostics']['autorace'][name]={'chars':len(html),'period':visible.find('開催期間'),'snippet':visible[:1300]}
+            item=parse_auto(html,name,today)
             if item:auto.append(item)
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code==404:continue
-            errors.append(name);log.warning('オート %s: %s',name,e)
+            errors.append(name);out['diagnostics']['autorace'][name]={'error':str(e)[:150]};log.warning('オート %s: %s',name,e)
         except Exception as e:errors.append(name);log.warning('オート %s: %s',name,e)
     sections['auto']=({'status':'partial' if auto else 'error','items':auto,'message':'取得未確認: '+'・'.join(errors)} if errors else ok(auto))
     try:
@@ -179,19 +182,29 @@ def collect(today,s):
             note='SODA対応場で開催。SODAライブ配信を保証するものではありません。')
     except Exception as e:log.exception('SODA開催場');sections['soda']=bad(e)
     races=[]
-    try:races=parse_mori(fetch(s,MORI),today)
-    except Exception as e:log.warning('森選手の出走予定: %s',e)
+    try:
+        html=fetch(s,MORI)
+        out['diagnostics']['mori']['oddspark']={'chars':len(html),'snippet':BeautifulSoup(html,'html.parser').get_text(' ',strip=True)[:1200]}
+        races=parse_mori(html,today)
+    except Exception as e:
+        out['diagnostics']['mori']['oddspark']={'error':str(e)[:150]}
+        log.warning('森選手の出走予定: %s',e)
     if races:
         item=races[0];item['type']='today' if item['date']==today.isoformat() else 'next'
         sections['mori']=ok(item=item)
     else:
         try:
-            assens=parse_assen(fetch(s,ASSEN),today)
+            html=fetch(s,ASSEN)
+            out['diagnostics']['mori']['official']={'chars':len(html),'snippet':BeautifulSoup(html,'html.parser').get_text(' ',strip=True)[:1300]}
+            assens=parse_assen(html,today)
             if assens:
                 item=assens[0];item.update({'type':'next','unconfirmed':True})
                 sections['mori']=ok(item=item,note='次回あっせん予定（出走Rは未確定）')
             else:sections['mori']=bad('次回の出走予定日を確認できません')
-        except Exception as e:log.warning('森選手のあっせん: %s',e);sections['mori']=bad('出走予定を確認できません')
+        except Exception as e:
+            out['diagnostics']['mori']['official']={'error':str(e)[:150]}
+            log.warning('森選手のあっせん: %s',e)
+            sections['mori']=bad('出走予定を確認できません')
     return out
 
 def main():
