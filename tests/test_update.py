@@ -2,7 +2,7 @@ import unittest,sys
 from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from update import parse_keirin,parse_auto,parse_boat,parse_mori,grade
+from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_mori_calendar,grade
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_grade(self):
@@ -17,6 +17,20 @@ class ParserTests(unittest.TestCase):
     def test_boat(self):
         h='<table><tr><td><img alt="蒲郡"></td><td><img alt="G1"></td><td>11/9-11/14 ３日目</td></tr></table>'
         self.assertEqual(parse_boat(h,D),[{'name':'蒲郡','grade':'G1','day':'３日目'}])
+    def test_autorace_calendar(self):
+        names=['川口','伊勢崎','浜松','飯塚','山陽']
+        blocks=[]
+        for name in names:
+            part=f'<h3>{name}オートレース</h3>'
+            for i in range(2):
+                start='11月11日 〜 11月15日ＧⅡ若獅子杯' if name=='山陽' and i==0 else '11月1日 〜 11月5日令和８年度 普通開催'
+                part+=f'<a>{start}</a>'
+            blocks.append(part)
+        h='<main><h2>2026年11月 開催日程</h2>'+''.join(blocks)+'</main>'
+        self.assertEqual(parse_auto_calendar(h,D),[{'name':'山陽','grade':'G2','day':'初日'}])
+    def test_winticket_mori_calendar(self):
+        h='<h1>森且行</h1><h2>出場予定</h2><a>令和8年</a> 飯塚オートレース 11/16〜11/18 川口オートレース 11/22〜11/25 <h2>直近5走</h2>'
+        self.assertEqual(parse_mori_calendar(h,D)[0]['date'],'2026-11-16')
     def test_mori(self):
         h='<p>出場予定</p><p>2026/11/11 川口 9R</p><h2>総合成績</h2>'
         self.assertEqual(parse_mori(h,D),[{'date':'2026-11-11','name':'川口','race':9}])
