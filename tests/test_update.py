@@ -15,7 +15,7 @@ class ParserTests(unittest.TestCase):
         categories={'1':'デイ','3':'ナイター','5':'ミッドナイト','8':'モーニング'}
         for code,category in categories.items():
             with self.subTest(code=code):
-                row=f'<h2>大宮</h2><img alt="F2"><img alt="{code}"><img alt="02"><div>11/10(火)～11/12(木)</div>'
+                row=f'<h2>大宮</h2><img alt="F2"><img alt="{code}"><div>11/10(火)～11/12(木)</div>'
                 result=parse_keirin('<html><body>'+row*20+'</body></html>',D)
                 self.assertEqual(result[0]['timeType'],category)
                 self.assertEqual(result[0]['day'],'2日目')
@@ -30,7 +30,7 @@ class ParserTests(unittest.TestCase):
             rows.append(f'<h2>{name}</h2><img alt="F2"><img alt="{code}">'+
                         (f'<img alt="{girls}">' if girls else '')+
                         '<div>11/10(火)～11/12(木)</div>')
-        html='<html><body>'+''.join(rows)*4+'</body></html>'
+        html='<html><body>'+''.join(rows)+'<div>11/01～11/03</div>'*12+'</body></html>'
         result=parse_keirin(html,D)
         self.assertEqual([x['name'] for x in result[:4]],['大宮','富山','四日市','松阪'])
         self.assertEqual([x['girls'] for x in result[:4]],[False,True,True,True])
