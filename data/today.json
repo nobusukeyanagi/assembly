@@ -1,0 +1,32 @@
+{
+  "date": "",
+  "updatedAt": null,
+  "sources": {
+    "keirin": "https://keirin.jp/sp/raceschedule",
+    "auto": "https://autorace.jp/",
+    "soda": "https://so-da.jp/aud/top",
+    "mori": "https://sp.atrc.jp/racer/racerasseninfo/player_id/2529"
+  },
+  "sections": {
+    "keirin": {
+      "status": "error",
+      "items": [],
+      "message": "初回データ更新前"
+    },
+    "auto": {
+      "status": "error",
+      "items": [],
+      "message": "初回データ更新前"
+    },
+    "soda": {
+      "status": "error",
+      "items": [],
+      "message": "初回データ更新前"
+    },
+    "mori": {
+      "status": "error",
+      "items": [],
+      "message": "初回データ更新前"
+    }
+  }
+}
