@@ -219,6 +219,11 @@ def collect(today,s):
     except Exception as e:
         log.warning('オート日程取得: %s',e)
         sections['auto']=bad('開催日程を確認できません: '+str(e))
+        try:
+            h=fetch(s,AUTO)
+            text=normalize('NFKC',BeautifulSoup(h,'html.parser').get_text(' ',strip=True))
+            out['auto_debug']={'chars':len(h),'index':text.find('2026年11月 開催日程'),'excerpt':text[:6000]}
+        except Exception as de:out['auto_debug']={'error':str(de)}
     try:
         sections['soda']=ok(parse_boat(fetch(s,BOAT,{'hd':today.strftime('%Y%m%d')}),today),
             note='SODA対応場で開催。SODAライブ配信を保証するものではありません。')
@@ -234,6 +239,7 @@ def collect(today,s):
                 sections['mori']=ok(item=item,note='次回あっせん予定（出走Rは未確定）')
         else:
             sections['mori']=bad('次回の出走予定日を確認できません')
+            out['mori_debug']=normalize('NFKC',BeautifulSoup(fetch(s,MORI),'html.parser').get_text(' ',strip=True))[:2600]
     except Exception as e:
         log.warning('森選手の出走予定: %s',e)
         sections['mori']=bad('出走予定を確認できません')
