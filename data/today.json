@@ -1,6 +1,6 @@
 {
-  "date": "",
-  "updatedAt": null,
+  "date": "2026-11-11",
+  "updatedAt": "2026-11-11T11:41+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "auto": "https://autorace.jp/",
@@ -9,24 +9,89 @@
   },
   "sections": {
     "keirin": {
-      "status": "error",
-      "items": [],
-      "message": "初回データ更新前"
+      "status": "ok",
+      "items": [
+        {
+          "name": "大宮",
+          "grade": "F2",
+          "day": "2日目"
+        },
+        {
+          "name": "松戸",
+          "grade": "F1",
+          "day": "最終日"
+        },
+        {
+          "name": "富山",
+          "grade": "F2",
+          "day": "2日目"
+        },
+        {
+          "name": "松阪",
+          "grade": "F2",
+          "day": "初日"
+        },
+        {
+          "name": "四日市",
+          "grade": "F1",
+          "day": "初日"
+        },
+        {
+          "name": "福井",
+          "grade": "F1",
+          "day": "初日"
+        },
+        {
+          "name": "武雄",
+          "grade": "F1",
+          "day": "最終日"
+        },
+        {
+          "name": "佐世保",
+          "grade": "F2",
+          "day": "初日"
+        }
+      ]
     },
     "auto": {
-      "status": "error",
-      "items": [],
-      "message": "初回データ更新前"
+      "status": "ok",
+      "items": []
     },
     "soda": {
-      "status": "error",
-      "items": [],
-      "message": "初回データ更新前"
+      "status": "ok",
+      "items": [
+        {
+          "name": "多摩川",
+          "grade": "一般",
+          "day": "最終日"
+        },
+        {
+          "name": "蒲郡",
+          "grade": "一般",
+          "day": "３日目"
+        },
+        {
+          "name": "三国",
+          "grade": "一般",
+          "day": "２日目"
+        },
+        {
+          "name": "宮島",
+          "grade": "一般",
+          "day": "３日目"
+        },
+        {
+          "name": "芦屋",
+          "grade": "一般",
+          "day": "４日目"
+        }
+      ],
+      "note": "SODA対応場で開催。SODAライブ配信を保証するものではありません。"
     },
     "mori": {
       "status": "error",
       "items": [],
-      "message": "初回データ更新前"
+      "message": "出走予定を確認できません"
     }
   }
 }
