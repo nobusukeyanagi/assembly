@@ -6,7 +6,7 @@ body{background:#e5ebe8;font-family:"Noto Sans JP","Yu Gothic",Meiryo,sans-serif
 .header{height:104px;flex:none;display:flex;align-items:center;margin-bottom:16px;border-bottom:1px solid #d0d9d7}
 h1{font-size:85px;font-weight:900;line-height:1;margin:0;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 #weekday{font-size:52px;margin-left:15px;letter-spacing:0;vertical-align:6px}
-.dashboard{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);grid-template-rows:minmax(0,1.6fr) minmax(0,1fr);gap:18px;flex:1;min-height:0}
+.dashboard{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:18px;flex:1;min-height:0}
 .panel{background:#fff;border:1px solid #e1e7e4;border-radius:18px;box-shadow:0 5px 18px #263d3b08;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;padding:16px 20px 14px}
 .panel-head{height:68px;flex:none;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px}
 .title-group{display:flex;align-items:center;gap:14px}
@@ -21,11 +21,11 @@ h1{font-size:85px;font-weight:900;line-height:1;margin:0;letter-spacing:-.03em;f
 h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .count{color:#88999c;font-size:17px}
 .count b{font-size:34px;color:var(--ink);font-variant-numeric:tabular-nums}
-.entries{flex:1;min-height:0;display:grid;grid-auto-rows:minmax(0,1fr);align-content:stretch;gap:7px;padding:9px 0 1px;overflow:auto;scrollbar-width:thin}
-.keirin .entries{grid-template-columns:repeat(2,minmax(0,1fr))}
+.entries{flex:1;min-height:0;display:grid;grid-auto-rows:auto;align-content:start;gap:5px;padding:8px 0 1px;overflow:auto;scrollbar-width:thin}
+.keirin .entries{grid-template-columns:minmax(0,1fr)}
 .auto .entries{grid-template-columns:minmax(0,1fr)}
-.soda .entries{grid-template-columns:repeat(3,minmax(0,1fr))}
-.entry{display:flex;align-items:center;gap:6px;border:1px solid #e8ecea;background:#f8faf9;border-radius:9px;padding:3px 10px;min-width:0;min-height:100px}
+.soda .entries{grid-template-columns:minmax(0,1fr)}
+.entry{display:flex;align-items:center;gap:6px;border:1px solid #e8ecea;background:#f8faf9;border-radius:9px;padding:1px 8px;min-width:0;min-height:93px}
 .entry .venue{font-size:90px;font-weight:900;letter-spacing:-.055em;line-height:1;white-space:nowrap;flex:none}
 .entry .grade,.entry .day{flex:none;white-space:nowrap}
 .entry .meta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-left:auto;min-width:55px}
@@ -36,15 +36,15 @@ h2{font-size:29px;font-weight:900;margin:3px 0 0;line-height:1.15}
 .entry .grade[data-grade="G3"]{background:#e7f4ec;color:#34825c}
 .entry .grade[data-grade="F1"]{background:#f8f0dd;color:#987223}
 .entry .grade[data-grade="F2"]{background:#f7ebe2;color:#ac7549}
-.entries.crowded,.entries.more{gap:6px}
-.entries.crowded .entry,.entries.more .entry{padding:3px 7px;min-height:100px}
-.soda .entry{padding:3px 7px}
+.entries.crowded,.entries.more{gap:5px}
+.entries.crowded .entry,.entries.more .entry{padding:1px 8px;min-height:93px}
+.soda .entry{padding:1px 8px}
 .soda .entry .meta{min-width:46px}
 .soda .entry .grade{font-size:13px;min-width:40px}
 .soda .entry .day{font-size:12px}
-.mori-body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:9px 0;font-size:20px}
+.mori-inline{flex:none;min-height:0;border-top:1px solid var(--line);margin-top:12px;padding:14px 4px 0}.mori-inline h3{margin:0 0 8px;color:#AC605A;font-size:25px;font-weight:900}.auto .entries{flex:0 1 auto;max-height:62%;min-height:0}.mori-body{min-height:0;display:flex;flex-direction:column;justify-content:center;padding:8px 0;font-size:20px}
 .mori-caption{color:#7d8c91;font-size:19px;margin-bottom:13px}
-.mori-primary{font-size:55px;font-weight:900;letter-spacing:-.025em;white-space:nowrap}
+.mori-primary{font-size:49px;font-weight:900;letter-spacing:-.025em;white-space:nowrap}
 .mori-today .mori-primary{color:#a34366}
 .mori-meta{margin-top:12px;color:#819193;font-size:14px}
 .message{color:#829093;font-size:20px;grid-column:1/-1;align-self:start;margin:13px 0}
