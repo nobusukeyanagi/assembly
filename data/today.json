@@ -1,6 +1,6 @@
 {
   "date": "2026-11-12",
-  "updatedAt": "2026-11-12T11:09+09:00",
+  "updatedAt": "2026-11-12T11:16+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "auto": "https://www.winticket.jp/autorace/schedules/",
@@ -10,7 +10,8 @@
     "mori": "https://www.winticket.jp/autorace/autoracer/2529/",
     "mori_official": "https://sp.atrc.jp/racer/racerasseninfo/player_id/2529",
     "mori_racecard": "https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529",
-    "auto_racecard": "https://autorace.jp/race_info/Program/"
+    "auto_racecard": "https://autorace.jp/race_info/Program/",
+    "mori_venue_schedule": "https://www.kawaguchiauto.jp/race-calender/"
   },
   "sections": {
     "keirin": {
@@ -145,7 +146,9 @@
         "date": "2026-11-22",
         "name": "川口",
         "type": "next",
-        "unconfirmed": true
+        "unconfirmed": true,
+        "grade": "一般",
+        "timeType": "ナイター"
       }
     }
   }
