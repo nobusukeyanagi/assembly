@@ -163,6 +163,79 @@ function layoutRows(sections,stale){
   const sodaRows=hasVerifiedItems(sections.soda)&&sections.soda.items.length<=4?1:2;
   return {keirinRows,sodaRows,totalRows:keirinRows+1+sodaRows};
 }
+
+const vehiclePalette={
+  1:['#ffffff','#15191b'],2:['#181a1d','#ffffff'],3:['#d92735','#ffffff'],
+  4:['#2364c9','#ffffff'],5:['#ffd21c','#171717'],6:['#288452','#ffffff'],
+  7:['#e97923','#181818'],8:['#f0a0be','#181818'],9:['#783da4','#ffffff']
+};
+let finalCards=[];
+let activeFinalIndex=-1;
+let activeFinalKey=null;
+function verifiedFinals(data,targetDate){
+  if(!data||data.date!==targetDate||!Array.isArray(data.finals?.items))return [];
+  return data.finals.items.filter(r=>(
+    (r.sport==='keirin'||r.sport==='auto')&&
+    typeof r.event==='string'&&r.event.length>0&&
+    typeof r.raceName==='string'&&r.raceName.includes('決勝'||'優勝')&&
+    typeof r.venue==='string'&&r.venue.length>0&&
+    Number.isInteger(r.race)&&r.race>=1&&r.race<=12&&
+    /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime)&&
+    Array.isArray(r.riders)&&r.riders.length>=5&&r.riders.length<=9&&
+    r.riders.every(p=>Number.isInteger(p.number)&&p.number>=1&&p.number<=9&&
+                   typeof p.name==='string'&&p.name.length>0)
+  ));
+}
+function finalIdentity(item){
+  return item.sport+'|'+item.venue+'|'+item.race;
+}
+function nextFinalIndex(index,length){
+  return length>0 ? (index+1<length ? index+1 : -1) : -1;
+}
+function paintFinal(){
+  const active=activeFinalIndex>=0&&activeFinalIndex<finalCards.length;
+  const stage=get('stage');
+  const screen=get('final-screen');
+  stage.classList.toggle('is-final',active);
+  screen.hidden=!active;
+  if(!active)return;
+  const data=finalCards[activeFinalIndex];
+  const board=get('final-card');
+  const heading=node('div','final-title',data.event);
+  const name=node('div','final-race',data.raceName);
+  const venue=node('div','final-venue',data.venue+' '+data.race+'R　発走 '+data.startTime);
+  const grid=node('div','final-riders');
+  const byNumber=new Map(data.riders.map(r=>[r.number,r.name]));
+  for(let n=1;n<=9;n++){
+    const row=node('div','final-row'+(byNumber.has(n)?'':' final-row-empty'));
+    if(byNumber.has(n)){
+      const number=node('span','final-number',String(n));
+      number.dataset.number=String(n);
+      const [background,color]=vehiclePalette[n];
+      number.style.backgroundColor=background;
+      number.style.color=color;
+      row.append(number,node('span','final-rider',byNumber.get(n)));
+    }else{
+      row.setAttribute('aria-hidden','true');
+    }
+    grid.append(row);
+  }
+  board.replaceChildren(heading,name,venue,grid);
+}
+function advanceFinal(){
+  activeFinalIndex=nextFinalIndex(activeFinalIndex,finalCards.length);
+  activeFinalKey=activeFinalIndex>=0?finalIdentity(finalCards[activeFinalIndex]):null;
+  paintFinal();
+}
+function onSpaceKey(event){
+  if(event.code!=='Space'&&event.key!==' ')return;
+  if(event.repeat||event.ctrlKey||event.metaKey||event.altKey)return;
+  const target=event.target;
+  if(target&&target.closest&&target.closest('input,textarea,select,button,[contenteditable="true"]'))return;
+  if(finalCards.length===0)return;
+  event.preventDefault();
+  advanceFinal();
+}
 function render(data,targetDate,mode){
   latest=data;
   const stale=data.date!==targetDate,s=data.sections||{};
@@ -177,6 +250,11 @@ function render(data,targetDate,mode){
   entries('auto',s.auto,stale,mode);
   entries('soda',s.soda,stale,mode);
   mori(s.mori,stale,targetDate);
+  const selected=activeFinalKey;
+  finalCards=verifiedFinals(data,targetDate);
+  activeFinalIndex=selected?finalCards.findIndex(r=>finalIdentity(r)===selected):-1;
+  activeFinalKey=activeFinalIndex>=0?selected:null;
+  paintFinal();
 }
 async function displayChoice(){
   try{
@@ -205,10 +283,11 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
+document.addEventListener('keydown',onSpaceKey);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 refresh();
 setInterval(refresh,600000);
