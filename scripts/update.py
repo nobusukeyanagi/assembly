@@ -209,7 +209,8 @@ def collect_past_keirin(s,target):
             row['girls']=t['girls']
     if times and set(times)!={x['name'] for x in records}:
         log.warning('日付別の開催場数が不一致: archive=%s race=%s',len(records),len(times))
-    return sort_by_time(records)
+    ordered=sorted(records,key=lambda item:KEIRIN_NAMES.index(item['name']) if item['name'] in KEIRIN_NAMES else len(KEIRIN_NAMES))
+    return sort_by_time(ordered)
 
 
 def parse_auto(html,name,today):

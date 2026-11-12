@@ -78,7 +78,7 @@ class ParserTests(unittest.TestCase):
         with patch('update.fetch',side_effect=lambda s,url,params=None:urls[url]):
             items=collect_past_keirin(object(),selected)
         self.assertEqual([x['name'] for x in items],
-                         ['小田原','熊本','防府','弥彦','久留米','宇都宮','西武園','松戸','名古屋'])
+                         ['小田原','熊本','弥彦','防府','宇都宮','久留米','西武園','松戸','名古屋'])
         self.assertEqual([x['timeType'] for x in items],
                          ['モーニング','モーニング','デイ','デイ','ナイター','ナイター',
                           'ミッドナイト','ミッドナイト','ミッドナイト'])
