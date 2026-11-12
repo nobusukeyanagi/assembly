@@ -50,9 +50,9 @@ function card(item,id){
   const grade=node('span','grade',item.grade||'—');
   grade.dataset.tier=isMajorGrade(item.grade)?'major':'regular';
   meta.append(grade);
-  if(id==='keirin'){
-    const type=item.timeType||'確認中';
-    if(type!=='デイ'){
+  if(id==='keirin'||id==='auto'||id==='soda'){
+    const type=item.timeType||null;
+    if(type&&type!=='デイ'){
       const tag=node('span','time-type');
       tag.dataset.type=type;
       if(type==='ナイター'){
