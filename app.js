@@ -200,6 +200,10 @@ function finalRaceLabel(name){
 function finalEventLabel(event){
   return String(event||'').replace(/^(?:特G[ⅠⅡⅢ123]|G[ⅠⅡⅢ123]|F[ⅠⅡ12]|SG|GP)[\s　]*/i,'').trim();
 }
+function finalRiderName(name,sport){
+  const value=String(name||'').trim();
+  return sport==='keirin' ? value.replace(/\\s*選手\\s*$/,'').trim() : value;
+}
 function splitFinalRiders(riders){
   const sorted=[...riders].sort((a,b)=>a.number-b.number);
   const leftCount=Math.ceil(sorted.length/2);
@@ -231,7 +235,7 @@ function paintFinal(){
       const [background,color]=vehiclePalette[rider.number];
       number.style.backgroundColor=background;
       number.style.color=color;
-      row.append(number,node('span','final-rider',rider.name));
+      row.append(number,node('span','final-rider',finalRiderName(rider.name,data.sport)));
       column.append(row);
     }
     for(let n=riders.length;n<5;n++){
@@ -304,7 +308,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);

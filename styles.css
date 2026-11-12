@@ -340,8 +340,15 @@ h1 {
 .final-title[data-sport="auto"] { background: var(--auto); }
 .final-race {
   padding: 0 20px;
-  font-size: 80px;
+  font-size: 60px;
   gap: 20px;
+}
+/* Override only the finals label; venue-list grade labels remain 30px. */
+.final-race .grade {
+  min-width: 120px;
+  height: 80px;
+  padding: 0 10px;
+  font-size: 60px;
 }
 .final-race-detail {
   min-width: 0;
