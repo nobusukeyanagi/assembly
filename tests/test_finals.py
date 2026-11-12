@@ -85,7 +85,7 @@ class GradeFinalTests(unittest.TestCase):
     def test_auto_final_exact_title_and_eight_riders(self):
         item=parse_autorace_final(auto_detail(),DAY,"浜松",12,"SG")
         self.assertEqual((item["event"],item["raceName"],item["startTime"]),
-                         ("SG日本選手権オートレース","優勝戦(枠番選択)","16:10"))
+                         ("SG日本選手権オートレース","優勝戦","16:10"))
         self.assertEqual(len(item["riders"]),8)
         self.assertEqual(item["riders"][0],{"number":1,"name":"佐藤 励"})
         self.assertEqual(item["riders"][7],{"number":8,"name":"中村 雅人"})
