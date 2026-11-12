@@ -83,6 +83,34 @@ jobs:
       - name: Validate the configured public display
         run: python scripts/display_mode.py check
 
+      - name: Report independent source verification
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          lines=['## 開催情報の照合結果', '', '| 対象 | 競技 | 場数 | 2サイト以上で確認 | 使用した情報源 |', '|---|---|---:|---:|---|']
+          for fname in ('today','selected'):
+              path=Path('data') / (fname+'.json')
+              if not path.exists():continue
+              data=json.loads(path.read_text(encoding='utf-8'))
+              for key,title in (('keirin','競輪'),('auto','オート'),('soda','SODA'),('mori','森選手')):
+                  section=data.get('sections',{}).get(key,{})
+                  checked=section.get('verification',{})
+                  sources=', '.join(checked.get('providers',{}))
+                  count=len(section.get('items',[]))
+                  line=f"| {fname} {data.get('date','')} | {title} | {count} | {checked.get('crossConfirmed','-')} | {sources or '-'} |"
+                  print(line)
+                  lines.append(line)
+                  if section.get('status')=='error':
+                      print(f"::warning::{fname} {title}: 全取得元を確認できませんでした")
+                  for conflict in checked.get('conflicts',[]):
+                      print(f"::warning::{fname} {title}: 情報源の不一致 {conflict}")
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as out:
+              out.write('\n'.join(lines)+'\n')
+          PY
+
       - name: Save snapshots and mode in repository
         if: ${{ github.event_name != 'push' }}
         run: |
