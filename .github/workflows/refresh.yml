@@ -106,6 +106,16 @@ jobs:
                   lines.append(line)
                   if section.get('status')=='error':
                       print(f"::warning::{fname} {title}: 全取得元を確認できませんでした")
+                  if key=='mori' and isinstance(section.get('item'),dict):
+                      item=section['item']
+                      races=item.get('races') or ([item['race']] if isinstance(item.get('race'),int) else [])
+                      times=item.get('startTimes',{})
+                      race_display='・'.join(str(n)+'R' for n in races) or '出走R未確認'
+                      start_display='/'.join(times.get(str(n),'未確認') for n in races) if races and item.get('type')=='today' else '-'
+                      note=f"森選手 {fname} {data.get('date','')}: {item.get('name','-')} {race_display} 発走 {start_display}"
+                      print(note)
+                      lines.append('')
+                      lines.append(note)
                   for conflict in checked.get('conflicts',[]):
                       print(f"::warning::{fname} {title}: 情報源の不一致 {conflict}")
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as out:
