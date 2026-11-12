@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-01",
-  "updatedAt": "2026-11-12T13:23+09:00",
+  "date": "2026-10-12",
+  "updatedAt": "2026-11-12T15:00+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -21,92 +21,60 @@
       "status": "ok",
       "items": [
         {
-          "name": "小田原",
+          "name": "いわき平",
           "grade": "F2",
-          "timeType": "モーニング",
-          "girls": true,
+          "timeType": "確認中",
+          "girls": false,
           "day": "初日"
+        },
+        {
+          "name": "弥彦",
+          "grade": "G1",
+          "timeType": "確認中",
+          "girls": false,
+          "day": "最終日"
+        },
+        {
+          "name": "大宮",
+          "grade": "F2",
+          "timeType": "確認中",
+          "girls": false,
+          "day": "初日"
+        },
+        {
+          "name": "岐阜",
+          "grade": "F2",
+          "timeType": "確認中",
+          "girls": false,
+          "day": "最終日"
+        },
+        {
+          "name": "富山",
+          "grade": "F1",
+          "timeType": "確認中",
+          "girls": false,
+          "day": "最終日"
+        },
+        {
+          "name": "小倉",
+          "grade": "F1",
+          "timeType": "確認中",
+          "girls": false,
+          "day": "2日目"
         },
         {
           "name": "熊本",
           "grade": "F2",
-          "timeType": "モーニング",
-          "girls": false,
-          "day": "2日目"
-        },
-        {
-          "name": "弥彦",
-          "grade": "F1",
-          "timeType": "デイ",
-          "girls": false,
-          "day": "最終日"
-        },
-        {
-          "name": "防府",
-          "grade": "G3",
-          "timeType": "デイ",
-          "girls": false,
-          "day": "2日目"
-        },
-        {
-          "name": "宇都宮",
-          "grade": "F2",
-          "timeType": "ナイター",
-          "girls": false,
-          "day": "最終日"
-        },
-        {
-          "name": "久留米",
-          "grade": "F1",
-          "timeType": "ナイター",
+          "timeType": "確認中",
           "girls": false,
           "day": "初日"
-        },
-        {
-          "name": "西武園",
-          "grade": "F2",
-          "timeType": "ミッドナイト",
-          "girls": true,
-          "day": "最終日"
-        },
-        {
-          "name": "松戸",
-          "grade": "F2",
-          "timeType": "ミッドナイト",
-          "girls": false,
-          "day": "最終日"
-        },
-        {
-          "name": "名古屋",
-          "grade": "F2",
-          "timeType": "ミッドナイト",
-          "girls": false,
-          "day": "最終日"
         }
       ]
     },
     "auto": {
-      "status": "ok",
-      "items": [
-        {
-          "name": "浜松",
-          "grade": "SG",
-          "timeType": null,
-          "day": "4日目"
-        },
-        {
-          "name": "川口",
-          "grade": "普通",
-          "timeType": "ナイター",
-          "day": "初日"
-        },
-        {
-          "name": "山陽",
-          "grade": "普通",
-          "timeType": "ミッドナイト",
-          "day": "最終日"
-        }
-      ]
+      "status": "error",
+      "items": [],
+      "message": "開催日程を確認できません: 開催日程の対象年月が不一致"
     },
     "soda": {
       "status": "ok",
@@ -114,7 +82,7 @@
         {
           "name": "戸田",
           "grade": "一般",
-          "day": "2日目",
+          "day": "最終日",
           "timeType": null,
           "girls": false
         },
@@ -126,21 +94,14 @@
           "girls": false
         },
         {
-          "name": "宮島",
+          "name": "びわこ",
           "grade": "一般",
           "day": "初日",
           "timeType": null,
           "girls": false
         },
         {
-          "name": "芦屋",
-          "grade": "一般",
-          "day": "初日",
-          "timeType": null,
-          "girls": false
-        },
-        {
-          "name": "蒲郡",
+          "name": "桐生",
           "grade": "一般",
           "day": "最終日",
           "timeType": "ナイター",
@@ -153,15 +114,14 @@
       "status": "ok",
       "items": [],
       "item": {
-        "date": "2026-11-01",
-        "name": "浜松",
+        "date": "2026-10-12",
+        "name": "飯塚",
         "type": "today",
-        "race": 5,
+        "race": 6,
         "races": [
-          5
+          6
         ],
-        "source": "historical-results",
-        "grade": "SG"
+        "source": "historical-results"
       }
     }
   }
