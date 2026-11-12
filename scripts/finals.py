@@ -40,11 +40,18 @@ def read_riders(table,max_count=9):
         cells=row.find_all(["th","td"],recursive=False)
         if len(cells)<2:continue
         first=text_clean(cells[0].get_text(" ",strip=True))
-        if not re.fullmatch(r"[1-9]",first):continue
-        number=int(first)
-        # KEIRIN HEX has car number in the first column; some other sources
-        # have an extra frame-number column and require a separate parser.
-        col=cells[1]
+        if re.fullmatch(r"[1-9]",first):
+            # KEIRIN HEX: car number is a dedicated first cell.
+            number=int(first)
+            col=cells[1]
+        else:
+            # Tokyo Sports autorace: number + rider name share the first cell,
+            # followed by trial/time/statistic cells and extra statistic rows.
+            match=re.match(r"^([1-9])\s+",first)
+            profile=cells[0].find("a",href=re.compile(r"autorace\.jp/race_info/Profile/"))
+            if not match or not profile:continue
+            number=int(match.group(1))
+            col=cells[0]
         racer_link=next((a for a in col.find_all("a",href=True)
                          if "autorace.jp" in a["href"] or "keirin" in a["href"]),None)
         if racer_link:

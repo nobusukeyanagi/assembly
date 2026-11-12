@@ -41,8 +41,8 @@ def hex_detail():
 
 def auto_detail(race=12,kind="優勝戦（枠番選択）"):
     riders="".join(
-        f'<tr><td>{n}</td><td><a href="https://autorace.jp/race_info/RaceResult/'
-        f'hamamatsu/{n}">{name}</a> 浜松 / 32期</td></tr>'
+        f'<tr><td>{n} <a href="https://autorace.jp/race_info/Profile/'
+        f'3{n:03d}">{name}</a> 浜松 / 32期</td><td>0</td></tr>'
         for n,name in enumerate(("佐藤　励","青山　周平","丹村　飛竜","荒尾　聡",
                                  "金子　大輔","鈴木　圭一郎","永井　大介","中村　雅人"),1))
     return (
