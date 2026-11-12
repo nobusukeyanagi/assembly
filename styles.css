@@ -7,7 +7,7 @@
   --soda: #17a2b8;
   --grade-major: hsl(345 44.31% 50%);
   --grade-regular: hsl(175 41.67% 32.94%);
-  --tile-height: 144px;
+  --tile-height: 152px;
   --tile-gap: 6px;
 }
 * { box-sizing: border-box; }
@@ -35,7 +35,7 @@ body {
   overflow: hidden;
 }
 .header {
-  height: var(--tile-height);
+  height: 100px;
   flex: none;
   display: flex;
   align-items: center;
@@ -74,16 +74,20 @@ h1 {
   gap: 12px;
   flex: none;
   min-width: 0;
-  padding: 0;
-  background: transparent;
+  width: calc(100% + 60px);
+  margin-inline: -30px;
+  padding: 0 30px;
+  color: #fff;
   border: 0;
   border-radius: 0;
   overflow: hidden;
 }
-.keirin { height: calc(3 * var(--tile-height) + 2 * var(--tile-gap)); }
-.auto { height: var(--tile-height); }
-.soda { height: calc(2 * var(--tile-height) + var(--tile-gap)); }
-.stage.five-rows { --tile-height: 170px; }
+.keirin { background: var(--keirin); height: calc(3 * var(--tile-height) + 2 * var(--tile-gap)); }
+.auto { background: var(--auto); height: var(--tile-height); }
+.soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap)); }
+/* Date stays 100px. With <=8 Keirin meets, all five rows grow evenly. */
+.stage.five-rows { --tile-height: 184px; }
+.stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap)); }
 .panel-head {
   display: flex;
   flex-direction: column;
@@ -155,9 +159,9 @@ h2 {
   min-height: 0;
   height: var(--tile-height);
   padding: 0 4px;
-  border: 1.5px solid #cbd5d9;
+  border: 1.5px solid rgba(255,255,255,.78);
   border-radius: 6px;
-  background: #fff;
+  background: transparent;
   overflow: hidden;
 }
 .entry .venue {
@@ -168,6 +172,7 @@ h2 {
   letter-spacing: -.045em;
   white-space: nowrap;
   max-width: 100%;
+  color: #fff;
   text-align: center;
 }
 .entry .meta {
@@ -204,7 +209,7 @@ h2 {
   line-height: 1.1;
   font-weight: 700;
   white-space: nowrap;
-  color: #687980;
+  color: #fff;
 }
 .entry .time-icon {
   display: inline-flex;
@@ -244,7 +249,7 @@ h2 {
 .mori-tile h3,
 .mori-status {
   font-size: 26px;
-  color: var(--auto);
+  color: #fff;
   font-weight: 900;
   line-height: 1;
 }
@@ -257,14 +262,14 @@ h2 {
   gap: 5px;
   min-width: 0;
 }
-.mori-primary { font-size: 39px; font-weight: 900; white-space: nowrap; line-height: 1.1; letter-spacing: -.03em; }
-.mori-today .mori-primary { color: #a34366; }
-.mori-meta { font-size: 14px; color: #819193; white-space: nowrap; }
+.mori-primary { color: #fff; font-size: 39px; font-weight: 900; white-space: nowrap; line-height: 1.1; letter-spacing: -.03em; }
+.mori-today .mori-primary { color: #fff; }
+.mori-meta { font-size: 14px; color: #fff; white-space: nowrap; }
 .message, .detail {
-  color: #7e9092;
+  color: #fff;
   font-size: 20px;
   text-align: center;
   grid-column: 1/-1;
   margin: 0;
 }
-.detail { color: #a66d54; font-size: 15px; }
+.detail { color: #fff; font-size: 15px; }
