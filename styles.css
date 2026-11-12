@@ -239,13 +239,26 @@ h2 {
   align-content: center;
   row-gap: 8px;
 }
+.mori-heading {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  white-space: nowrap;
+}
 .mori-tile h3 {
   font-size: 26px;
   color: var(--auto);
   font-weight: 900;
   line-height: 1;
   margin: 0;
-  white-space: nowrap;
+}
+.mori-status {
+  font-size: 22px;
+  font-weight: 800;
+  color: #76858b;
+  line-height: 1;
 }
 .mori-body {
   display: flex;
@@ -255,7 +268,6 @@ h2 {
   gap: 5px;
   min-width: 0;
 }
-.mori-caption { font-size: 19px; font-weight: 800; line-height: 1; color: #76858b; }
 .mori-primary { font-size: 39px; font-weight: 900; white-space: nowrap; line-height: 1.1; letter-spacing: -.03em; }
 .mori-today .mori-primary { color: #a34366; }
 .mori-meta { font-size: 14px; color: #819193; white-space: nowrap; }

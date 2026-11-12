@@ -95,7 +95,9 @@ function entries(id,section,stale){
 }
 function mori(section,stale){
   const root=get('mori-body');
+  const status=get('mori-status');
   root.classList.remove('mori-today');
+  status.textContent='確認中';
   if(stale){error(root,'情報確認中');return}
   if(!section||section.status==='error'||!section.item){
     error(root,'出走予定確認中');return;
@@ -105,9 +107,9 @@ function mori(section,stale){
   const hasRace=isToday&&Number.isInteger(x.race);
   const d=/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?
     Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';
-  const caption=hasRace?'本日出走':isToday?'出走R確認中':'次回予定';
+  status.textContent=hasRace?'本日出走':isToday?'出走R確認中':'次回予定';
   const primary=hasRace?x.name+' '+x.race+'R':isToday?x.name+' R確認中':d+' '+(x.name||'');
-  root.replaceChildren(node('div','mori-caption',caption),node('div','mori-primary',primary));
+  root.replaceChildren(node('div','mori-primary',primary));
   if(isToday)root.classList.add('mori-today');
 }
 function render(data){
