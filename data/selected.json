@@ -1,0 +1,127 @@
+{
+  "date": "2026-11-01",
+  "updatedAt": "2026-11-12T12:41+09:00",
+  "sources": {
+    "keirin": "https://keirin.jp/sp/raceschedule",
+    "auto": "https://www.winticket.jp/autorace/schedules/",
+    "auto_official": "https://autorace.jp/",
+    "soda": "https://so-da.jp/aud/top",
+    "soda_schedule": "https://www.boatrace.jp/owpc/pc/race/index",
+    "mori": "https://www.winticket.jp/autorace/autoracer/2529/",
+    "mori_official": "https://sp.atrc.jp/racer/racerasseninfo/player_id/2529",
+    "mori_racecard": "https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529",
+    "auto_racecard": "https://autorace.jp/race_info/Program/",
+    "mori_venue_schedule": "https://www.kawaguchiauto.jp/race-calender/"
+  },
+  "sections": {
+    "keirin": {
+      "status": "ok",
+      "items": [
+        {
+          "name": "小田原",
+          "grade": "F2",
+          "timeType": "モーニング",
+          "girls": true,
+          "day": "初日"
+        },
+        {
+          "name": "熊本",
+          "grade": "F2",
+          "timeType": "モーニング",
+          "girls": false,
+          "day": "2日目"
+        },
+        {
+          "name": "防府",
+          "grade": "G3",
+          "timeType": "デイ",
+          "girls": false,
+          "day": "2日目"
+        },
+        {
+          "name": "久留米",
+          "grade": "F1",
+          "timeType": "ナイター",
+          "girls": false,
+          "day": "初日"
+        }
+      ]
+    },
+    "auto": {
+      "status": "ok",
+      "items": [
+        {
+          "name": "浜松",
+          "grade": "SG",
+          "timeType": null,
+          "day": "4日目"
+        },
+        {
+          "name": "川口",
+          "grade": "一般",
+          "timeType": "ナイター",
+          "day": "初日"
+        },
+        {
+          "name": "山陽",
+          "grade": "一般",
+          "timeType": "ミッドナイト",
+          "day": "最終日"
+        }
+      ]
+    },
+    "soda": {
+      "status": "ok",
+      "items": [
+        {
+          "name": "戸田",
+          "grade": "一般",
+          "day": "2日目",
+          "timeType": null,
+          "girls": false
+        },
+        {
+          "name": "浜名湖",
+          "grade": "一般",
+          "day": "3日目",
+          "timeType": null,
+          "girls": false
+        },
+        {
+          "name": "宮島",
+          "grade": "一般",
+          "day": "初日",
+          "timeType": null,
+          "girls": false
+        },
+        {
+          "name": "芦屋",
+          "grade": "一般",
+          "day": "初日",
+          "timeType": null,
+          "girls": false
+        },
+        {
+          "name": "蒲郡",
+          "grade": "一般",
+          "day": "最終日",
+          "timeType": "ナイター",
+          "girls": false
+        }
+      ],
+      "note": "SODA対応場で開催。SODAライブ配信を保証するものではありません。"
+    },
+    "mori": {
+      "status": "ok",
+      "items": [],
+      "item": {
+        "date": "2026-11-22",
+        "name": "川口",
+        "type": "next",
+        "unconfirmed": true,
+        "grade": "一般",
+        "timeType": "ナイター"
+      }
+    }
+  }
+}
