@@ -304,3 +304,19 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
   .fullscreen-hint { animation: fullscreen-hint-dismiss 0s linear 2s forwards; }
 }
+
+/* Label selected-date display without changing the dashboard's grid geometry. */
+#display-mode-indicator {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  padding: 6px 12px;
+  background: #fff4df;
+  color: #7e4b18;
+  border: 1px solid #c9a46b;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+#display-mode-indicator[hidden] { display: none; }

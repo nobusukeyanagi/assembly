@@ -89,12 +89,12 @@ function card(item,id){
   el.append(title,meta);
   return el;
 }
-function entries(id,section,stale){
+function entries(id,section,stale,mode){
   const root=get(id+'-entries');
   const records=section&&Array.isArray(section.items)?section.items:[];
   const max=limits[id];
   const tiles=records.slice(0,max);
-  if(stale){error(root,'本日の情報を確認中');return}
+  if(stale){error(root,mode==='selected'?'指定日の情報を確認中':'本日の情報を確認中');return}
   if(!section||section.status==='error'){
     error(root,'開催情報を確認できません');return;
   }
@@ -104,7 +104,7 @@ function entries(id,section,stale){
   root.replaceChildren(...tiles.map(i=>card(i,id)));
   if(records.length>max)console.warn(id+' : maximum displayed entries exceeded');
 }
-function mori(section,stale){
+function mori(section,stale,targetDate){
   const root=get('mori-body');
   const status=get('mori-status');
   root.classList.remove('mori-today');
@@ -114,7 +114,7 @@ function mori(section,stale){
     error(root,'出走予定確認中');return;
   }
   const x=section.item;
-  const isToday=x.type==='today'&&x.date===today();
+  const isToday=x.type==='today'&&x.date===targetDate;
   const hasRace=isToday&&Number.isInteger(x.race);
   const d=/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?
     Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';
@@ -133,27 +133,42 @@ function mori(section,stale){
   root.replaceChildren(venue,meta);
   if(isToday)root.classList.add('mori-today');
 }
-function render(data){
+function render(data,targetDate,mode){
   latest=data;
-  const d=today(),stale=data.date!==d,s=data.sections||{};
+  const stale=data.date!==targetDate,s=data.sections||{};
   const keirinItems=s.keirin?.items;
   const fiveRows=!stale&&s.keirin?.status!=='error'&&Array.isArray(keirinItems)&&keirinItems.length<=8;
   get('stage').classList.toggle('five-rows',fiveRows);
-  dateDisplay(d);
-  entries('keirin',s.keirin,stale);
-  entries('auto',s.auto,stale);
-  entries('soda',s.soda,stale);
-  mori(s.mori,stale);
+  get('display-mode-indicator').hidden=mode!=='selected';
+  dateDisplay(targetDate);
+  entries('keirin',s.keirin,stale,mode);
+  entries('auto',s.auto,stale,mode);
+  entries('soda',s.soda,stale,mode);
+  mori(s.mori,stale,targetDate);
+}
+async function displayChoice(){
+  try{
+    const response=await fetch('./data/display.json?v='+Date.now(),{cache:'no-store'});
+    if(!response.ok)throw Error('Display setting HTTP '+response.status);
+    const choice=await response.json();
+    if(choice.mode==='selected'&&/^\d{4}-\d{2}-\d{2}$/.test(choice.date)){
+      return {date:choice.date,mode:'selected',file:'selected.json'};
+    }
+  }catch(err){
+    console.warn('Display setting unavailable; using today',err);
+  }
+  return {date:today(),mode:'today',file:'today.json'};
 }
 async function refresh(){
+  const choice=await displayChoice();
   try{
-    const response=await fetch('./data/today.json?v='+Date.now(),{cache:'no-store'});
+    const response=await fetch('./data/'+choice.file+'?v='+Date.now(),{cache:'no-store'});
     if(!response.ok)throw Error('HTTP '+response.status);
     const data=await response.json();
     if(!data.date||!data.sections)throw Error('Missing schedule fields');
-    render(data);
+    render(data,choice.date,choice.mode);
   }catch(err){
-    if(!(latest&&latest.date===today()))render({date:'',sections:{}});
+    if(!(latest&&latest.date===choice.date))render({date:choice.date,sections:{}},choice.date,choice.mode);
     console.warn(err);
   }
 }

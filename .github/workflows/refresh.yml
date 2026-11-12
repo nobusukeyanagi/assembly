@@ -4,6 +4,20 @@ on:
     # 16:10 UTC = 01:10 JST on the following day
     - cron: '10 16 * * *'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "公開ページの表示方法"
+        required: true
+        type: choice
+        options:
+          - 本来（当日）
+          - 日付指定
+        default: 本来（当日）
+      date:
+        description: "日付指定の場合のみ使用（YYYY-MM-DD）"
+        required: false
+        type: string
+        default: "2026-11-23"
   push:
     branches: [main]
     paths:
@@ -11,6 +25,7 @@ on:
       - app.js
       - styles.css
       - scripts/update.py
+      - scripts/display_mode.py
       - requirements.txt
       - data/**
       - tests/**
@@ -46,22 +61,47 @@ jobs:
         run: |
           python -m unittest discover -s tests -v
           node tests/test_holidays.cjs
+      - name: Select the public display mode
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          DISPLAY_MODE: ${{ inputs.mode }}
+          DISPLAY_DATE: ${{ inputs.date }}
+        run: python scripts/display_mode.py set --mode "$DISPLAY_MODE" --date "$DISPLAY_DATE"
+
+      - name: Gather the selected date from public schedules
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == '日付指定' }}
+        env:
+          DISPLAY_DATE: ${{ inputs.date }}
+        run: python scripts/update.py --date "$DISPLAY_DATE" --output data/selected.json
+
       - name: Gather today's information
         run: python scripts/update.py
-      - name: Save snapshot in repository
+
+      - name: Validate the configured public display
+        run: python scripts/display_mode.py check
+
+      - name: Save snapshots and mode in repository
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/today.json
+          git add -A -- data/
           if ! git diff --cached --quiet; then
-            git commit -m "data: refresh morning board"
-            git push
+            git commit -m "data: update morning board and display mode"
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                break
+              fi
+              if [ "$attempt" -eq 3 ]; then exit 1; fi
+              git fetch origin main
+              git rebase origin/main
+            done
           fi
       - name: Prepare static site
         run: |
           mkdir -p dist/data
           cp index.html app.js holidays.js styles.css .nojekyll dist/
-          cp data/today.json dist/data/today.json
+          cp data/today.json data/display.json dist/data/
+          if [ -f data/selected.json ]; then cp data/selected.json dist/data/; fi
       # One-time prerequisite: Settings > Pages > Source = GitHub Actions
       - name: Configure Pages
         uses: actions/configure-pages@v6
