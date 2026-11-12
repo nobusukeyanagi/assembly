@@ -1,6 +1,6 @@
 {
   "date": "2026-11-12",
-  "updatedAt": "2026-11-12T15:45+09:00",
+  "updatedAt": "2026-11-12T17:17+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -11,6 +11,7 @@
     "soda_schedule": "https://www.boatrace.jp/owpc/pc/race/index",
     "mori": "https://www.winticket.jp/autorace/autoracer/2529/",
     "mori_history": "https://handicapper.jp/riders/118",
+    "mori_start_time": "https://autorace.tokyo-sports.co.jp/list/race/{day}{venue}{race}",
     "mori_official": "https://sp.atrc.jp/racer/racerasseninfo/player_id/2529",
     "mori_racecard": "https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529",
     "auto_racecard": "https://autorace.jp/race_info/Program/",
@@ -296,6 +297,16 @@
         "grade": "普通",
         "timeType": "ナイター"
       }
+    }
+  },
+  "finals": {
+    "status": "ok",
+    "items": [],
+    "verification": {
+      "targetDate": "2026-11-12",
+      "eligibleMeetings": 0,
+      "confirmedRaces": 0,
+      "errors": []
     }
   }
 }
