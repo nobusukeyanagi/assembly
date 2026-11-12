@@ -7,8 +7,8 @@
   --soda: #17a2b8;
   --grade-major: hsl(345 44.31% 50%);
   --grade-regular: hsl(175 41.67% 32.94%);
-  --tile-height: 152px;
-  --tile-gap: 6px;
+  --tile-height: 150px;
+  --tile-gap: 10px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
@@ -86,7 +86,7 @@ h1 {
 .auto { background: var(--auto); height: calc(var(--tile-height) + 6px); }
 .soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap) + 6px); }
 /* 100px date; six or five fixed-height rows fill the screen exactly. */
-.stage.five-rows { --tile-height: 183.6px; }
+.stage.five-rows { --tile-height: 182px; }
 .stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap) + 6px); }
 .panel-head {
   display: flex;
