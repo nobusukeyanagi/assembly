@@ -1,6 +1,6 @@
 {
   "date": "2026-11-12",
-  "updatedAt": "2026-11-12T11:16+09:00",
+  "updatedAt": "2026-11-12T11:22+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "auto": "https://www.winticket.jp/autorace/schedules/",
@@ -79,6 +79,12 @@
       "status": "ok",
       "items": [
         {
+          "name": "山陽",
+          "grade": "G2",
+          "timeType": null,
+          "day": "2日目"
+        },
+        {
           "name": "伊勢崎",
           "grade": "一般",
           "timeType": "ナイター",
@@ -89,12 +95,6 @@
           "grade": "一般",
           "timeType": "ミッドナイト",
           "day": "最終日"
-        },
-        {
-          "name": "山陽",
-          "grade": "G2",
-          "timeType": null,
-          "day": "2日目"
         }
       ]
     },
@@ -106,13 +106,6 @@
           "grade": "一般",
           "day": "初日",
           "timeType": null,
-          "girls": false
-        },
-        {
-          "name": "蒲郡",
-          "grade": "一般",
-          "day": "4日目",
-          "timeType": "ナイター",
           "girls": false
         },
         {
@@ -134,6 +127,13 @@
           "grade": "一般",
           "day": "最終日",
           "timeType": null,
+          "girls": false
+        },
+        {
+          "name": "蒲郡",
+          "grade": "一般",
+          "day": "4日目",
+          "timeType": "ナイター",
           "girls": false
         }
       ],
