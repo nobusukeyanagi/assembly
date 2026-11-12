@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
+from update import parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_autorace_grade(self):
@@ -11,6 +11,58 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(autorace_grade('一般'),'普通')
         self.assertEqual(autorace_grade('GⅡ'),'G2')
         self.assertEqual(grade('一般'),'一般')
+
+
+    def test_mori_historical_races_for_selected_date(self):
+        history=(
+            '<h1>森 且行</h1><h2>直近の出走</h2><table>'
+            '<tr><th>レース</th><th>着順</th></tr>'
+            '<tr><td>2026-11-09 川口9R</td><td>8着</td></tr>'
+            '<tr><td>2026-11-03 浜松11R</td><td>8着</td></tr>'
+            '<tr><td>2026-11-02 浜松12R</td><td>-</td></tr>'
+            '<tr><td>2026-11-01 浜松5R</td><td>4着</td></tr>'
+            '<tr><td>2026-10-31 浜松5R</td><td>4着</td></tr>'
+            '</table><h2>キャリア成績</h2>')
+        all_results=parse_mori_history(history)
+        self.assertEqual(len(all_results),5)
+        self.assertEqual([x for x in all_results if x['date']=='2026-11-01'],
+                         [{'date':'2026-11-01','name':'浜松','race':5}])
+        with patch('update.fetch',return_value=history):
+            on_day=collect_past_mori(object(),date(2026,11,1))
+            next_day=collect_past_mori(object(),date(2026,11,4))
+            before=collect_past_mori(object(),date(2026,10,1))
+        self.assertEqual(on_day['item']['name'],'浜松')
+        self.assertEqual(on_day['item']['race'],5)
+        self.assertEqual(on_day['item']['races'],[5])
+        self.assertEqual(on_day['item']['type'],'today')
+        self.assertEqual(next_day['item']['date'],'2026-11-09')
+        self.assertEqual(next_day['item']['type'],'next')
+        self.assertEqual(before['status'],'error')
+        self.assertNotIn('item',before)
+
+    def test_mori_historical_multiple_races_same_day(self):
+        history=('<h1>森 且行</h1><h2>直近の出走</h2><table>'
+                 '<tr><td>2026-11-01 浜松12R</td></tr>'
+                 '<tr><td>2026-11-01 浜松3R</td></tr>'
+                 '<tr><td>2026-11-01 浜松3R</td></tr>'
+                 '<tr><td>2026-10-31 浜松5R</td></tr></table>')
+        with patch('update.fetch',return_value=history):
+            result=collect_past_mori(object(),date(2026,11,1))
+        self.assertEqual(result['item']['races'],[3,12])
+        self.assertEqual(result['item']['race'],3)
+
+    def test_mori_historical_missing_source_no_current_schedule(self):
+        with patch('update.fetch',side_effect=RuntimeError('blocked')):
+            result=collect_past_mori(object(),date(2026,11,1))
+        self.assertEqual(result['status'],'error')
+        self.assertFalse(result.get('item'))
+
+    def test_mori_history_rejects_other_rider_and_unrelated_text(self):
+        with self.assertRaisesRegex(ValueError,'森且行選手'):
+            parse_mori_history('<h1>別選手</h1><h2>直近の出走</h2>'
+                               '<table><tr><td>2026-11-01 浜松5R</td></tr></table>')
+        with self.assertRaisesRegex(ValueError,'出走履歴の項目'):
+            parse_mori_history('<h1>森 且行</h1><p>2026-11-01 浜松5R</p>')
 
     def test_mori_multiple_races(self):
         records=[

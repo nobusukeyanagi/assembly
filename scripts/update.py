@@ -19,12 +19,13 @@ KEIRIN_RACES='https://keirinhex.jp/races/{day}/'
 AUTO='https://www.winticket.jp/autorace/schedules/'
 BOAT='https://www.boatrace.jp/owpc/pc/race/index'
 MORI='https://www.winticket.jp/autorace/autoracer/2529/'
+MORI_HISTORY='https://handicapper.jp/riders/118'
 ASSEN='https://sp.atrc.jp/racer/racerasseninfo/player_id/2529'
 ODDSPARK='https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529'
 AUTO_OFFICIAL='https://autorace.jp/race_info/Program/'
 KAWAGUCHI_SCHEDULE='https://www.kawaguchiauto.jp/race-calender/'
 NIGHT_BOAT={'桐生','蒲郡','若松'}
-SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
+SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
 KEIRIN_NAMES='函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本'.split()
 AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
 SODA_NAMES='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
@@ -400,6 +401,76 @@ def parse_assen(html,today):
                         'name':m.group(5),'type':'today' if current else 'next','unconfirmed':True})
     return sorted(entries,key=lambda x:x['date'])
 
+
+def parse_mori_history(html):
+    """Extract verified dated race appearances, not the current planned schedule.
+
+    Handicapper.jp lists completed race results on the named rider page.
+    Only read the recent race-history table; other page text is ignored.
+    """
+    soup=BeautifulSoup(html,'html.parser')
+    h1=soup.find('h1')
+    if h1 is None or re.sub(r'\s+','',normalize('NFKC',h1.get_text(' ',strip=True)))!='森且行':
+        raise ValueError('森且行選手の出走履歴ページを検証できません')
+    h2=next((h for h in soup.find_all(['h2','h3'])
+             if '直近の出走' in h.get_text(' ',strip=True)),None)
+    if h2 is None:raise ValueError('出走履歴の項目がありません')
+    table=h2.find_next('table')
+    if table is None:raise ValueError('出走履歴表が見つかりません')
+    names='|'.join(map(re.escape,AUTO_NAMES))
+    pattern=re.compile(r'(?<!\d)(20\d{2}-\d{2}-\d{2})\s*('+names+r')\s*(1[0-2]|[1-9])\s*R\b',re.I)
+    items=[]
+    for row in table.select('tr'):
+        # Restrict to the race column rather than unrelated athlete statistics.
+        cell=row.find(['td','th'])
+        if cell is None:continue
+        match=pattern.search(normalize('NFKC',cell.get_text(' ',strip=True)))
+        if match is None:continue
+        iso,name,race_no=match.groups()
+        try:date.fromisoformat(iso)
+        except ValueError:continue
+        items.append({'date':iso,'name':name,'race':int(race_no)})
+    if not items:raise ValueError('出走履歴表から日付・場名・レースを読み取れません')
+    # The same race can appear twice due to source markup; deduplicate.
+    return sorted((dict(date=d,name=n,race=r) for d,n,r in
+                  set((item['date'],item['name'],item['race']) for item in items)),
+                  key=lambda x:(x['date'],x['name'],x['race']))
+
+
+def collect_past_mori(s,selected,auto_html=None):
+    """Resolve a historical display date from actual race records.
+
+    Never use future assignments scraped today as if they were known on a
+    historical date. A future race in completed history is retrospective,
+    and can only be used when no race occurred on the selected day.
+    """
+    try:
+        records=parse_mori_history(fetch(s,MORI_HISTORY))
+    except Exception as e:
+        log.warning('森選手の過去日出走履歴: %s',e)
+        return bad('指定日の出走履歴を確認できません')
+    # A limited recent-history table cannot certify older dates.
+    if selected.isoformat()<records[0]['date']:
+        return bad('指定日が取得可能な出走履歴の範囲外です')
+    matches=[item for item in records if item['date']>=selected.isoformat()]
+    if not matches:
+        return bad('指定日以降の出走情報を確認できません')
+    earliest=matches[0]['date']
+    day_items=[item for item in matches if item['date']==earliest]
+    venue=day_items[0]['name']
+    if any(item['name']!=venue for item in day_items):
+        log.warning('同日に森選手の異なる開催場が記録されています: %s',day_items)
+        return bad('出走履歴の開催場が一致しません')
+    numbers=sorted({item['race'] for item in day_items})
+    item={'date':earliest,'name':venue,'type':'today' if earliest==selected.isoformat() else 'next',
+          'race':numbers[0],'races':numbers,'source':'historical-results'}
+    if auto_html:
+        try:
+            item.update(mori_meeting_metadata(auto_html,date.fromisoformat(earliest),venue))
+        except Exception as exc:log.info('森選手の過去日開催グレードを照合できません: %s',exc)
+    return ok(item=item)
+
+
 def mori_previous_item(previous,today):
     """Retain a verified assignment only while its displayed date is still in the future."""
     if not isinstance(previous,dict):return None
@@ -467,6 +538,9 @@ def collect(today,s,previous=None):
         sections['soda']=ok(sort_by_time(parse_boat(fetch(s,BOAT,{'hd':today.strftime('%Y%m%d')}),today)),
             note='SODA対応場で開催。SODAライブ配信を保証するものではありません。')
     except Exception as e:log.exception('SODA開催場');sections['soda']=bad(e)
+    if today<datetime.now(TZ).date():
+        sections['mori']=collect_past_mori(s,today,auto_html if 'auto_html' in locals() else None)
+        return out
     candidates={}
     for url,parser,source in (
             (ASSEN,parse_assen,'official'),

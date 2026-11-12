@@ -36,11 +36,11 @@ https://nobusukeyanagi.github.io/assembly/
 | 競輪 | 当日・未来：[KEIRIN.JP公式開催日程](https://keirin.jp/sp/raceschedule)。過去：[楽天Kドリームスの日別開催情報](https://keirin.kdreams.jp/kaisai/2026/11/01/)と[KEIRIN HEXのレース一覧](https://keirinhex.jp/races/20261101/)を照合 |
 | オートレース | [WINTICKET月間開催日程](https://www.winticket.jp/autorace/schedules/)（[AUTORACE.JP](https://autorace.jp/calendar/)の個別出走表は開催日程判定に使用できないため補完） |
 | SODA対象場 | [SODA](https://so-da.jp/aud/top) の対応場を、[BOAT RACE公式開催日程](https://www.boatrace.jp/owpc/pc/race/index) と照合 |
-| 森且行選手 | [WINTICKET選手プロフィール](https://www.winticket.jp/autorace/autoracer/2529/) と、当日開催期間中は WINTICKET の出走表 |
+| 森且行選手 | 当日・未来：[WINTICKET選手プロフィール](https://www.winticket.jp/autorace/autoracer/2529/)・公式あっせん。過去日：[Handicapper.jpの出走履歴](https://handicapper.jp/riders/118) |
 
 **SODA欄は「SODA対応場で開催されるレース場」です。SODAでそのレースが配信されることを保証しません。**
 
-森選手は当日出走が出走表で確かめられたときのみ場名とR番号を同じ行に60pxで表示します（例：川口 11R／川口 3R・12R）。あっせん日程しか確認できない場合は「本日の出走R確認中」または「次回あっせん予定」と表示します。出走取消・変更の可能性があります。
+森選手は場名とR番号を同じ行に60pxで表示します（例：川口 11R／川口 3R・12R）。**日付指定で過去日を選択した場合は、[Handicapper.jpの選手別出走履歴](https://handicapper.jp/riders/118)から指定日の実際の出走記録を検索し、当日出走がなければ履歴に記録された次の出走を表示します。** 現在の未来あっせんを過去日の出走情報として流用しません。過去履歴の収録範囲外や取得失敗時には、確認できない旨を表示します。あっせん日程しか確認できない場合は「本日の出走R確認中」または「次回あっせん予定」と表示します。出走取消・変更の可能性があります。
 
 オートレースの通常開催は「普通」、SODA等の一般開催は「一般」と表示します。曜日は土曜が青、日曜・祝日が赤で、括弧は黒のままです。
 
