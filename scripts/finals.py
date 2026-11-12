@@ -22,6 +22,7 @@ AUTO_GRADES=frozenset(("SG","特G1","G1","G2"))
 PREFECTURES="北海道 青森 岩手 宮城 秋田 山形 福島 茨城 栃木 群馬 埼玉 千葉 東京 神奈川 新潟 富山 石川 福井 山梨 長野 岐阜 静岡 愛知 三重 滋賀 京都 大阪 兵庫 奈良 和歌山 鳥取 島根 岡山 広島 山口 徳島 香川 愛媛 高知 福岡 佐賀 長崎 熊本 大分 宮崎 鹿児島 沖縄".split()
 PREFECTURE_PATTERN=re.compile(r"(?:地元)?(?:"+"|".join(sorted(PREFECTURES,key=len,reverse=True))+r")[・/]")
 CLOCK=re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+SCRATCHED=re.compile(r"出走取消|出場取消|出走取止|欠車|欠場|競走除外|出走除外|出走取り消し")
 
 
 def norm(value):
@@ -64,14 +65,21 @@ def read_riders(table,max_count=9):
         name=re.sub(r"\s+"," ",name).strip()
         if not re.fullmatch(r"[\u3005\u3400-\u9fffぁ-んァ-ヶー・A-Za-z\s]{2,24}",name):
             continue
-        if number in riders and riders[number]!=name:
+        if number in riders and riders[number]["name"]!=name:
             raise ValueError("車番に複数の選手が存在します")
-        riders[number]=name
+        status_text=text_clean(row.get_text(" ",strip=True))
+        crossed=bool(col.find(["del","s","strike"]))
+        scratched=bool(SCRATCHED.search(status_text) or crossed)
+        rider={"number":number,"name":name}
+        if scratched:rider["status"]="scratched"
+        if number in riders and riders[number].get("status")=="scratched":
+            rider["status"]="scratched"
+        riders[number]=rider
     if not 5<=len(riders)<=max_count:
         raise ValueError(f"出走選手を十分に読み取れません: {len(riders)}人")
     if set(riders)!=set(range(1,len(riders)+1)):
         raise ValueError("出走車番に欠番・不連続があります")
-    return [{"number":i,"name":riders[i]} for i in sorted(riders)]
+    return [riders[i] for i in sorted(riders)]
 
 
 def candidate_hex_finals(html,selected,meetings):
@@ -145,8 +153,8 @@ def parse_hex_final(html,selected,candidate):
     return dict(candidate,riders=riders)
 
 
-def parse_autorace_final(html,selected,venue,race,grade):
-    """Auto race's page identifies selected date + venue + R in its title."""
+def parse_autorace_race(html,selected,venue,race,grade,require_final=True,require_mori=False):
+    """Verify the date/venue/race header and the actual entry list."""
     soup=BeautifulSoup(html,"html.parser")
     title=text_clean(soup.title.get_text(" ",strip=True)) if soup.title else ""
     m=re.search(r"(20\d{2})年(\d{1,2})月(\d{1,2})日\s*"
@@ -159,34 +167,40 @@ def parse_autorace_final(html,selected,venue,race,grade):
     if not event_heading:raise ValueError("オート開催節名が取得できません")
     event=text_clean(event_heading.get_text(" ",strip=True))
     if not event:raise ValueError("オート開催節名が空欄です")
-    # Restrict classification and time to the race header before the first
-    # 出走表; navigation and historic race text are NOT trusted for this.
     parts=[]
     for el in event_heading.next_elements:
-        if getattr(el,"name",None)=="table":
-            break
+        if getattr(el,"name",None)=="table":break
         if getattr(el,"name",None) in ("h2","h3") and "出走表" in el.get_text(" ",strip=True):
             break
         if isinstance(el,NavigableString):
             parts.append(str(el))
             if sum(len(x) for x in parts)>1400:break
     card_header=text_clean(" ".join(parts))
-    match=re.search(r"優勝戦(?:\s*[（(][^）)]{1,16}[）)])?|決勝戦",card_header)
-    if not match:raise ValueError("オートレースが優勝戦ではありません")
+    classification=re.search(r"優勝戦(?:\s*[（(][^）)]{1,16}[）)])?|決勝戦",card_header)
+    if require_final and not classification:
+        raise ValueError("オートレースが優勝戦ではありません")
     start_match=re.search(r"発走\s*[：:]\s*([0-2]?\d:[0-5]\d)",card_header)
-    if not start_match:raise ValueError("オート優勝戦の発走時刻が不明です")
+    if not start_match:raise ValueError("オート出走表の発走時刻が不明です")
     start=start_match.group(1).zfill(5)
-    if not CLOCK.fullmatch(start):raise ValueError("オート優勝戦の時刻が不正です")
+    if not CLOCK.fullmatch(start):raise ValueError("オート出走表の時刻が不正です")
     tables=[t for t in soup.find_all("table")
             if "車番" in text_clean(t.get_text(" ",strip=True))[:400] and
                "選手名" in text_clean(t.get_text(" ",strip=True))[:400]]
     if not tables:raise ValueError("オート出走表に車番・選手名の項目がありません")
     riders=read_riders(tables[0],max_count=8)
-    return {"sport":"auto","venue":venue,"grade":grade,"event":event,
-            "raceName":text_clean(match.group()),"race":race,
-            "startTime":start,"riders":riders,
-            "sourceUrl":AUTO_RACE.format(day=selected.strftime("%Y%m%d"),
-                                        venue=AUTO_CODES[venue],race=race)}
+    if require_mori and not any(re.sub(r"\s+","",r["name"])=="森且行" for r in riders):
+        raise ValueError("出走表で森且行選手の出走を確認できません")
+    item={"sport":"auto","venue":venue,"grade":grade,"event":event,
+          "raceName":text_clean(classification.group()) if classification else "森且行出走",
+          "race":race,"startTime":start,"riders":riders,
+          "sourceUrl":AUTO_RACE.format(day=selected.strftime("%Y%m%d"),
+                                      venue=AUTO_CODES[venue],race=race)}
+    if require_mori:item["feature"]="mori"
+    return item
+
+
+def parse_autorace_final(html,selected,venue,race,grade):
+    return parse_autorace_race(html,selected,venue,race,grade,require_final=True)
 
 
 def collect(s,selected,sections,u,previous=None):
@@ -245,8 +259,35 @@ def collect(s,selected,sections,u,previous=None):
                 CLOCK.fullmatch(str(race.get("startTime","")))):
                 results[key]=race
         ordered=sorted(results.values(),key=lambda x:(x["startTime"],x["sport"],x["venue"],x["race"]))
+    # Mori's verified racecards are presented after every graded final.
+    mori_section=sections.get("mori",{})
+    mori=mori_section.get("item") if isinstance(mori_section,dict) else None
+    if (isinstance(mori,dict) and mori.get("type")=="today" and
+        mori.get("date")==selected.isoformat() and mori.get("name") in AUTO_CODES):
+        races=mori.get("races") if isinstance(mori.get("races"),list) else [mori.get("race")]
+        numbers=sorted({n for n in races if type(n) is int and 1<=n<=12})
+        for number in numbers:
+            key=("auto",mori["name"],number)
+            if key in results:
+                # The same race has already been displayed as a grade final.
+                # Do not show it a second time.
+                continue
+            uri=AUTO_RACE.format(day=selected.strftime("%Y%m%d"),
+                                 venue=AUTO_CODES[mori["name"]],race=number)
+            try:
+                item=parse_autorace_race(u.fetch(s,uri),selected,mori["name"],number,
+                                        mori.get("grade","普通"),
+                                        require_final=False,require_mori=True)
+                results[key]=item
+            except Exception as exc:
+                errors.append(f"森且行 {mori['name']} {number}R: {exc}")
+    graded=[x for x in results.values() if x.get("feature")!="mori"]
+    mori_cards=[x for x in results.values() if x.get("feature")=="mori"]
+    sort_key=lambda x:(x["startTime"],x["sport"],x["venue"],x["race"])
+    ordered=sorted(graded,key=sort_key)+sorted(mori_cards,key=sort_key)
     status="ok" if not errors else "partial"
     return {"status":status,"items":ordered,
             "verification":{"targetDate":selected.isoformat(),
                             "eligibleMeetings":len(keirin)+len(auto),
-                            "confirmedRaces":len(ordered),"errors":errors}}
+                            "confirmedRaces":len(ordered),
+                            "moriRaces":len(mori_cards),"errors":errors}}

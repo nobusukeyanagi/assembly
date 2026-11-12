@@ -177,7 +177,11 @@ function verifiedFinals(data,targetDate){
   return data.finals.items.filter(r=>(
     (r.sport==='keirin'||r.sport==='auto')&&
     typeof r.event==='string'&&r.event.length>0&&
-    typeof r.raceName==='string'&&/決勝|優勝戦/.test(r.raceName)&&
+    typeof r.raceName==='string'&&
+    (r.feature==='mori'
+      ? r.sport==='auto'&&Array.isArray(r.riders)&&
+        r.riders.some(p=>typeof p.name==='string'&&p.name.replace(/\s/g,'')==='森且行')
+      : /決勝|優勝戦/.test(r.raceName))&&
     typeof r.venue==='string'&&r.venue.length>0&&
     Number.isInteger(r.race)&&r.race>=1&&r.race<=12&&
     /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime)&&
@@ -202,7 +206,19 @@ function finalEventLabel(event){
 }
 function finalRiderName(name,sport){
   const value=String(name||'').trim();
-  return sport==='keirin' ? value.replace(/\s*選手\s*$/,'').trim() : value;
+  if(sport!=='keirin')return value;
+  const clean=value.replace(/\s*(?:選手|地元)(?:\s*(?:選手|地元))*\s*$/,'').trim();
+  if(/\s/.test(clean))return clean.replace(/\s+/g,' ');
+  // Keirin HEX often joins surname and given name. Standard Japanese names
+  // default to a two-character surname; known 1/3-character surnames override.
+  if(!/^[一-龯々ぁ-んァ-ヶー]{3,7}$/.test(clean))return clean;
+  const surname3=['佐々木','長谷川','小野寺','小笠原','五十嵐','大久保',
+                  '小松崎','小田倉','久保田','阿久津','佐久間','小田原','小田島'];
+  const oneChar=new Set(['森','原','東','堀','林','関','辻','谷','南','北',
+                         '西','岡','岸','泉','平','堤','沖','関','室','滝']);
+  const count=surname3.some(s=>clean.startsWith(s))?3:
+    (clean.length===3&&oneChar.has(clean[0])?1:2);
+  return clean.slice(0,count)+' '+clean.slice(count);
 }
 function splitFinalRiders(riders){
   const sorted=[...riders].sort((a,b)=>a.number-b.number);
@@ -224,7 +240,9 @@ function paintFinal(){
   const grade=node('span','grade',displayGrade(data.grade||'—',data.sport));
   grade.dataset.tier=isMajorGrade(data.grade)?'major':'regular';
   race.append(grade,node('span','final-race-detail',
-    data.venue+' '+data.race+'R '+finalRaceLabel(data.raceName)+' '+data.startTime+'発走'));
+    data.venue+' '+data.race+'R '+
+    (data.feature==='mori'?'森且行出走':finalRaceLabel(data.raceName))+
+    ' '+data.startTime+'発走'));
   const grid=node('div','final-riders');
   for(const riders of splitFinalRiders(data.riders)){
     const column=node('div','final-rider-column');
@@ -235,7 +253,12 @@ function paintFinal(){
       const [background,color]=vehiclePalette[rider.number];
       number.style.backgroundColor=background;
       number.style.color=color;
-      row.append(number,node('span','final-rider',finalRiderName(rider.name,data.sport)));
+      const name=node('span','final-rider',finalRiderName(rider.name,data.sport));
+      if(rider.status==='scratched'){
+        name.classList.add('is-scratched');
+        name.setAttribute('aria-label',name.textContent+' 出走取消・欠場等');
+      }
+      row.append(number,name);
       column.append(row);
     }
     for(let n=riders.length;n<5;n++){

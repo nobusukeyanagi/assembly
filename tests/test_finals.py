@@ -8,7 +8,7 @@ from types import SimpleNamespace
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
 from finals import (
     candidate_hex_finals,parse_hex_final,parse_autorace_final,collect,
-    AUTO_RACE,HEX_DAILY,read_riders
+    AUTO_RACE,HEX_DAILY,read_riders,parse_autorace_race
 )
 from bs4 import BeautifulSoup
 
@@ -124,6 +124,49 @@ class GradeFinalTests(unittest.TestCase):
         # Do not reuse graded finals if the current meeting has not reached final day.
         self.assertEqual(collect(object(),DAY,sections,u,previous)["items"],[])
         self.assertEqual(collect(object(),date(2026,11,4),sections,u,previous)["items"],[])
+
+
+    def test_scratched_keirin_and_autorace_riders(self):
+        table=BeautifulSoup(
+            '<table><tr><td>1</td><td>佐藤太郎</td><td>欠場</td></tr>'
+            '<tr><td>2</td><td><s>田中二郎</s></td></tr>'
+            '<tr><td>3</td><td>山本三郎</td></tr>'
+            '<tr><td>4</td><td>鈴木四郎</td></tr>'
+            '<tr><td>5</td><td>高橋五郎</td></tr></table>',"html.parser").table
+        riders=read_riders(table)
+        self.assertEqual(riders[0]["status"],"scratched")
+        self.assertEqual(riders[1]["status"],"scratched")
+        self.assertNotIn("status",riders[2])
+
+    def test_mori_racecard_appended_after_final_and_deduped(self):
+        url=HEX_DAILY.format(day="20261103")
+        detail="https://keirinhex.jp/races/20261103/126320261103/"
+        final_uri=AUTO_RACE.format(day="20261103",venue="04",race=12)
+        mori_uri=AUTO_RACE.format(day="20261103",venue="04",race=11)
+        mori_html=auto_detail(11,"一般戦").replace(
+            "中村　雅人","森　且行")
+        docs={url:hex_list(),detail:hex_detail(),
+              final_uri:auto_detail(),mori_uri:mori_html}
+        def fetch(_,uri):
+            if uri not in docs:raise RuntimeError("missing fixture")
+            return docs[uri]
+        sections={"keirin":{"items":[{"name":"防府","grade":"G3","day":"最終日"}]},
+                  "auto":{"items":[{"name":"浜松","grade":"SG","day":"最終日"}]},
+                  "mori":{"item":{"name":"浜松","date":DAY.isoformat(),"type":"today",
+                                  "grade":"SG","races":[11]}}}
+        out=collect(object(),DAY,sections,SimpleNamespace(fetch=fetch))
+        self.assertEqual([(x["venue"],x["race"]) for x in out["items"]],
+                         [("浜松",12),("防府",12),("浜松",11)])
+        self.assertEqual(out["items"][-1]["feature"],"mori")
+        self.assertEqual(out["verification"]["moriRaces"],1)
+        # Mori in the same race as a featured final must not create a duplicate.
+        sections["mori"]["item"]["races"]=[12]
+        same=collect(object(),DAY,sections,SimpleNamespace(fetch=fetch))
+        self.assertEqual(len(same["items"]),2)
+        # Exclude a race if Mori is not actually listed in that racecard.
+        with self.assertRaisesRegex(ValueError,"森且行"):
+            parse_autorace_race(auto_detail(11,"一般戦"),DAY,"浜松",11,"SG",
+                                require_final=False,require_mori=True)
 
     def test_reject_unverified_riders(self):
         table=BeautifulSoup("<table><tr><td>1</td><td>佐藤太郎東京・S1</td></tr></table>","html.parser").table

@@ -30,6 +30,17 @@ assert.equal(finalRiderName('清水 裕友選手','keirin'),'清水 裕友');
 assert.equal(finalRiderName('郡司浩平','keirin'),'郡司浩平');
 assert.equal(finalRiderName('選手A','keirin'),'選手A');
 assert.equal(finalRiderName('青山 周平 選手','auto'),'青山 周平 選手');
+assert.equal(finalRiderName('郡司浩平','keirin'),'郡司 浩平');
+assert.equal(finalRiderName('佐々木豪','keirin'),'佐々木 豪');
+assert.equal(finalRiderName('清水裕友 地元','keirin'),'清水 裕友');
+assert.equal(finalRiderName('森且行','keirin'),'森 且行');
+const moriRace={...card('auto','浜松',11,'15:24'),raceName:'森且行出走',
+  feature:'mori',riders:[
+    ...Array.from({length:7},(_,i)=>({number:i+1,name:'選手'+(i+1)})),
+    {number:8,name:'森 且行'}]};
+assert.equal(verifiedFinals({date:day,finals:{items:[moriRace]}},day).length,1);
+assert.equal(verifiedFinals({date:day,finals:{items:[
+  {...moriRace,riders:moriRace.riders.slice(0,7)}]}},day).length,0);
 
 for(const [size,left,right] of [[6,3,3],[7,4,3],[8,4,4],[9,5,4]]){
   const riders=Array.from({length:size},(_,i)=>({number:size-i,name:'選手'+i}));
@@ -56,8 +67,11 @@ for(const className of ['final-title','final-rider','final-number']){
 assert.match(css,/\.final-race\s*\{[^}]*font-size:\s*60px;/s);
 assert.match(css,/\.final-race \.grade\s*\{[^}]*font-size:\s*60px;/s);
 assert.match(css,/\.final-card\s*\{[^}]*width:\s*1600px;/s);
+assert.match(css,/\.final-rider\.is-scratched::after\s*\{[^}]*var\(--grade-major\)/s);
+assert.match(css,/\.fullscreen-hint-line\s*\{/s);
 assert.match(css,/\.final-riders\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
 assert.match(css,/\.final-rider-column\s*\{[^}]*grid-template-rows:\s*repeat\(5,/s);
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 assert.match(html,/id="final-screen"[^>]*hidden/);
+assert.match(html,/<kbd>Space Key<\/kbd><span>で出走表表示<\/span>/);
 console.log('Final board tests passed: race info+grade label 60px, keirin suffix removal, 2-column riders and other text 80px');

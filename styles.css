@@ -395,6 +395,10 @@ h1 {
   line-height: 1;
 }
 .final-rider {
+  position: relative;
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
   min-width: 0;
   font-size: 80px;
   font-weight: 900;
@@ -402,6 +406,23 @@ h1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Two horizontal red lines across the name, but never the vehicle-number badge. */
+.final-rider.is-scratched::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 12px;
+  transform: translateY(-50%);
+  background: linear-gradient(to bottom,
+    var(--grade-major) 0 4px,
+    transparent 4px 8px,
+    var(--grade-major) 8px 12px);
+  pointer-events: none;
 }
 
 /* A three-second entrance hint, independent of the scaled 1920×1080 board. */
@@ -415,10 +436,11 @@ h1 {
   height: 315px;
   aspect-ratio: 16 / 9; /* 縦:横 = 9:16 */
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: .35em;
-  padding: 1.5em 2.3em;
+  gap: 20px;
+  padding: 30px 40px;
   border-radius: 24px;
   background: rgba(30, 41, 48, .94);
   box-shadow: 0 12px 36px rgba(0, 0, 0, .2);
@@ -429,6 +451,12 @@ h1 {
   white-space: nowrap;
   pointer-events: none;
   animation: fullscreen-hint-dismiss .12s ease-in 2.88s forwards;
+}
+.fullscreen-hint-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 .fullscreen-hint kbd {
   display: inline-flex;
