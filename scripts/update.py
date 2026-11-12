@@ -76,6 +76,11 @@ def soup_with_alt(html):
         if val:img.replace_with(' '+val+' ')
     return soup
 
+def sort_by_time(items):
+    """Stable morning, day, night, midnight order; unknowns stay unlabelled."""
+    order={'モーニング':0,'デイ':1,None:1,'ナイター':2,'ミッドナイト':3}
+    return sorted(items,key=lambda item:order.get(item.get('timeType'),4))
+
 def parse_keirin(html,today):
     """Read verified KEIRIN.JP schedule grade, time category, and day."""
     soup=soup_with_alt(html)
@@ -107,8 +112,7 @@ def parse_keirin(html,today):
         gr=None;time_type=None;girls=False
     if sum(bool(DATE_RANGE.search(t)) for t in tokens)<12:raise ValueError('競輪開催日程のDOMを解析できません')
     if not items:raise ValueError('競輪開催場を特定できません')
-    order={'モーニング':0,'デイ':1,'ナイター':2,'ミッドナイト':3,'確認中':4}
-    return sorted(items,key=lambda item:order.get(item['timeType'],5))
+    return sort_by_time(items)
 
 def parse_auto(html,name,today):
     soup=BeautifulSoup(html,'html.parser')
@@ -332,13 +336,13 @@ def collect(today,s,previous=None):
                     meet['timeType']=None
                 elif other:meet['timeType']=other
             except Exception as e:log.info('オートの公式照合ができません: %s: %s',meet['name'],e)
-        sections['auto']=ok(auto)
+        sections['auto']=ok(sort_by_time(auto))
     except Exception as e:
         log.warning('オート日程取得: %s',e)
         sections['auto']=bad('開催日程を確認できません: '+str(e))
     
     try:
-        sections['soda']=ok(parse_boat(fetch(s,BOAT,{'hd':today.strftime('%Y%m%d')}),today),
+        sections['soda']=ok(sort_by_time(parse_boat(fetch(s,BOAT,{'hd':today.strftime('%Y%m%d')}),today)),
             note='SODA対応場で開催。SODAライブ配信を保証するものではありません。')
     except Exception as e:log.exception('SODA開催場');sections['soda']=bad(e)
     candidates={}

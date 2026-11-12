@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade
+from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,sort_by_time
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_grade(self):
@@ -35,6 +35,21 @@ class ParserTests(unittest.TestCase):
         result=parse_keirin(html,D)
         self.assertEqual([x['name'] for x in result[:4]],['大宮','富山','四日市','松阪'])
         self.assertEqual([x['girls'] for x in result[:4]],[False,True,True,True])
+    def test_sort_by_time_all_sports(self):
+        items=[
+            {'name':'night-A','timeType':'ナイター'},
+            {'name':'midnight','timeType':'ミッドナイト'},
+            {'name':'day-A','timeType':'デイ'},
+            {'name':'morning','timeType':'モーニング'},
+            {'name':'unverified-A','timeType':None},
+            {'name':'night-B','timeType':'ナイター'},
+            {'name':'unverified-B','timeType':None},
+            {'name':'day-B','timeType':'デイ'}]
+        got=sort_by_time(items)
+        self.assertEqual([x['name'] for x in got],[
+            'morning','day-A','unverified-A','unverified-B','day-B',
+            'night-A','night-B','midnight'])
+        self.assertIsNone(got[2]['timeType'])
     def test_auto(self):
         h='<h2>GII 山陽</h2><p>開催期間：2026年11月11日(水)～15日(日) 開催 第1日目</p>'
         self.assertEqual(parse_auto(h,'山陽',D),{'name':'山陽','grade':'G2','day':'初日'})

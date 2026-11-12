@@ -7,8 +7,8 @@
   --soda: #17a2b8;
   --grade-major: hsl(345 44.31% 50%);
   --grade-regular: hsl(175 41.67% 32.94%);
-  --tile-height: 147px;
-  --tile-gap: 10px;
+  --tile-height: 146px;
+  --tile-gap: 12px;
   --band-pad-y: 8px;
 }
 * { box-sizing: border-box; }
@@ -87,7 +87,7 @@ h1 {
 .auto { background: var(--auto); height: calc(var(--tile-height) + 2 * var(--band-pad-y)); }
 .soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap) + 2 * var(--band-pad-y)); }
 /* Shared top/bottom inset for each sport; 5/6-row layouts both fit 1080px. */
-.stage.five-rows { --tile-height: 178.4px; }
+.stage.five-rows { --tile-height: 177.6px; }
 .stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap) + 2 * var(--band-pad-y)); }
 .panel-head {
   display: flex;
@@ -111,6 +111,8 @@ h1 {
   letter-spacing: -.04em;
   margin: 0;
   white-space: nowrap;
+  /* Center text across the entire color area preceding the first venue. */
+  transform: translateX(-9px);
 }
 .entries {
   display: grid;
