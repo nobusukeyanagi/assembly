@@ -88,6 +88,14 @@ jobs:
               print("AUTO DEBUG H2",[(h.get_text(" ",strip=True))[:120] for h in soup.find_all("h2")][:8])
               print("AUTO DEBUG TEXT",soup.get_text(" ",strip=True)[:1200])
               print("AUTO DEBUG TABLES",len(soup.find_all("table")))
+              for table in soup.find_all("table")[:1]:
+                  for tr in table.find_all("tr")[:6]:
+                      cells=tr.find_all(["td","th"],recursive=False)
+                      print("AUTO DEBUG ROW",[(c.get_text(" ",strip=True)[:100],[(a.get("href",""),a.get_text(" ",strip=True)) for a in c.find_all("a")][:2]) for c in cells[:4]])
+              try:
+                  print("AUTO DIRECT PARSE",finals.parse_autorace_final(str(soup),target,"浜松",12,"SG"))
+              except Exception as exc:
+                  print("AUTO DIRECT PARSE ERROR",repr(exc))
               for h in soup.find_all("h1")[:2]:
                   values=[str(t).strip() for t in h.next_elements if isinstance(t,NavigableString)]
                   print("AUTO DEBUG AFTER H1",values[:35])
