@@ -132,7 +132,14 @@ function mori(section,stale,targetDate){
     gr.dataset.tier=isMajorGrade(x.grade)?'major':'regular';
     meta.append(gr);
   }
-  meta.append(node('span','day',d));
+  if(hasRace){
+    const times=x.startTimes&&typeof x.startTimes==='object'?x.startTimes:{};
+    const starts=races.map(n=>times[String(n)]);
+    const verified=starts.length>0&&starts.every(t=>typeof t==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(t));
+    meta.append(node('span','day',verified?starts.join('/'):'発走時刻確認中'));
+  } else {
+    meta.append(node('span','day',d));
+  }
   const timeIcon=timeBadge(x.timeType);
   if(timeIcon)meta.append(timeIcon);
   root.replaceChildren(venue,meta);

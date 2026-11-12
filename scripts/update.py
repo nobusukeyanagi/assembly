@@ -21,12 +21,13 @@ AUTO='https://www.winticket.jp/autorace/schedules/'
 BOAT='https://www.boatrace.jp/owpc/pc/race/index'
 MORI='https://www.winticket.jp/autorace/autoracer/2529/'
 MORI_HISTORY='https://handicapper.jp/riders/118'
+MORI_RACE_START='https://autorace.tokyo-sports.co.jp/list/race/{day}{venue}{race}'
 ASSEN='https://sp.atrc.jp/racer/racerasseninfo/player_id/2529'
 ODDSPARK='https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529'
 AUTO_OFFICIAL='https://autorace.jp/race_info/Program/'
 KAWAGUCHI_SCHEDULE='https://www.kawaguchiauto.jp/race-calender/'
 NIGHT_BOAT={'桐生','蒲郡','若松'}
-SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
+SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_start_time':MORI_RACE_START,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
 KEIRIN_NAMES='函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本'.split()
 AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
 SODA_NAMES='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
@@ -485,6 +486,79 @@ def mori_previous_item(previous,today):
     return item
 
 
+AUTO_SITE_CODES={'川口':'02','伊勢崎':'03','浜松':'04','飯塚':'05','山陽':'06'}
+
+
+
+def parse_mori_race_start(html,selected,venue,race):
+    """Extract the *scheduled start*, not the betting cutoff, from one dated racecard.
+
+    Tokyo Sports URL/title encodes calendar date + venue + race. Refuse an
+    unrelated race and do not infer start times by regular race intervals.
+    """
+    soup=BeautifulSoup(html,'html.parser')
+    for tag in soup(['script','style','noscript']):tag.decompose()
+    titles=[]
+    if soup.title:titles.append(soup.title.get_text(' ',strip=True))
+    for tag in soup.select('meta[property="og:title"],meta[name="twitter:title"]'):
+        if tag.get('content'):titles.append(tag['content'])
+    title_pattern=re.compile(r'(20\d{2})年(\d{1,2})月(\d{1,2})日\s*'
+                             r'(川口|伊勢崎|浜松|飯塚|山陽)\s*オート\s*(\d{1,2})R',re.I)
+    found=False
+    for title in titles:
+        matched=title_pattern.search(normalize('NFKC',title))
+        if not matched:continue
+        y,m,d=map(int,matched.group(1,2,3))
+        if (y,m,d)==(selected.year,selected.month,selected.day) and (
+             matched.group(4),int(matched.group(5)))==(venue,race):
+            found=True
+            break
+    if not found:raise ValueError('レース出走表の日付・場・Rが一致しません')
+    text=normalize('NFKC',soup.get_text(' ',strip=True))
+    # A racecard can also contain times for other races in its navigation.
+    # Only take the explicit "発走：" label for this race.
+    matches=re.findall(r'(?<![票投])発走\s*[：:]\s*(\d{1,2}):([0-5]\d)',text)
+    if len(matches)!=1:raise ValueError('対象Rの発走時刻を一意に確認できません')
+    h,minute=map(int,matches[0])
+    if not 0<=h<=23:raise ValueError('発走時刻が有効範囲外です')
+    return f'{h:02d}:{minute:02d}'
+
+
+def mori_start_times(s,item,previous=None,selected=None):
+    """Enrich Mori's verified race numbers with separately verified start times."""
+    if not isinstance(item,dict) or item.get('type')!='today':return item
+    races=item.get('races') if isinstance(item.get('races'),list) else [item.get('race')]
+    races=sorted({n for n in races if type(n) is int and 1<=n<=12})
+    if not races or item.get('name') not in AUTO_NAMES:return item
+    try:day=date.fromisoformat(item['date'])
+    except (TypeError,ValueError,KeyError):return item
+    # The selected date must match the verified rider appearance date.
+    if selected is not None and day!=selected:return item
+    venue=AUTO_SITE_CODES[item['name']]
+    found={}
+    for number in races:
+        uri=MORI_RACE_START.format(day=day.strftime('%Y%m%d'),venue=venue,race=number)
+        try:
+            found[str(number)]=parse_mori_race_start(fetch(s,uri),day,item['name'],number)
+        except Exception as e:log.warning('森選手の発走時刻を確認できません %s %sR: %s',item['name'],number,e)
+    # Safe cache: only a matching selected date, rider, venue and race number.
+    if isinstance(previous,dict) and previous.get('date')==day.isoformat():
+        saved=previous.get('sections',{}).get('mori',{}).get('item',{})
+        if isinstance(saved,dict) and saved.get('date')==item.get('date') and saved.get('name')==item.get('name'):
+            past_races=saved.get('races') if isinstance(saved.get('races'),list) else [saved.get('race')]
+            valid_races={n for n in past_races if type(n) is int and 1<=n<=12}
+            saved_times=saved.get('startTimes')
+            if isinstance(saved_times,dict):
+                for number in races:
+                    value=saved_times.get(str(number))
+                    if (str(number) not in found and number in valid_races and
+                        isinstance(value,str) and re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d',value)):
+                        found[str(number)]=value
+    if found:
+        item['startTimes']={str(n):found[str(n)] for n in races if str(n) in found}
+    return item
+
+
 def mori_race_numbers(records):
     """Return each independently identified race, de-duplicated and sorted."""
     values=set()
@@ -526,6 +600,8 @@ def collect(today,s,previous=None):
             if matching:
                 for field in ('grade','timeType'):
                     if matching.get(field):item[field]=matching[field]
+        if item and item.get('type')=='today':
+            mori_start_times(s,item,previous,today)
         if sections['mori']['status']=='error' and isinstance(previous,dict) and previous.get('date')==today.isoformat():
             old=previous.get('sections',{}).get('mori')
             if isinstance(old,dict) and old.get('status') in ('ok','cached') and old.get('item',{}).get('source')=='historical-results':
@@ -571,6 +647,7 @@ def collect(today,s,previous=None):
         if item['type']=='today' and not item.get('races') and not isinstance(item.get('race'),int):
             sections['mori']={'status':'partial','items':[],'item':item,'message':'出走R確認中'}
         else:sections['mori']=ok(item=item)
+        mori_start_times(s,item,previous,today)
     else:
         cached=mori_previous_item(previous,today)
         if cached:

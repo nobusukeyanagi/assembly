@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from verified_sources import parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
-from update import parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
+from update import parse_mori_race_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_autorace_grade(self):
@@ -64,6 +64,48 @@ class ParserTests(unittest.TestCase):
                                '<table><tr><td>2026-11-01 浜松5R</td></tr></table>')
         with self.assertRaisesRegex(ValueError,'出走履歴の項目'):
             parse_mori_history('<h1>森 且行</h1><p>2026-11-01 浜松5R</p>')
+
+
+    def test_mori_start_time_from_dated_race_page(self):
+        d=date(2026,11,1)
+        h=('<html><head><title>2026年11月01日 浜松オート 5R 出走表 | 東スポオートレース</title></head>'
+           '<body><h2>浜松 4日目</h2><div>5R</div><div>発走：12:22</div>'
+           '<div>投票締切：12:20</div><p>2026年11月1日</p>'
+           '<table><tr><td>2 森 且行 川口 / 25期 / 52歳</td></tr></table>'
+           '</body></html>')
+        self.assertEqual(parse_mori_race_start(h,d,'浜松',5),'12:22')
+        self.assertEqual(
+            MORI_RACE_START.format(day='20261101',venue='04',race=5),
+            'https://autorace.tokyo-sports.co.jp/list/race/20261101045')
+        for date_value,venue,race in (
+            (date(2026,11,2),'浜松',5),(d,'川口',5),(d,'浜松',4)):
+            with self.subTest(date=date_value,venue=venue,race=race),self.assertRaises(ValueError):
+                parse_mori_race_start(h,date_value,venue,race)
+        with self.assertRaisesRegex(ValueError,'一意'):
+            parse_mori_race_start(h.replace('発走：12:22','発走：12:22 発走：12:23'),d,'浜松',5)
+        with self.assertRaisesRegex(ValueError,'一意'):
+            parse_mori_race_start(h.replace('発走：12:22','締切：12:22'),d,'浜松',5)
+
+    def test_mori_start_times_multiple_races_and_same_date_cache(self):
+        d=date(2026,11,1)
+        def racepage(r,clock):
+            return (f'<html><head><title>2026年11月1日 浜松オート {r}R 出走表</title></head>'
+                    f'<body>発走：{clock}　投票締切：10:00</body></html>')
+        pages={MORI_RACE_START.format(day='20261101',venue='04',race=3):racepage(3,'10:30'),
+               MORI_RACE_START.format(day='20261101',venue='04',race=12):racepage(12,'18:00')}
+        obj={'date':d.isoformat(),'name':'浜松','type':'today','race':3,'races':[3,12]}
+        with patch('update.fetch',side_effect=lambda s,url,params=None:pages[url]):
+            mori_start_times(object(),obj,selected=d)
+        self.assertEqual(obj['startTimes'],{'3':'10:30','12':'18:00'})
+        cached={'date':d.isoformat(),'sections':{'mori':{'item':dict(obj)}}}
+        obj2={'date':d.isoformat(),'name':'浜松','type':'today','race':3,'races':[3,12]}
+        with patch('update.fetch',side_effect=RuntimeError('source down')):
+            mori_start_times(object(),obj2,cached,d)
+        self.assertEqual(obj2['startTimes'],obj['startTimes'])
+        obj3={'date':d.isoformat(),'name':'浜松','type':'today','race':3,'races':[3,12]}
+        with patch('update.fetch',side_effect=RuntimeError('source down')):
+            mori_start_times(object(),obj3,dict(cached,date='2026-10-31'),d)
+        self.assertNotIn('startTimes',obj3)
 
     def test_mori_multiple_races(self):
         records=[
