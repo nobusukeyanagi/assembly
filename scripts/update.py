@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """JST daily meeting collector. Public official schedules; failures are visible."""
 from __future__ import annotations
-import argparse, json, logging, re
+import argparse, json, logging, re, sys
+import verified_sources
 from unicodedata import normalize
 from datetime import date, datetime
 from pathlib import Path
@@ -509,37 +510,26 @@ def bad(error):
 def collect(today,s,previous=None):
     out={'date':today.isoformat(),'updatedAt':datetime.now(TZ).isoformat(timespec='minutes'),'sources':SOURCES,'sections':{}}
     sections=out['sections']
-    try:
-        if today<datetime.now(TZ).date():
-            sections['keirin']=ok(collect_past_keirin(s,today))
-        else:
-            sections['keirin']=ok(parse_keirin(fetch(s,KEIRIN),today))
-    except Exception as e:log.exception('競輪取得');sections['keirin']=bad(e)
-    try:
-        auto_html=fetch(s,AUTO)
-        auto=parse_auto_calendar(auto_html,today)
-        for meet in auto:
-            try:
-                url=AUTO_OFFICIAL+AUTO_NAMES[meet['name']]+'/'+today.isoformat()
-                official=check_auto_official(fetch(s,url),meet['name'],today)
-                if not official:continue
-                primary=meet.get('timeType');other=official.get('timeType')
-                if primary and other and primary!=other:
-                    log.warning('オート開催時間帯が不一致: %s (%s vs %s)',meet['name'],primary,other)
-                    meet['timeType']=None
-                elif other:meet['timeType']=other
-            except Exception as e:log.info('オートの公式照合ができません: %s: %s',meet['name'],e)
-        sections['auto']=ok(sort_by_time(auto))
-    except Exception as e:
-        log.warning('オート日程取得: %s',e)
-        sections['auto']=bad('開催日程を確認できません: '+str(e))
-    
-    try:
-        sections['soda']=ok(sort_by_time(parse_boat(fetch(s,BOAT,{'hd':today.strftime('%Y%m%d')}),today)),
-            note='SODA対応場で開催。SODAライブ配信を保証するものではありません。')
-    except Exception as e:log.exception('SODA開催場');sections['soda']=bad(e)
+    # Each sport is verified against independent, date-specific providers.
+    # Missing providers do not erase a date-confirmed meeting from another site.
+    active=sys.modules[__name__]
+    sections['keirin']=verified_sources.keirin(s,today,previous,active)
+    sections['auto']=verified_sources.auto(s,today,previous,active)
+    sections['soda']=verified_sources.soda(s,today,previous,active)
     if today<datetime.now(TZ).date():
-        sections['mori']=collect_past_mori(s,today,auto_html if 'auto_html' in locals() else None)
+        sections['mori']=collect_past_mori(s,today)
+        # Historical rider results can inherit same-day grade/slot only from a
+        # confirmed venue meeting, never from the *current* future calendar.
+        item=sections['mori'].get('item')
+        if item and item.get('type')=='today':
+            matching=next((x for x in sections['auto'].get('items',[]) if x['name']==item['name']),None)
+            if matching:
+                for field in ('grade','timeType'):
+                    if matching.get(field):item[field]=matching[field]
+        if sections['mori']['status']=='error' and isinstance(previous,dict) and previous.get('date')==today.isoformat():
+            old=previous.get('sections',{}).get('mori')
+            if isinstance(old,dict) and old.get('status') in ('ok','cached') and old.get('item',{}).get('source')=='historical-results':
+                sections['mori']=dict(old,status='cached',note='同日・前回確認済みの出走履歴を表示')
         return out
     candidates={}
     for url,parser,source in (
@@ -597,7 +587,7 @@ def main():
     args=parser.parse_args()
     today=date.fromisoformat(args.date) if args.date else datetime.now(TZ).date()
     previous=None
-    snapshot=ROOT/'data'/'today.json'
+    snapshot=Path(args.output)
     if snapshot.exists():
         try:previous=json.loads(snapshot.read_text(encoding='utf-8'))
         except (OSError,ValueError):pass
