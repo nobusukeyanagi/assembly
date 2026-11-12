@@ -296,8 +296,8 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: .35em;
-  padding: 1em 1.5em;
-  border-radius: 20px;
+  padding: 1.5em 2.3em;
+  border-radius: 24px;
   background: rgba(30, 41, 48, .94);
   box-shadow: 0 12px 36px rgba(0, 0, 0, .2);
   color: #fff;
