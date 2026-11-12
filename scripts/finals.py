@@ -62,14 +62,19 @@ def read_riders(table,max_count=9):
             m=PREFECTURE_PATTERN.search(name)
             if m:name=name[:m.start()].strip()
             name=re.sub(r"\s*(?:地元)?\d{1,2}歳.*$","",name)
+        name=SCRATCHED.sub("",name).strip()
         name=re.sub(r"\s+"," ",name).strip()
         if not re.fullmatch(r"[\u3005\u3400-\u9fffぁ-んァ-ヶー・A-Za-z\s]{2,24}",name):
             continue
         if number in riders and riders[number]["name"]!=name:
             raise ValueError("車番に複数の選手が存在します")
         status_text=text_clean(row.get_text(" ",strip=True))
-        crossed=bool(col.find(["del","s","strike"]))
-        scratched=bool(SCRATCHED.search(status_text) or crossed)
+        crossed=bool(col.find(["del","s","strike"])) or any(
+            "line-through" in (child.get("style","") or "")
+            for child in [col,*col.find_all(True)])
+        classes=" ".join(row.get("class",[])+col.get("class",[])).lower()
+        scratched=bool(SCRATCHED.search(status_text) or crossed or
+                       re.search(r"cancel|scratch|withdraw|absent",classes))
         rider={"number":number,"name":name}
         if scratched:rider["status"]="scratched"
         if number in riders and riders[number].get("status")=="scratched":

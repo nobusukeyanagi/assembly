@@ -137,6 +137,14 @@ class GradeFinalTests(unittest.TestCase):
         self.assertEqual(riders[0]["status"],"scratched")
         self.assertEqual(riders[1]["status"],"scratched")
         self.assertNotIn("status",riders[2])
+        appended=BeautifulSoup(
+            '<table><tr><td>1</td><td>佐藤太郎 欠場</td></tr>'
+            '<tr><td>2</td><td>田中二郎</td></tr>'
+            '<tr><td>3</td><td>山本三郎</td></tr>'
+            '<tr><td>4</td><td>鈴木四郎</td></tr>'
+            '<tr><td>5</td><td>高橋五郎</td></tr></table>',"html.parser").table
+        cleaned=read_riders(appended)
+        self.assertEqual(cleaned[0],{"number":1,"name":"佐藤太郎","status":"scratched"})
 
     def test_mori_racecard_appended_after_final_and_deduped(self):
         url=HEX_DAILY.format(day="20261103")
