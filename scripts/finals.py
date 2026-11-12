@@ -206,6 +206,7 @@ def collect(s,selected,sections,u,previous=None):
         if venue not in AUTO_CODES:continue
         # Most graded championship races are race 12. Check other late races
         # ONLY when race 12 was not a verified final.
+        attempts=[]
         for race in (12,11,10,9):
             uri=AUTO_RACE.format(day=selected.strftime("%Y%m%d"),venue=AUTO_CODES[venue],race=race)
             try:
@@ -214,7 +215,9 @@ def collect(s,selected,sections,u,previous=None):
                 found.append(final)
                 break
             except Exception as exc:
-                if race==9:errors.append(f"オート {venue} 優勝戦未確認: {exc}")
+                attempts.append(f"{race}R: {exc}")
+        else:
+            errors.append(f"オート {venue} 優勝戦未確認: {'; '.join(attempts)}")
     # Deduplicate one race across sources and ensure no identical seat numbers.
     results={}
     for item in found:
