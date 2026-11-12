@@ -77,7 +77,7 @@ h1 {
   min-width: 0;
   width: calc(100% + 60px);
   margin-inline: -30px;
-  padding: var(--band-pad-y) 30px;
+  padding: var(--band-pad-y) var(--tile-gap) var(--band-pad-y) 30px;
   color: #fff;
   border: 0;
   border-radius: 0;
