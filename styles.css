@@ -258,19 +258,14 @@ h2 {
   min-width: 0;
   white-space: nowrap;
 }
-.mori-tile h3 {
+.mori-tile h3,
+.mori-status {
   font-size: 26px;
   color: var(--auto);
   font-weight: 900;
   line-height: 1;
-  margin: 0;
 }
-.mori-status {
-  font-size: 22px;
-  font-weight: 800;
-  color: #76858b;
-  line-height: 1;
-}
+.mori-tile h3 { margin: 0; }
 .mori-body {
   display: flex;
   flex-direction: column;
