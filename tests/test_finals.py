@@ -108,8 +108,8 @@ class GradeFinalTests(unittest.TestCase):
         u=SimpleNamespace(fetch=fetch)
         result=collect(object(),DAY,sections,u)
         self.assertEqual(len(result["items"]),2)
-        self.assertEqual([item["sport"] for item in result["items"]],["auto","keirin"])
-        self.assertEqual([item["startTime"] for item in result["items"]],["16:10","16:26"])
+        self.assertEqual([item["sport"] for item in result["items"]],["keirin","auto"])
+        self.assertEqual([item["startTime"] for item in result["items"]],["16:26","16:10"])
         self.assertEqual(result["verification"]["confirmedRaces"],2)
 
     def test_no_graded_final_and_safe_same_day_reuse(self):
@@ -165,7 +165,7 @@ class GradeFinalTests(unittest.TestCase):
                                   "grade":"SG","races":[11]}}}
         out=collect(object(),DAY,sections,SimpleNamespace(fetch=fetch))
         self.assertEqual([(x["venue"],x["race"]) for x in out["items"]],
-                         [("浜松",12),("防府",12),("浜松",11)])
+                         [("防府",12),("浜松",12),("浜松",11)])
         self.assertEqual(out["items"][-1]["feature"],"mori")
         self.assertEqual(out["verification"]["moriRaces"],1)
         # Mori in the same race as a featured final must not create a duplicate.
