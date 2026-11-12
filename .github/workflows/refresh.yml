@@ -66,42 +66,6 @@ jobs:
           node tests/test_holidays.cjs
           node tests/test_layout.cjs
           node tests/test_final_board.cjs
-      - name: Verify real November 3 graded championship racecards
-        run: |
-          python - <<'PY'
-          import sys
-          from datetime import date
-          sys.path.insert(0,"scripts")
-          import update,finals
-          target=date(2026,11,3)
-          sections={"keirin":{"items":[{"name":"防府","grade":"G3","day":"最終日"}]},
-                    "auto":{"items":[{"name":"浜松","grade":"SG","day":"最終日"}]}}
-          out=finals.collect(update.session(),target,sections,update)
-          print("LIVE FINALS",[(r["sport"],r["venue"],r["event"],r["raceName"],r["race"],r["startTime"],len(r["riders"])) for r in out["items"]])
-          print("LIVE ERRORS",out["verification"]["errors"])
-          try:
-              from bs4 import BeautifulSoup, NavigableString
-              uri=finals.AUTO_RACE.format(day="20261103",venue="04",race=12)
-              soup=BeautifulSoup(update.fetch(update.session(),uri),"html.parser")
-              print("AUTO DEBUG TITLE",soup.title.get_text(" ",strip=True) if soup.title else "-")
-              print("AUTO DEBUG H1",[(h.get_text(" ",strip=True))[:120] for h in soup.find_all("h1")][:5])
-              print("AUTO DEBUG H2",[(h.get_text(" ",strip=True))[:120] for h in soup.find_all("h2")][:8])
-              print("AUTO DEBUG TEXT",soup.get_text(" ",strip=True)[:1200])
-              print("AUTO DEBUG TABLES",len(soup.find_all("table")))
-              for table in soup.find_all("table")[:1]:
-                  for tr in table.find_all("tr")[:6]:
-                      cells=tr.find_all(["td","th"],recursive=False)
-                      print("AUTO DEBUG ROW",[(c.get_text(" ",strip=True)[:100],[(a.get("href",""),a.get_text(" ",strip=True)) for a in c.find_all("a")][:2]) for c in cells[:4]])
-              try:
-                  print("AUTO DIRECT PARSE",finals.parse_autorace_final(str(soup),target,"浜松",12,"SG"))
-              except Exception as exc:
-                  print("AUTO DIRECT PARSE ERROR",repr(exc))
-              for h in soup.find_all("h1")[:2]:
-                  values=[str(t).strip() for t in h.next_elements if isinstance(t,NavigableString)]
-                  print("AUTO DEBUG AFTER H1",values[:35])
-          except Exception as exc:
-              print("AUTO DEBUG ERROR",repr(exc))
-          PY
       - name: Select the public display mode
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
