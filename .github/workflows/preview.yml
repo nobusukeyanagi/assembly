@@ -1,0 +1,57 @@
+name: 日付指定プレビュー（サンプルデータ）
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "表示日付（YYYY-MM-DD）"
+        type: string
+        required: true
+        default: "2026-11-23"
+      keirin_count:
+        description: "競輪開催場数（0～12、画面構成のテスト用）"
+        type: string
+        required: true
+        default: "12"
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/preview.yml
+      - scripts/preview_screenshot.mjs
+
+# This job never writes data/today.json or deploys to GitHub Pages.
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: 1920×1080画面プレビュー
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PREVIEW_DATE: ${{ inputs.date || '2026-11-23' }}
+      KEIRIN_COUNT: ${{ inputs.keirin_count || '12' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Chromium and Playwright
+        run: |
+          npm install --no-save playwright@1.55.1
+          npx playwright install --with-deps chromium
+
+      - name: Capture and check preview
+        run: node scripts/preview_screenshot.mjs
+
+      - name: Save screenshot and preview checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-${{ env.PREVIEW_DATE }}-keirin${{ env.KEIRIN_COUNT }}
+          path: preview-output/
+          if-no-files-found: error
+          retention-days: 14
