@@ -66,6 +66,20 @@ jobs:
           node tests/test_holidays.cjs
           node tests/test_layout.cjs
           node tests/test_final_board.cjs
+      - name: Verify real November 3 graded championship racecards
+        run: |
+          python - <<'PY'
+          import sys
+          from datetime import date
+          sys.path.insert(0,"scripts")
+          import update,finals
+          target=date(2026,11,3)
+          sections={"keirin":{"items":[{"name":"防府","grade":"G3","day":"最終日"}]},
+                    "auto":{"items":[{"name":"浜松","grade":"SG","day":"最終日"}]}}
+          out=finals.collect(update.session(),target,sections,update)
+          print("LIVE FINALS",[(r["sport"],r["venue"],r["event"],r["raceName"],r["race"],r["startTime"],len(r["riders"])) for r in out["items"]])
+          print("LIVE ERRORS",out["verification"]["errors"])
+          PY
       - name: Select the public display mode
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
