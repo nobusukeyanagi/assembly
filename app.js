@@ -50,6 +50,7 @@ function card(item,id){
   const grade=node('span','grade',item.grade||'—');
   grade.dataset.tier=isMajorGrade(item.grade)?'major':'regular';
   meta.append(grade);
+  meta.append(node('span','day',String(item.day||'—').normalize('NFKC')));
   if(id==='keirin'||id==='auto'||id==='soda'){
     const type=item.timeType||null;
     if(type&&type!=='デイ'){
@@ -73,7 +74,6 @@ function card(item,id){
       meta.append(heart);
     }
   }
-  meta.append(node('span','day',String(item.day||'—').normalize('NFKC')));
   el.append(title,meta);
   return el;
 }
@@ -117,7 +117,7 @@ function render(data){
   const d=today(),stale=data.date!==d,s=data.sections||{};
   const keirinItems=s.keirin?.items;
   const fiveRows=!stale&&s.keirin?.status!=='error'&&Array.isArray(keirinItems)&&keirinItems.length<=8;
-  document.querySelector('.dashboard').classList.toggle('five-rows',fiveRows);
+  get('stage').classList.toggle('five-rows',fiveRows);
   dateDisplay(d);
   entries('keirin',s.keirin,stale);
   entries('auto',s.auto,stale);
