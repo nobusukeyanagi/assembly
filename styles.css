@@ -194,7 +194,8 @@ h1 {
   height: 36px;
   white-space: nowrap;
 }
-.entry .grade {
+.entry .grade,
+.final-race .grade {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -209,7 +210,8 @@ h1 {
   color: #fff;
   background: var(--grade-regular);
 }
-.entry .grade[data-tier="major"] { background: var(--grade-major); }
+.entry .grade[data-tier="major"],
+.final-race .grade[data-tier="major"] { background: var(--grade-major); }
 .entry .time-type, .entry .day, .entry .girls {
   display: inline-flex;
   align-items: center;
@@ -307,7 +309,7 @@ h1 {
 }
 .final-screen[hidden] { display: none; }
 .final-card {
-  width: 1240px;
+  width: 1800px;
   height: 960px;
   padding: 0;
   background: #fff;
@@ -333,12 +335,19 @@ h1 {
   padding: 0 20px;
   background: var(--keirin);
   color: #fff;
-  font-size: 60px;
+  font-size: 80px;
 }
 .final-title[data-sport="auto"] { background: var(--auto); }
 .final-race {
   padding: 0 20px;
-  font-size: 50px;
+  font-size: 80px;
+  gap: 20px;
+}
+.final-race-detail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .final-riders {
   height: 100%;
@@ -367,20 +376,20 @@ h1 {
 .final-row-empty { border-bottom-color: transparent; }
 .final-number {
   display: inline-flex;
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   flex: none;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
   border: 2px solid rgba(0,0,0,.15);
-  font-size: 60px;
+  font-size: 80px;
   font-weight: 900;
   line-height: 1;
 }
 .final-rider {
   min-width: 0;
-  font-size: 50px;
+  font-size: 80px;
   font-weight: 900;
   line-height: 1.1;
   white-space: nowrap;

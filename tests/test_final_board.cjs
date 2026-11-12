@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {verifiedFinals,nextFinalIndex,splitFinalRiders}=require('../app.js');
+const {verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel}=require('../app.js');
 const day='2026-11-03';
 const card=(sport,venue,race,time)=>({
   sport,venue,race,startTime:time,event:'SG日本選手権オートレース',
@@ -20,6 +20,12 @@ assert.equal(verifiedFinals({date:day,finals:{items:[
   {...card('auto','浜松',12,'16:10'),raceName:'最終予選'}]}},day).length,0);
 assert.deepEqual([-1,0,1,2,3].map(i=>nextFinalIndex(i,3)),[0,1,2,-1,-1]);
 assert.equal(nextFinalIndex(-1,0),-1);
+assert.equal(finalRaceLabel('優勝戦(枠番選択)'),'優勝戦');
+assert.equal(finalRaceLabel('S級 決勝'),'決勝');
+assert.equal(finalRaceLabel('決勝戦'),'決勝');
+assert.equal(finalEventLabel('SG日本選手権オートレース'),'日本選手権オートレース');
+assert.equal(finalEventLabel('GⅢ 周防国府杯争奪戦'),'周防国府杯争奪戦');
+
 for(const [size,left,right] of [[6,3,3],[7,4,3],[8,4,4],[9,5,4]]){
   const riders=Array.from({length:size},(_,i)=>({number:size-i,name:'選手'+i}));
   const [lhs,rhs]=splitFinalRiders(riders);
@@ -38,8 +44,14 @@ assert.match(css,/\.final-screen\s*\{[^}]*top:\s*120px;[^}]*width:\s*1920px;[^}]
 assert.match(css,/\.final-screen\s*\{[^}]*background:\s*#fff;/s);
 assert.match(css,/\.final-title\s*\{[^}]*background:\s*var\(--keirin\);/s);
 assert.match(css,/\.final-title\[data-sport="auto"\]\s*\{[^}]*background:\s*var\(--auto\);/s);
+for(const className of ['final-title','final-race','final-rider','final-number']){
+  const re=new RegExp('\\.'+className+'\\s*\\{[^}]*font-size:\\s*80px;','s');
+  assert.match(css,re,className+' should use 80px');
+}
+assert.match(css,/\.final-race \.grade\s*\{/);
+assert.match(css,/\.final-card\s*\{[^}]*width:\s*1800px;/s);
 assert.match(css,/\.final-riders\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
 assert.match(css,/\.final-rider-column\s*\{[^}]*grid-template-rows:\s*repeat\(5,/s);
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 assert.match(html,/id="final-screen"[^>]*hidden/);
-console.log('Final board tests passed: cycle, date header, 2-column 6–9 riders, sport band, white margins and font sizes');
+console.log('Final board tests passed: sport band, 80px text, shared grade badge, final label normalization and 2-column 6–9 riders');

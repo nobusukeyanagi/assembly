@@ -192,6 +192,14 @@ function finalIdentity(item){
 function nextFinalIndex(index,length){
   return length>0 ? (index+1<length ? index+1 : -1) : -1;
 }
+function finalRaceLabel(name){
+  if(String(name).includes('優勝戦'))return '優勝戦';
+  if(String(name).includes('決勝'))return '決勝';
+  return '—';
+}
+function finalEventLabel(event){
+  return String(event||'').replace(/^(?:特G[ⅠⅡⅢ123]|G[ⅠⅡⅢ123]|F[ⅠⅡ12]|SG|GP)[\s　]*/i,'').trim();
+}
 function splitFinalRiders(riders){
   const sorted=[...riders].sort((a,b)=>a.number-b.number);
   const leftCount=Math.ceil(sorted.length/2);
@@ -206,11 +214,13 @@ function paintFinal(){
   if(!active)return;
   const data=finalCards[activeFinalIndex];
   const board=get('final-card');
-  const heading=node('div','final-title',data.event);
+  const heading=node('div','final-title',finalEventLabel(data.event));
   heading.dataset.sport=data.sport;
-  const grade=displayGrade(data.grade||'—',data.sport);
-  const race=node('div','final-race',
-    '['+grade+'] '+data.venue+' '+data.race+'R '+data.raceName+' '+data.startTime+'発走');
+  const race=node('div','final-race');
+  const grade=node('span','grade',displayGrade(data.grade||'—',data.sport));
+  grade.dataset.tier=isMajorGrade(data.grade)?'major':'regular';
+  race.append(grade,node('span','final-race-detail',
+    data.venue+' '+data.race+'R '+finalRaceLabel(data.raceName)+' '+data.startTime+'発走'));
   const grid=node('div','final-riders');
   for(const riders of splitFinalRiders(data.riders)){
     const column=node('div','final-rider-column');
@@ -294,7 +304,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
