@@ -11,7 +11,7 @@ from datetime import date
 from unicodedata import normalize
 from urllib.parse import urljoin, urlparse
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 log=logging.getLogger("assembly.finals")
 HEX_DAILY="https://keirinhex.jp/races/{day}/"
@@ -155,9 +155,16 @@ def parse_autorace_final(html,selected,venue,race,grade):
     if not event:raise ValueError("オート開催節名が空欄です")
     # Restrict classification and time to the race header before the first
     # 出走表; navigation and historic race text are NOT trusted for this.
-    text=text_clean(soup.get_text(" ",strip=True))
-    idx=text.find(event)
-    card_header=text[idx:idx+500].split("出走表")[0]
+    parts=[]
+    for el in event_heading.next_elements:
+        if getattr(el,"name",None)=="table":
+            break
+        if getattr(el,"name",None) in ("h2","h3") and "出走表" in el.get_text(" ",strip=True):
+            break
+        if isinstance(el,NavigableString):
+            parts.append(str(el))
+            if sum(len(x) for x in parts)>1400:break
+    card_header=text_clean(" ".join(parts))
     match=re.search(r"優勝戦(?:\s*[（(][^）)]{1,16}[）)])?|決勝戦",card_header)
     if not match:raise ValueError("オートレースが優勝戦ではありません")
     start_match=re.search(r"発走\s*[：:]\s*([0-2]?\d:[0-5]\d)",card_header)
