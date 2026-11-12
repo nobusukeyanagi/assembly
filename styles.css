@@ -28,7 +28,7 @@ body {
   margin-top: -540px;
   transform: scale(var(--scale, 1));
   transform-origin: center;
-  padding: 12px 30px;
+  padding: 12px 30px 0;
   display: flex;
   flex-direction: column;
   background: #ffffff;
@@ -84,7 +84,7 @@ h1 {
 }
 .keirin { background: var(--keirin); height: calc(3 * var(--tile-height) + 2 * var(--tile-gap) + 6px); }
 .auto { background: var(--auto); height: calc(var(--tile-height) + 6px); }
-.soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap) + 6px); }
+.soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap) + 18px); }
 /* 100px date; six or five fixed-height rows fill the screen exactly. */
 .stage.five-rows { --tile-height: 182px; }
 .stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap) + 6px); }
