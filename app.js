@@ -202,7 +202,7 @@ function finalEventLabel(event){
 }
 function finalRiderName(name,sport){
   const value=String(name||'').trim();
-  return sport==='keirin' ? value.replace(/\\s*選手\\s*$/,'').trim() : value;
+  return sport==='keirin' ? value.replace(/\s*選手\s*$/,'').trim() : value;
 }
 function splitFinalRiders(riders){
   const sorted=[...riders].sort((a,b)=>a.number-b.number);

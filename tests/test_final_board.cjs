@@ -53,9 +53,9 @@ for(const className of ['final-title','final-rider','final-number']){
   const re=new RegExp('\\.'+className+'\\s*\\{[^}]*font-size:\\s*80px;','s');
   assert.match(css,re,className+' should use 80px');
 }
-assert.match(css,/\\.final-race\\s*\\{[^}]*font-size:\\s*60px;/s);
-assert.match(css,/\\.final-race \\.grade\\s*\\{[^}]*font-size:\\s*60px;/s);
-assert.match(css,/\.final-card\s*\{[^}]*width:\s*1800px;/s);
+assert.match(css,/\.final-race\s*\{[^}]*font-size:\s*60px;/s);
+assert.match(css,/\.final-race \.grade\s*\{[^}]*font-size:\s*60px;/s);
+assert.match(css,/\.final-card\s*\{[^}]*width:\s*1600px;/s);
 assert.match(css,/\.final-riders\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
 assert.match(css,/\.final-rider-column\s*\{[^}]*grid-template-rows:\s*repeat\(5,/s);
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');

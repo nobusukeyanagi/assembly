@@ -309,7 +309,7 @@ h1 {
 }
 .final-screen[hidden] { display: none; }
 .final-card {
-  width: 1800px;
+  width: 1600px;
   height: 960px;
   padding: 0;
   background: #fff;
