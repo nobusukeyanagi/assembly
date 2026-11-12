@@ -197,9 +197,9 @@ h1 {
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 44px;
-  height: 44px;
-  font-size: 44px;
+  width: 30px;
+  height: 30px;
+  font-size: 30px;
   line-height: 1;
   font-weight: 900;
 }
@@ -208,14 +208,14 @@ h1 {
 .entry .time-type[data-type="ミッドナイト"] .time-icon { color: #e4a529; }
 .moon-symbol {
   display: block;
-  width: 44px;
-  height: 44px;
+  width: 30px;
+  height: 30px;
   fill: currentColor;
   stroke: currentColor;
   stroke-width: .45px;
   stroke-linejoin: round;
 }
-.entry .girls { color: #cf4a7a; font-size: 44px; font-weight: 900; line-height: 1; }
+.entry .girls { color: #cf4a7a; font-weight: 900; }
 .mori-tile {
   grid-column: 4;
   grid-template-rows: 26px auto;
