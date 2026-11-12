@@ -19,11 +19,11 @@ def valid_date(value: str) -> str:
         raise ValueError("存在しない日付です: " + value) from exc
 
 def config_for(mode: str, chosen_date: str = "") -> dict:
-    if mode in ("本来（当日）", "today"):
+    if mode in ("当日", "today"):
         return {"mode": "today", "date": None}
     if mode in ("日付指定", "selected"):
         return {"mode": "selected", "date": valid_date(chosen_date)}
-    raise ValueError("表示方法は「本来（当日）」か「日付指定」です")
+    raise ValueError("表示方法は「当日」か「日付指定」です")
 
 def set_mode(mode: str, chosen_date: str = "", config_path: Path = DISPLAY, selected_path: Path = SELECTED) -> dict:
     config = config_for(mode, chosen_date)
@@ -50,7 +50,7 @@ def check(config_path: Path = DISPLAY, selected_path: Path = SELECTED) -> dict:
 if __name__ == "__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("action",choices=("set","check"))
-    parser.add_argument("--mode",default="本来（当日）")
+    parser.add_argument("--mode",default="当日")
     parser.add_argument("--date",default="")
     args=parser.parse_args()
     result=set_mode(args.mode,args.date) if args.action=="set" else check()

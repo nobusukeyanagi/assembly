@@ -10,11 +10,11 @@ on:
         required: true
         type: choice
         options:
-          - 本来（当日）
+          - 当日
           - 日付指定
-        default: 本来（当日）
+        default: 日付指定
       date:
-        description: "日付指定の場合のみ使用（YYYY-MM-DD）"
+        description: "日付指定の場合のみ使用／当日では無視（YYYY-MM-DD）"
         required: false
         type: string
         default: "2026-11-23"
