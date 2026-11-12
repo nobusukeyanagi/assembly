@@ -81,7 +81,6 @@ function entries(id,section,stale){
   const root=get(id+'-entries');
   const records=section&&Array.isArray(section.items)?section.items:[];
   const max=limits[id];
-  get(id+'-count').textContent=stale||!section||section.status==='error'?'—':records.length;
   const tiles=records.slice(0,max);
   if(stale){error(root,'本日の情報を確認中');return}
   if(!section||section.status==='error'){

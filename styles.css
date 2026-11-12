@@ -101,40 +101,14 @@ h1 {
 .keirin .panel-head { background: var(--keirin); }
 .auto .panel-head { background: var(--auto); }
 .soda .panel-head { background: var(--soda); }
-.title-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.stripe { display: none; }
-.s-keirin { background: var(--keirin); }
-.s-auto { background: var(--auto); }
-.s-soda { background: var(--soda); }
-h2 {
-  font-size: 42px;
+.panel-head h2 {
+  color: #fff;
+  font-size: 60px;
   font-weight: 900;
-  line-height: 1.12;
+  line-height: 1.05;
+  letter-spacing: -.04em;
   margin: 0;
   white-space: nowrap;
-}
-.panel-head h2 { color: #fff; }
-.count {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-left: 0;
-  color: #fff;
-  font-size: 42px;
-  font-weight: 900;
-  line-height: 1.12;
-}
-.count b {
-  color: #fff;
-  font-size: inherit;
-  font-weight: inherit;
-  font-variant-numeric: tabular-nums;
-  line-height: inherit;
 }
 .entries {
   display: grid;
