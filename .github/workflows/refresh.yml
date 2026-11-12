@@ -1,4 +1,4 @@
-name: 朝礼情報更新・本番公開
+name: 本番公開・日次更新
 on:
   schedule:
     # 16:10 UTC = 01:10 JST on the following day

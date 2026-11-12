@@ -6,19 +6,19 @@
 
 https://nobusukeyanagi.github.io/assembly/
 
-**初回だけ** リポジトリの [Settings → Pages](https://github.com/nobusukeyanagi/assembly/settings/pages) にある **Build and deployment > Source** を **GitHub Actions** に変更してください。その後、[Actions → 朝礼情報更新・本番公開](https://github.com/nobusukeyanagi/assembly/actions/workflows/refresh.yml) から `Run workflow` を実行します。初回の Pages 有効化は `GITHUB_TOKEN` だけでは行えません。
+**初回だけ** リポジトリの [Settings → Pages](https://github.com/nobusukeyanagi/assembly/settings/pages) にある **Build and deployment > Source** を **GitHub Actions** に変更してください。その後、[Actions → 本番公開・日次更新](https://github.com/nobusukeyanagi/assembly/actions/workflows/refresh.yml) から `Run workflow` を実行します。初回の Pages 有効化は `GITHUB_TOKEN` だけでは行えません。
 
 ## 自動更新
 
 - 毎日 **01:10 JST**（cron は UTC 16:10）。GitHub Actions の実行開始には遅延があり得ます。
 - `main` ブランチの HTML / CSS / JS / 収集スクリプトの変更時も自動実行し、公開サイトを更新します。
-- 手動更新: **Actions → 朝礼情報更新・本番公開 → Run workflow**。
+- 手動更新: **Actions → 本番公開・日次更新 → Run workflow**。
 - 生成データ: `data/today.json`。画面は10分ごと、再表示時にも当日のデータを取得し直します。
 - 昨日以前のデータを開催情報として表示しません。取得失敗は「情報を確認中」と表示し、推測で埋めません。
 
 ## 公開画面の表示切り替え（当日／日付指定）
 
-[Actions → 朝礼情報更新・本番公開](https://github.com/nobusukeyanagi/assembly/actions/workflows/refresh.yml) → **Run workflow** から実行します。
+[Actions → 本番公開・日次更新](https://github.com/nobusukeyanagi/assembly/actions/workflows/refresh.yml) → **Run workflow** から実行します。
 
 - **表示方法**：`当日` または `日付指定` を選択します。初期選択は **`日付指定`** です。
 - **日付指定**の場合は日付を `YYYY-MM-DD` で入力します。初期値 `2026-11-23`。
@@ -40,7 +40,9 @@ https://nobusukeyanagi.github.io/assembly/
 
 **SODA欄は「SODA対応場で開催されるレース場」です。SODAでそのレースが配信されることを保証しません。**
 
-森選手は当日出走が出走表で確かめられたときのみ場名・R番号を表示します。あっせん日程しか確認できない場合は「本日の出走R確認中」または「次回あっせん予定」と表示します。出走取消・変更の可能性があります。
+森選手は当日出走が出走表で確かめられたときのみ場名とR番号を同じ行に60pxで表示します（例：川口 11R／川口 3R・12R）。あっせん日程しか確認できない場合は「本日の出走R確認中」または「次回あっせん予定」と表示します。出走取消・変更の可能性があります。
+
+オートレースの通常開催は「普通」、SODA等の一般開催は「一般」と表示します。曜日は土曜が青、日曜・祝日が赤で、括弧は黒のままです。
 
 **Gamboo** はアクセス確認画面等のため自動取得元には利用せず、各競技の日程ソースを優先しています。
 

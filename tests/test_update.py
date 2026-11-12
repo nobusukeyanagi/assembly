@@ -3,9 +3,27 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
+from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
+    def test_autorace_grade(self):
+        self.assertEqual(autorace_grade('普通'),'普通')
+        self.assertEqual(autorace_grade('一般'),'普通')
+        self.assertEqual(autorace_grade('GⅡ'),'G2')
+        self.assertEqual(grade('一般'),'一般')
+
+    def test_mori_multiple_races(self):
+        records=[
+            ('oddspark',{'date':'2026-11-12','name':'川口','type':'today','race':12}),
+            ('oddspark',{'date':'2026-11-12','name':'川口','type':'today','race':3}),
+            ('official',{'date':'2026-11-12','name':'川口','type':'today','race':3}),
+            ('other',{'date':'2026-11-12','name':'川口','type':'next','race':6}),
+        ]
+        self.assertEqual(mori_race_numbers(records),[3,12])
+        self.assertEqual(mori_race_numbers([('official',{'type':'next','race':3})]),[])
+        html='<p>出場予定</p><p>2026/11/12 川口 3R 2026/11/12 川口 12R</p><h2>総合成績</h2>'
+        self.assertEqual([x['race'] for x in parse_mori(html,date(2026,11,12))],[3,12])
+
     def test_grade(self):
         self.assertEqual(grade('GⅡ'),'G2')
         self.assertEqual(grade('特GI'),'特G1')
@@ -93,6 +111,10 @@ class ParserTests(unittest.TestCase):
     def test_auto(self):
         h='<h2>GII 山陽</h2><p>開催期間：2026年11月11日(水)～15日(日) 開催 第1日目</p>'
         self.assertEqual(parse_auto(h,'山陽',D),{'name':'山陽','grade':'G2','day':'初日'})
+    def test_auto_regular(self):
+        h='<h2>普通 川口</h2><p>開催期間：2026年11月11日(水)～13日(金) 開催 第2日目</p>'
+        self.assertEqual(parse_auto(h,'川口',D)['grade'],'普通')
+
     def test_boat(self):
         h='<table><tr><td><img alt="蒲郡"></td><td><img alt="G1"></td><td>11/9-11/14 ３日目</td></tr></table>'
         self.assertEqual(parse_boat(h,D),[{'name':'蒲郡','grade':'G1','day':'3日目','timeType':'ナイター','girls':False}])
@@ -137,7 +159,7 @@ class ParserTests(unittest.TestCase):
     def test_mori_kawaguchi_venue_calendar(self):
         official='<h4>テレ玉presents 川口ナイトレース(無観客開催)</h4><p>11/22(日) ～ 11/25(水)</p>'
         detail=parse_kawaguchi_official_meeting(official,date(2026,11,22))
-        self.assertEqual(detail,{'grade':'一般','timeType':'ナイター'})
+        self.assertEqual(detail,{'grade':'普通','timeType':'ナイター'})
     def test_mori_grade_and_night_from_matching_meeting(self):
         venues=['川口','伊勢崎','浜松','飯塚','山陽']
         blocks=[]
@@ -149,7 +171,7 @@ class ParserTests(unittest.TestCase):
         html='<main><h2>2026年11月 開催日程</h2>'+''.join(blocks)+'</main>'
         official='<h4>テレ玉presents 川口ナイトレース(無観客開催)</h4><p>11/22(日) ～ 11/25(水)</p>'
         result=mori_meeting_metadata(html,date(2026,11,22),'川口',official)
-        self.assertEqual(result,{'grade':'一般','timeType':'ナイター'})
+        self.assertEqual(result,{'grade':'普通','timeType':'ナイター'})
         mismatch='<h4>SG第58回</h4><p>11/22(日) ～ 11/25(水)</p>'
         self.assertNotIn('grade',mori_meeting_metadata(html,date(2026,11,22),'川口',mismatch))
     def test_mori_missing_meeting_no_guessed_metadata(self):

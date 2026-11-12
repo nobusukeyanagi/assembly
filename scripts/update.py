@@ -51,7 +51,13 @@ def fetch(s,url,params=None):
 
 def grade(x):
     x=x.upper().replace(' ','').replace('　','').replace('Ⅰ','I').replace('Ⅱ','II').replace('Ⅲ','III')
-    return {'GI':'G1','GII':'G2','GIII':'G3','FI':'F1','FII':'F2','特GI':'特G1','普通':'一般'}.get(x,x)
+    return {'GI':'G1','GII':'G2','GIII':'G3','FI':'F1','FII':'F2','特GI':'特G1'}.get(x,x)
+
+def autorace_grade(value):
+    """Use the autorace grade name, without changing SODA's 一般 label."""
+    normalized=grade(value)
+    return '普通' if normalized in ('一般','普通') else normalized
+
 
 def period(today,a,b,c,d):
     all_dates=[]
@@ -225,7 +231,7 @@ def parse_auto(html,name,today):
     heading=text[max(0,pm.start()-210):pm.start()]
     gm=re.search(r'(特\s*G[ⅠI1]|SG|G\s*(?:Ⅰ|Ⅱ|Ⅲ|III|II|I|[123])|普通)',heading,re.I)
     if not gm:raise ValueError(name+' のグレードが確認できません')
-    return {'name':name,'grade':grade(gm.group(1)),'day':'初日' if n==1 else str(n)+'日目'}
+    return {'name':name,'grade':autorace_grade(gm.group(1)),'day':'初日' if n==1 else str(n)+'日目'}
 
 
 def race_time_type(title):
@@ -271,7 +277,7 @@ def parse_auto_calendar(html,today):
             if not dates or not dates[0]<=today<=dates[1]:continue
             name_event=block[p.end():periods[i+1].start() if i+1<len(periods) else len(block)]
             gm=re.search(r'(特G(?:III|II|I|[123])|SG|G(?:III|II|I|[123]))',name_event[:120],re.I)
-            items.append({'name':name,'grade':grade(gm.group(1)) if gm else '一般','timeType':race_time_type(name_event),'day':day_label(today,*dates)})
+            items.append({'name':name,'grade':autorace_grade(gm.group(1)) if gm else '普通','timeType':race_time_type(name_event),'day':day_label(today,*dates)})
     if len(verified)!=5 or count<8:raise ValueError('全5場の開催日程を確認できません')
     return items
 
@@ -289,7 +295,7 @@ def parse_kawaguchi_official_meeting(html,scheduled):
         title=lines[n-1]
         if '場外' in title:continue
         gr=re.search(r'(SG|特G(?:III|II|I|[123])|G(?:III|II|I|[123]))',title,re.I)
-        return {'grade':grade(gr.group(1)) if gr else '一般',
+        return {'grade':autorace_grade(gr.group(1)) if gr else '普通',
                 'timeType':race_time_type(title)}
     return None
 
@@ -407,6 +413,19 @@ def mori_previous_item(previous,today):
     return item
 
 
+def mori_race_numbers(records):
+    """Return each independently identified race, de-duplicated and sorted."""
+    values=set()
+    for source,item in records:
+        if item.get('type')!='today':continue
+        races=item.get('races')
+        candidates=races if isinstance(races,list) else [item.get('race')]
+        for value in candidates:
+            if isinstance(value,int) and not isinstance(value,bool) and 1<=value<=12:
+                values.add(value)
+    return sorted(values)
+
+
 def ok(items=None,item=None,note=None):
     d={'status':'ok','items':items or []}
     if item:d['item']=item
@@ -467,6 +486,11 @@ def collect(today,s,previous=None):
             sources={name for name,_ in records}
             item=next((x for _,x in records if x.get('type')=='today' and isinstance(x.get('race'),int)),None)
             if item is None:item=next((x for name,x in records if name=='official'),records[0][1])
+            item=dict(item)
+            races=mori_race_numbers(records)
+            if races:
+                item['races']=races
+                item['race']=races[0]  # preserve the existing single-race data field
             scored.append((item['date'],0 if len(sources)>=2 else 1,0 if 'official' in sources else 1,item))
         item=min(scored,key=lambda x:x[:3])[3]
         # Resolve the exact future/current event in the published calendar.
@@ -480,7 +504,7 @@ def collect(today,s,previous=None):
                 except Exception as e:log.info('森選手の川口公式開催日程を照合できません: %s',e)
             item.update(mori_meeting_metadata(monthly_html,scheduled,item['name'],venue_html))
         except Exception as e:log.warning('森選手の次回開催属性を確認できません: %s',e)
-        if item['type']=='today' and not isinstance(item.get('race'),int):
+        if item['type']=='today' and not item.get('races') and not isinstance(item.get('race'),int):
             sections['mori']={'status':'partial','items':[],'item':item,'message':'出走R確認中'}
         else:sections['mori']=ok(item=item)
     else:

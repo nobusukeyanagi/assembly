@@ -24,8 +24,11 @@ function dateDisplay(d){
   get('date').textContent=y+'年'+m+'月'+day+'日';
   const holiday=window.AssemblyHoliday?.isJapaneseHoliday(d)===true;
   const label=get('weekday-label');
-  label.textContent=weekday[new Date(Date.UTC(y,m-1,day)).getUTCDay()]+(holiday?'祝':'');
+  const dayOfWeek=new Date(Date.UTC(y,m-1,day)).getUTCDay();
+  label.textContent=weekday[dayOfWeek]+(holiday?'祝':'');
   label.classList.toggle('is-holiday',holiday);
+  label.classList.toggle('is-sunday',dayOfWeek===0&&!holiday);
+  label.classList.toggle('is-saturday',dayOfWeek===6&&!holiday);
 }
 function error(root,message,detail){
   root.replaceChildren(node('p','message',message));
@@ -37,6 +40,7 @@ function isMajorGrade(grade){
 // Keep source grade codes normalized; use Roman numerals only in Keirin/Autorace labels.
 function displayGrade(grade,id){
   const value=String(grade||'—');
+  if(id==='auto'&&(value==='一般'||value==='普通'))return '普通';
   if(id!=='keirin'&&id!=='auto')return value;
   const roman={'1':'Ⅰ','2':'Ⅱ','3':'Ⅲ'};
   return value.replace(/([GF])([123])/g,(_,letter,number)=>letter+roman[number]);
@@ -115,11 +119,13 @@ function mori(section,stale,targetDate){
   }
   const x=section.item;
   const isToday=x.type==='today'&&x.date===targetDate;
-  const hasRace=isToday&&Number.isInteger(x.race);
+  const numbers=Array.isArray(x.races)?x.races:[x.race];
+  const races=[...new Set(numbers.filter(n=>Number.isInteger(n)&&n>=1&&n<=12))].sort((a,b)=>a-b);
+  const hasRace=isToday&&races.length>0;
   const d=/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?
     Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';
   status.textContent=hasRace?'本日出走':isToday?'出走R確認中':'次回予定';
-  const venue=node('div','venue mori-primary',x.name||'—');
+  const venue=node('div','venue mori-primary',(x.name||'—')+(hasRace?' '+races.map(n=>n+'R').join('・'):''));
   const meta=node('div','meta mori-detail');
   if(x.grade){
     const gr=node('span','grade',displayGrade(x.grade,'auto'));
@@ -129,7 +135,6 @@ function mori(section,stale,targetDate){
   meta.append(node('span','day',d));
   const timeIcon=timeBadge(x.timeType);
   if(timeIcon)meta.append(timeIcon);
-  if(hasRace)meta.append(node('span','mori-race',String(x.race)+'R'));
   root.replaceChildren(venue,meta);
   if(isToday)root.classList.add('mori-today');
 }
