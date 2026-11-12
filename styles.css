@@ -41,7 +41,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  border-bottom: 3px solid #25323a;
+  border-bottom: 0;
   margin-bottom: 8px;
 }
 h1 {
@@ -64,7 +64,7 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 0;
   flex: 1;
   min-height: 0;
 }
@@ -76,18 +76,18 @@ h1 {
   min-width: 0;
   width: calc(100% + 60px);
   margin-inline: -30px;
-  padding: 0 30px;
+  padding: 3px 30px;
   color: #fff;
   border: 0;
   border-radius: 0;
   overflow: hidden;
 }
-.keirin { background: var(--keirin); height: calc(3 * var(--tile-height) + 2 * var(--tile-gap)); }
-.auto { background: var(--auto); height: var(--tile-height); }
-.soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap)); }
-/* Date stays 100px. With <=8 Keirin meets, all five rows grow evenly. */
-.stage.five-rows { --tile-height: 184px; }
-.stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap)); }
+.keirin { background: var(--keirin); height: calc(3 * var(--tile-height) + 2 * var(--tile-gap) + 6px); }
+.auto { background: var(--auto); height: calc(var(--tile-height) + 6px); }
+.soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap) + 6px); }
+/* 100px date; six or five fixed-height rows fill the screen exactly. */
+.stage.five-rows { --tile-height: 183.6px; }
+.stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap) + 6px); }
 .panel-head {
   display: flex;
   flex-direction: column;
@@ -112,9 +112,9 @@ h1 {
 .s-auto { background: var(--auto); }
 .s-soda { background: var(--soda); }
 h2 {
-  font-size: 29px;
+  font-size: 42px;
   font-weight: 900;
-  line-height: 1.15;
+  line-height: 1.12;
   margin: 0;
   white-space: nowrap;
 }
@@ -124,14 +124,17 @@ h2 {
   align-items: baseline;
   gap: 6px;
   margin-left: 0;
-  color: rgba(255,255,255,.88);
-  font-size: 24px;
+  color: #fff;
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1.12;
 }
 .count b {
   color: #fff;
-  font-size: 44px;
+  font-size: inherit;
+  font-weight: inherit;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+  line-height: inherit;
 }
 .entries {
   display: grid;
@@ -159,9 +162,9 @@ h2 {
   min-height: 0;
   height: var(--tile-height);
   padding: 0 4px;
-  border: 1.5px solid rgba(255,255,255,.78);
+  border: 1.5px solid #d1d8da;
   border-radius: 6px;
-  background: transparent;
+  background: #fff;
   overflow: hidden;
 }
 .entry .venue {
@@ -172,7 +175,7 @@ h2 {
   letter-spacing: -.045em;
   white-space: nowrap;
   max-width: 100%;
-  color: #fff;
+  color: var(--ink);
   text-align: center;
 }
 .entry .meta {
@@ -209,7 +212,7 @@ h2 {
   line-height: 1.1;
   font-weight: 700;
   white-space: nowrap;
-  color: #fff;
+  color: var(--ink);
 }
 .entry .time-icon {
   display: inline-flex;
@@ -249,7 +252,7 @@ h2 {
 .mori-tile h3,
 .mori-status {
   font-size: 26px;
-  color: #fff;
+  color: var(--ink);
   font-weight: 900;
   line-height: 1;
 }
@@ -262,14 +265,14 @@ h2 {
   gap: 5px;
   min-width: 0;
 }
-.mori-primary { color: #fff; font-size: 39px; font-weight: 900; white-space: nowrap; line-height: 1.1; letter-spacing: -.03em; }
-.mori-today .mori-primary { color: #fff; }
-.mori-meta { font-size: 14px; color: #fff; white-space: nowrap; }
+.mori-primary { color: var(--ink); font-size: 39px; font-weight: 900; white-space: nowrap; line-height: 1.1; letter-spacing: -.03em; }
+.mori-today .mori-primary { color: var(--ink); }
+.mori-meta { font-size: 14px; color: var(--ink); white-space: nowrap; }
 .message, .detail {
-  color: #fff;
+  color: var(--ink);
   font-size: 20px;
   text-align: center;
   grid-column: 1/-1;
   margin: 0;
 }
-.detail { color: #fff; font-size: 15px; }
+.detail { color: var(--ink); font-size: 15px; }
