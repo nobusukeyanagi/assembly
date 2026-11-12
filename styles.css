@@ -285,7 +285,7 @@ h1 {
 }
 .detail { color: var(--ink); font-size: 20px; }
 
-/* A two-second entrance hint, independent of the scaled 1920×1080 board. */
+/* A three-second entrance hint, independent of the scaled 1920×1080 board. */
 .fullscreen-hint {
   position: fixed;
   z-index: 1000;
@@ -296,8 +296,8 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: .35em;
-  padding: .55em .85em;
-  border-radius: 14px;
+  padding: 1em 1.5em;
+  border-radius: 20px;
   background: rgba(30, 41, 48, .94);
   box-shadow: 0 12px 36px rgba(0, 0, 0, .2);
   color: #fff;
@@ -306,7 +306,7 @@ h1 {
   line-height: 1.2;
   white-space: nowrap;
   pointer-events: none;
-  animation: fullscreen-hint-dismiss .12s ease-in 1.88s forwards;
+  animation: fullscreen-hint-dismiss .12s ease-in 2.88s forwards;
 }
 .fullscreen-hint kbd {
   display: inline-flex;
@@ -328,7 +328,7 @@ h1 {
   to { opacity: 0; visibility: hidden; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fullscreen-hint { animation: fullscreen-hint-dismiss 0s linear 2s forwards; }
+  .fullscreen-hint { animation: fullscreen-hint-dismiss 0s linear 3s forwards; }
 }
 
 /* Label selected-date display without changing the dashboard's grid geometry. */
