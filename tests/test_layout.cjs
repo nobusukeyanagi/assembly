@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {layoutRows}=require('../app.js');
+const {layoutRows,isEmptyVenueSection}=require('../app.js');
 
 // The same function used by the published browser determines all row counts.
 function sections(keirin,soda,keirinStatus='ok',sodaStatus='ok'){
@@ -31,4 +31,12 @@ assert.deepEqual(layoutRows(sections(12,4,'error','ok'),false),{keirinRows:3,sod
 assert.deepEqual(layoutRows(sections(8,4,'ok','error'),false),{keirinRows:2,sodaRows:2,totalRows:5});
 assert.deepEqual(layoutRows(sections(8,4),true),{keirinRows:3,sodaRows:2,totalRows:6});
 assert.deepEqual(layoutRows(sections(8,4,'cached','cached'),false),{keirinRows:2,sodaRows:1,totalRows:4});
-console.log('Layout tests passed: 4–6-row height, SODA/Keirin boundaries, errors, cache, stale data');
+// No-meeting state is intentionally different from an error or an outdated snapshot.
+assert.equal(isEmptyVenueSection({status:'ok',items:[]},false),true);
+assert.equal(isEmptyVenueSection({status:'cached',items:[]},false),true);
+assert.equal(isEmptyVenueSection({status:'ok',items:[{name:'川口'}]},false),false);
+assert.equal(isEmptyVenueSection({status:'error',items:[]},false),false);
+assert.equal(isEmptyVenueSection({status:'partial',items:[]},false),false);
+assert.equal(isEmptyVenueSection({status:'ok',items:[]},true),false);
+assert.equal(isEmptyVenueSection(null,false),false);
+console.log('Layout tests passed: dynamic rows, empty-venue status, errors, cache, stale data');

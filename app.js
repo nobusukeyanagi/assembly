@@ -93,8 +93,14 @@ function card(item,id){
   el.append(title,meta);
   return el;
 }
+function isEmptyVenueSection(section,stale){
+  return !stale&&section&&
+    (section.status==='ok'||section.status==='cached')&&
+    Array.isArray(section.items)&&section.items.length===0;
+}
 function entries(id,section,stale,mode){
   const root=get(id+'-entries');
+  root.classList.remove('is-empty');
   const records=section&&Array.isArray(section.items)?section.items:[];
   const max=limits[id];
   const tiles=records.slice(0,max);
@@ -102,8 +108,13 @@ function entries(id,section,stale,mode){
   if(!section||section.status==='error'){
     error(root,'開催情報を確認できません');return;
   }
+  if(isEmptyVenueSection(section,stale)){
+    root.classList.add('is-empty');
+    root.replaceChildren(node('p','no-venues','開催情報がありません'));
+    return;
+  }
   if(!records.length){
-    error(root,section.status==='ok'?'本日の開催はありません':'情報を確認中');return;
+    error(root,'情報を確認中');return;
   }
   root.replaceChildren(...tiles.map(i=>card(i,id)));
   if(records.length>max)console.warn(id+' : maximum displayed entries exceeded');
@@ -194,7 +205,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
