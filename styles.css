@@ -257,3 +257,49 @@ h1 {
   margin: 0;
 }
 .detail { color: var(--ink); font-size: 15px; }
+
+/* A one-second entrance hint, independent of the scaled 1920×1080 board. */
+.fullscreen-hint {
+  position: fixed;
+  z-index: 1000;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35em;
+  padding: .55em .85em;
+  border-radius: 14px;
+  background: rgba(30, 41, 48, .94);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .2);
+  color: #fff;
+  font-size: clamp(18px, 2.25vw, 34px);
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fullscreen-hint-dismiss .12s ease-in .88s forwards;
+}
+.fullscreen-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .12em .36em .08em;
+  border: 2px solid #d2d8dc;
+  border-bottom-width: 5px;
+  border-radius: 8px;
+  background: #fff;
+  color: #25323a;
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: 900;
+  line-height: 1.1;
+  box-shadow: inset 0 1px 0 #fff, 0 2px 0 rgba(0, 0, 0, .2);
+}
+@keyframes fullscreen-hint-dismiss {
+  to { opacity: 0; visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fullscreen-hint { animation: fullscreen-hint-dismiss 0s linear 1s forwards; }
+}
