@@ -258,7 +258,7 @@ h1 {
 }
 .detail { color: var(--ink); font-size: 15px; }
 
-/* A one-second entrance hint, independent of the scaled 1920×1080 board. */
+/* A two-second entrance hint, independent of the scaled 1920×1080 board. */
 .fullscreen-hint {
   position: fixed;
   z-index: 1000;
@@ -279,7 +279,7 @@ h1 {
   line-height: 1.2;
   white-space: nowrap;
   pointer-events: none;
-  animation: fullscreen-hint-dismiss .12s ease-in .88s forwards;
+  animation: fullscreen-hint-dismiss .12s ease-in 1.88s forwards;
 }
 .fullscreen-hint kbd {
   display: inline-flex;
@@ -301,5 +301,5 @@ h1 {
   to { opacity: 0; visibility: hidden; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fullscreen-hint { animation: fullscreen-hint-dismiss 0s linear 1s forwards; }
+  .fullscreen-hint { animation: fullscreen-hint-dismiss 0s linear 2s forwards; }
 }
