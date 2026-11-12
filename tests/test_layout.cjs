@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {layoutRows,isEmptyVenueSection}=require('../app.js');
+const {layoutRows,isEmptyVenueSection,venueStatusText}=require('../app.js');
 
 // The same function used by the published browser determines all row counts.
 function sections(keirin,soda,keirinStatus='ok',sodaStatus='ok'){
@@ -39,4 +39,12 @@ assert.equal(isEmptyVenueSection({status:'error',items:[]},false),false);
 assert.equal(isEmptyVenueSection({status:'partial',items:[]},false),false);
 assert.equal(isEmptyVenueSection({status:'ok',items:[]},true),false);
 assert.equal(isEmptyVenueSection(null,false),false);
-console.log('Layout tests passed: dynamic rows, empty-venue status, errors, cache, stale data');
+// The same white 50px band notice is used by empty and error states.
+assert.equal(venueStatusText({status:'ok',items:[]},false,'today'),'開催情報がありません');
+assert.equal(venueStatusText({status:'cached',items:[]},false,'selected'),'開催情報がありません');
+assert.equal(venueStatusText({status:'error',items:[]},false,'today'),'開催情報を確認できません');
+assert.equal(venueStatusText(null,false,'today'),'開催情報を確認できません');
+assert.equal(venueStatusText({status:'partial',items:[]},false,'today'),'情報を確認中');
+assert.equal(venueStatusText({status:'ok',items:[]},true,'selected'),'指定日の情報を確認中');
+assert.equal(venueStatusText({status:'ok',items:[{name:'浜松'}]},false,'today'),null);
+console.log('Layout tests passed: dynamic rows, unified band notices, errors, cache, stale data');

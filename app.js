@@ -98,25 +98,25 @@ function isEmptyVenueSection(section,stale){
     (section.status==='ok'||section.status==='cached')&&
     Array.isArray(section.items)&&section.items.length===0;
 }
+function venueStatusText(section,stale,mode){
+  if(stale)return mode==='selected'?'指定日の情報を確認中':'本日の情報を確認中';
+  if(!section||section.status==='error')return '開催情報を確認できません';
+  if(isEmptyVenueSection(section,false))return '開催情報がありません';
+  if(!Array.isArray(section.items)||section.items.length===0)return '情報を確認中';
+  return null;
+}
 function entries(id,section,stale,mode){
   const root=get(id+'-entries');
-  root.classList.remove('is-empty');
-  const records=section&&Array.isArray(section.items)?section.items:[];
-  const max=limits[id];
-  const tiles=records.slice(0,max);
-  if(stale){error(root,mode==='selected'?'指定日の情報を確認中':'本日の情報を確認中');return}
-  if(!section||section.status==='error'){
-    error(root,'開催情報を確認できません');return;
-  }
-  if(isEmptyVenueSection(section,stale)){
-    root.classList.add('is-empty');
-    root.replaceChildren(node('p','no-venues','開催情報がありません'));
+  root.classList.remove('is-notice');
+  const message=venueStatusText(section,stale,mode);
+  if(message){
+    root.classList.add('is-notice');
+    root.replaceChildren(node('p','band-notice',message));
     return;
   }
-  if(!records.length){
-    error(root,'情報を確認中');return;
-  }
-  root.replaceChildren(...tiles.map(i=>card(i,id)));
+  const records=section.items;
+  const max=limits[id];
+  root.replaceChildren(...records.slice(0,max).map(i=>card(i,id)));
   if(records.length>max)console.warn(id+' : maximum displayed entries exceeded');
 }
 function mori(section,stale,targetDate){
@@ -205,7 +205,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
