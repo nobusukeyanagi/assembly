@@ -1,8 +1,10 @@
 {
   "date": "2026-11-01",
-  "updatedAt": "2026-11-12T12:41+09:00",
+  "updatedAt": "2026-11-12T12:57+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
+    "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
+    "keirin_races": "https://keirinhex.jp/races/{day}/",
     "auto": "https://www.winticket.jp/autorace/schedules/",
     "auto_official": "https://autorace.jp/",
     "soda": "https://so-da.jp/aud/top",
@@ -32,6 +34,13 @@
           "day": "2日目"
         },
         {
+          "name": "弥彦",
+          "grade": "F1",
+          "timeType": "デイ",
+          "girls": false,
+          "day": "最終日"
+        },
+        {
           "name": "防府",
           "grade": "G3",
           "timeType": "デイ",
@@ -39,11 +48,39 @@
           "day": "2日目"
         },
         {
+          "name": "宇都宮",
+          "grade": "F2",
+          "timeType": "ナイター",
+          "girls": false,
+          "day": "最終日"
+        },
+        {
           "name": "久留米",
           "grade": "F1",
           "timeType": "ナイター",
           "girls": false,
           "day": "初日"
+        },
+        {
+          "name": "西武園",
+          "grade": "F2",
+          "timeType": "ミッドナイト",
+          "girls": true,
+          "day": "最終日"
+        },
+        {
+          "name": "松戸",
+          "grade": "F2",
+          "timeType": "ミッドナイト",
+          "girls": false,
+          "day": "最終日"
+        },
+        {
+          "name": "名古屋",
+          "grade": "F2",
+          "timeType": "ミッドナイト",
+          "girls": false,
+          "day": "最終日"
         }
       ]
     },
