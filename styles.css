@@ -46,7 +46,7 @@ body {
   margin-bottom: 8px;
 }
 h1 {
-  font-size: 72px;
+  font-size: 70px;
   font-weight: 900;
   line-height: 1;
   margin: 0;
@@ -55,11 +55,12 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 #weekday {
-  font-size: 46px;
+  font-size: 50px;
   vertical-align: 4px;
   margin-left: 15px;
   letter-spacing: 0;
 }
+#weekday-label.is-holiday { color: #d32f2f; }
 /* Reserve the maximum 3 + 1 + 2 card rows. Never resize tiles by date. */
 .dashboard {
   display: flex;
@@ -218,7 +219,7 @@ h1 {
 .entry .girls { color: #cf4a7a; font-weight: 900; }
 .mori-tile {
   grid-column: 4;
-  grid-template-rows: 26px auto;
+  grid-template-rows: 30px auto;
   align-content: center;
   row-gap: 4px;
 }
@@ -232,7 +233,7 @@ h1 {
 }
 .mori-tile h3,
 .mori-status {
-  font-size: 26px;
+  font-size: 30px;
   color: var(--auto);
   font-weight: 900;
   line-height: 1;
@@ -246,9 +247,9 @@ h1 {
   gap: 3px;
   min-width: 0;
 }
-.entry .mori-primary { font-size: 62px; height: 66px; line-height: 66px; }
+.entry .mori-primary { font-size: 60px; height: 66px; line-height: 66px; }
 .mori-detail { justify-content: center; }
-.mori-race { font-size: 26px; font-weight: 800; color: var(--ink); }
+.mori-race { font-size: 30px; font-weight: 800; color: var(--ink); }
 .message, .detail {
   color: var(--ink);
   font-size: 20px;
@@ -256,7 +257,7 @@ h1 {
   grid-column: 1/-1;
   margin: 0;
 }
-.detail { color: var(--ink); font-size: 15px; }
+.detail { color: var(--ink); font-size: 20px; }
 
 /* A two-second entrance hint, independent of the scaled 1920×1080 board. */
 .fullscreen-hint {
@@ -274,7 +275,7 @@ h1 {
   background: rgba(30, 41, 48, .94);
   box-shadow: 0 12px 36px rgba(0, 0, 0, .2);
   color: #fff;
-  font-size: clamp(18px, 2.25vw, 34px);
+  font-size: 30px;
   font-weight: 800;
   line-height: 1.2;
   white-space: nowrap;

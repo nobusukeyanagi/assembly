@@ -6,11 +6,12 @@
 <meta name="theme-color" content="#f5f6f3">
 <title>朝礼モニター｜ASSEMBLY</title>
 <link rel="stylesheet" href="./styles.css">
+<script defer src="./holidays.js"></script>
 <script defer src="./app.js"></script>
 </head>
 <body>
 <main id="stage" class="stage">
-  <header class="header"><h1><span id="date">--月--日</span><span id="weekday">（--）</span></h1></header>
+  <header class="header"><h1><span id="date">--月--日</span><span id="weekday">（<span id="weekday-label">--</span>）</span></h1></header>
   <div class="dashboard">
     <section class="panel keirin" aria-label="競輪開催情報">
       <header class="panel-head"><h2>競輪</h2></header>

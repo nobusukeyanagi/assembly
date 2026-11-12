@@ -39,9 +39,13 @@ jobs:
       - name: Install dependencies
         run: pip install --disable-pip-version-check -r requirements.txt
       - name: Check JavaScript syntax
-        run: node --check app.js
+        run: |
+          node --check app.js
+          node --check holidays.js
       - name: Unit tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          python -m unittest discover -s tests -v
+          node tests/test_holidays.cjs
       - name: Gather today's information
         run: python scripts/update.py
       - name: Save snapshot in repository
@@ -56,7 +60,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p dist/data
-          cp index.html app.js styles.css .nojekyll dist/
+          cp index.html app.js holidays.js styles.css .nojekyll dist/
           cp data/today.json dist/data/today.json
       # One-time prerequisite: Settings > Pages > Source = GitHub Actions
       - name: Configure Pages

@@ -22,7 +22,10 @@ function resize(){
 function dateDisplay(d){
   const [y,m,day]=d.split('-').map(Number);
   get('date').textContent=y+'年'+m+'月'+day+'日';
-  get('weekday').textContent='（'+weekday[new Date(Date.UTC(y,m-1,day)).getUTCDay()]+'）';
+  const holiday=window.AssemblyHoliday?.isJapaneseHoliday(d)===true;
+  const label=get('weekday-label');
+  label.textContent=weekday[new Date(Date.UTC(y,m-1,day)).getUTCDay()]+(holiday?'祝':'');
+  label.classList.toggle('is-holiday',holiday);
 }
 function error(root,message,detail){
   root.replaceChildren(node('p','message',message));
