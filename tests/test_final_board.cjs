@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName}=require('../app.js');
+const {verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort}=require('../app.js');
 const day='2026-11-03';
 const card=(sport,venue,race,time)=>({
   sport,venue,race,startTime:time,event:'SG日本選手権オートレース',
@@ -20,6 +20,14 @@ assert.equal(verifiedFinals({date:day,finals:{items:[
   {...card('auto','浜松',12,'16:10'),raceName:'最終予選'}]}},day).length,0);
 assert.deepEqual([-1,0,1,2,3].map(i=>nextFinalIndex(i,3)),[0,1,2,-1,-1]);
 assert.equal(nextFinalIndex(-1,0),-1);
+const sample=[
+  {...card('auto','浜松',11,'15:24'),feature:'mori'},
+  {...card('auto','浜松',12,'16:10')},
+  {...card('keirin','防府',12,'16:20')},
+  {...card('soda','宮島',12,'15:40'),startTime:null}
+];
+assert.deepEqual(finalSort(sample).map(x=>x.sport+(x.feature||'')),
+                 ['keirin','auto','automori','soda']);
 assert.equal(finalRaceLabel('優勝戦(枠番選択)'),'優勝戦');
 assert.equal(finalRaceLabel('S級 決勝'),'決勝');
 assert.equal(finalRaceLabel('決勝戦'),'決勝');
@@ -60,6 +68,9 @@ assert.match(css,/\.final-screen\s*\{[^}]*top:\s*120px;[^}]*width:\s*1920px;[^}]
 assert.match(css,/\.final-screen\s*\{[^}]*background:\s*#fff;/s);
 assert.match(css,/\.final-title\s*\{[^}]*background:\s*var\(--keirin\);/s);
 assert.match(css,/\.final-title\[data-sport="auto"\]\s*\{[^}]*background:\s*var\(--auto\);/s);
+assert.match(css,/\.final-title\[data-sport="soda"\]\s*\{[^}]*background:\s*var\(--soda\);/s);
+assert.match(css,/\.final-title-text\s*\{[^}]*transform-origin:/s);
+assert.match(css,/\.final-rider\.is-mori\s*\{[^}]*var\(--grade-major\)/s);
 for(const className of ['final-title','final-rider','final-number']){
   const re=new RegExp('\\.'+className+'\\s*\\{[^}]*font-size:\\s*80px;','s');
   assert.match(css,re,className+' should use 80px');

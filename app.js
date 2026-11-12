@@ -175,7 +175,7 @@ let activeFinalKey=null;
 function verifiedFinals(data,targetDate){
   if(!data||data.date!==targetDate||!Array.isArray(data.finals?.items))return [];
   return data.finals.items.filter(r=>(
-    (r.sport==='keirin'||r.sport==='auto')&&
+    (r.sport==='keirin'||r.sport==='auto'||r.sport==='soda')&&
     typeof r.event==='string'&&r.event.length>0&&
     typeof r.raceName==='string'&&
     (r.feature==='mori'
@@ -184,11 +184,20 @@ function verifiedFinals(data,targetDate){
       : /決勝|優勝戦/.test(r.raceName))&&
     typeof r.venue==='string'&&r.venue.length>0&&
     Number.isInteger(r.race)&&r.race>=1&&r.race<=12&&
-    /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime)&&
+    (r.sport==='soda'
+      ? r.startTime==null||/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime)
+      : /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime))&&
     Array.isArray(r.riders)&&r.riders.length>=5&&r.riders.length<=9&&
     r.riders.every(p=>Number.isInteger(p.number)&&p.number>=1&&p.number<=9&&
                    typeof p.name==='string'&&p.name.length>0)
   ));
+}
+function finalSort(items){
+  const priority=item=>item.sport==='keirin'?0:
+    item.feature==='mori'?2:item.sport==='auto'?1:3;
+  return [...items].sort((a,b)=>priority(a)-priority(b)||
+    String(a.startTime||'').localeCompare(String(b.startTime||''))||
+    a.venue.localeCompare(b.venue)||a.race-b.race);
 }
 function finalIdentity(item){
   return item.sport+'|'+item.venue+'|'+item.race;
@@ -234,15 +243,17 @@ function paintFinal(){
   if(!active)return;
   const data=finalCards[activeFinalIndex];
   const board=get('final-card');
-  const heading=node('div','final-title',finalEventLabel(data.event));
+  const heading=node('div','final-title');
   heading.dataset.sport=data.sport;
+  const headingLabel=node('span','final-title-text',finalEventLabel(data.event));
+  heading.append(headingLabel);
   const race=node('div','final-race');
   const grade=node('span','grade',displayGrade(data.grade||'—',data.sport));
   grade.dataset.tier=isMajorGrade(data.grade)?'major':'regular';
   race.append(grade,node('span','final-race-detail',
-    data.venue+' '+data.race+'R '+
-    (data.feature==='mori'?'森且行出走':finalRaceLabel(data.raceName))+
-    ' '+data.startTime+'発走'));
+    data.venue+' '+data.race+'R　'+
+    (data.feature==='mori'?data.raceName:finalRaceLabel(data.raceName))+
+    '　'+(data.startTime?data.startTime+'発走':'発走時刻確認中')));
   const grid=node('div','final-riders');
   for(const riders of splitFinalRiders(data.riders)){
     const column=node('div','final-rider-column');
@@ -254,6 +265,9 @@ function paintFinal(){
       number.style.backgroundColor=background;
       number.style.color=color;
       const name=node('span','final-rider',finalRiderName(rider.name,data.sport));
+      if(data.sport==='auto'&&rider.name.replace(/\s/g,'')==='森且行'){
+        name.classList.add('is-mori');
+      }
       if(rider.status==='scratched'){
         name.classList.add('is-scratched');
         name.setAttribute('aria-label',name.textContent+' 出走取消・欠場等');
@@ -269,6 +283,19 @@ function paintFinal(){
     grid.append(column);
   }
   board.replaceChildren(heading,race,grid);
+  fitFinalHeading(heading,headingLabel);
+}
+function fitFinalHeading(heading,label){
+  const resizeLabel=()=>{
+    if(!heading.isConnected)return;
+    const available=heading.clientWidth-40;
+    const natural=label.scrollWidth;
+    if(available>0&&natural>0){
+      label.style.transform='scaleX('+Math.min(1,available/natural)+')';
+    }
+  };
+  resizeLabel();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resizeLabel);
 }
 function advanceFinal(){
   activeFinalIndex=nextFinalIndex(activeFinalIndex,finalCards.length);
@@ -299,7 +326,7 @@ function render(data,targetDate,mode){
   entries('soda',s.soda,stale,mode);
   mori(s.mori,stale,targetDate);
   const selected=activeFinalKey;
-  finalCards=verifiedFinals(data,targetDate);
+  finalCards=finalSort(verifiedFinals(data,targetDate));
   activeFinalIndex=selected?finalCards.findIndex(r=>finalIdentity(r)===selected):-1;
   activeFinalKey=activeFinalIndex>=0?selected:null;
   paintFinal();
@@ -331,7 +358,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);

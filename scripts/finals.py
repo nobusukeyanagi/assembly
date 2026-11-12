@@ -17,6 +17,11 @@ log=logging.getLogger("assembly.finals")
 HEX_DAILY="https://keirinhex.jp/races/{day}/"
 AUTO_RACE="https://autorace.tokyo-sports.co.jp/list/race/{day}{venue}{race}"
 AUTO_CODES={"川口":"02","伊勢崎":"03","浜松":"04","飯塚":"05","山陽":"06"}
+SODA_CODES={"桐生":"01","戸田":"02","多摩川":"05","浜名湖":"06",
+            "蒲郡":"07","三国":"10","びわこ":"11","宮島":"17",
+            "若松":"20","芦屋":"21"}
+BOAT_FINAL="https://www.boatrace.jp/owpc/pc/race/racelist?hd={day}&jcd={venue}&rno=12"
+BOAT_START="https://boatrace-rating.com/stadiums/{venue}/12"
 KEIRIN_GRADES=frozenset(("GP","G1","G2","G3"))
 AUTO_GRADES=frozenset(("SG","特G1","G1","G2"))
 PREFECTURES="北海道 青森 岩手 宮城 秋田 山形 福島 茨城 栃木 群馬 埼玉 千葉 東京 神奈川 新潟 富山 石川 福井 山梨 長野 岐阜 静岡 愛知 三重 滋賀 京都 大阪 兵庫 奈良 和歌山 鳥取 島根 岡山 広島 山口 徳島 香川 愛媛 高知 福岡 佐賀 長崎 熊本 大分 宮崎 鹿児島 沖縄".split()
@@ -181,9 +186,13 @@ def parse_autorace_race(html,selected,venue,race,grade,require_final=True,requir
             parts.append(str(el))
             if sum(len(x) for x in parts)>1400:break
     card_header=text_clean(" ".join(parts))
-    classification=re.search(r"優勝戦(?:\s*[（(][^）)]{1,16}[）)])?|決勝戦",card_header)
-    if require_final and not classification:
+    classification=re.search(
+        r"準優勝戦|準決勝戦|特別選抜戦|特別一般戦|特別予選|"
+        r"順位決定戦|優勝戦|選抜戦|一般戦|予選|準決勝|準々決勝|優秀戦|特選|一般",
+        card_header)
+    if require_final and (not classification or classification.group()!="優勝戦"):
         raise ValueError("オートレースが優勝戦ではありません")
+    if not classification:raise ValueError("レース種別を確認できません")
     start_match=re.search(r"発走\s*[：:]\s*([0-2]?\d:[0-5]\d)",card_header)
     if not start_match:raise ValueError("オート出走表の発走時刻が不明です")
     start=start_match.group(1).zfill(5)
@@ -196,7 +205,7 @@ def parse_autorace_race(html,selected,venue,race,grade,require_final=True,requir
     if require_mori and not any(re.sub(r"\s+","",r["name"])=="森且行" for r in riders):
         raise ValueError("出走表で森且行選手の出走を確認できません")
     item={"sport":"auto","venue":venue,"grade":grade,"event":event,
-          "raceName":text_clean(classification.group()) if classification else "森且行出走",
+          "raceName":classification.group(),
           "race":race,"startTime":start,"riders":riders,
           "sourceUrl":AUTO_RACE.format(day=selected.strftime("%Y%m%d"),
                                       venue=AUTO_CODES[venue],race=race)}
@@ -208,12 +217,84 @@ def parse_autorace_final(html,selected,venue,race,grade):
     return parse_autorace_race(html,selected,venue,race,grade,require_final=True)
 
 
+
+def parse_soda_start(html,selected,venue,official_closing):
+    """Use an explicitly labeled start time, never a betting deadline."""
+    soup=BeautifulSoup(html,"html.parser")
+    text=text_clean(soup.get_text(" ",strip=True))
+    date_pattern=rf"{selected.month}月{selected.day}日"
+    venue_pattern=re.escape(venue)
+    match=re.search(rf"{venue_pattern}\s*12R.*?{date_pattern}\s*/\s*"
+                    rf".+?\s*/\s*([0-2]?\d:[0-5]\d)\s*発走",text)
+    if not match:
+        raise ValueError("発走時刻の明示と開催日・場・Rを照合できません")
+    start=match.group(1).zfill(5)
+    if not CLOCK.fullmatch(start):
+        raise ValueError("発走時刻が不正です")
+    if start==official_closing:
+        # Some third-party sites label the official deadline as 発走.
+        # Reject, rather than relabel a closing time as a start time.
+        raise ValueError("発走表記が公式締切時刻と同一のため採用しません")
+    return start
+
+
+def parse_soda_final(html,selected,venue,grade):
+    """Verify official date, venue, final classification and six entries."""
+    if venue not in SODA_CODES:raise ValueError("SODA対象外の場です")
+    soup=BeautifulSoup(html,"html.parser")
+    text=text_clean(soup.get_text(" ",strip=True))
+    if f"{selected.month}月{selected.day}日" not in text:
+        raise ValueError("ボート公式ページの日付が不一致です")
+    if not soup.find("img",alt=re.compile(rf"^\s*{re.escape(venue)}\s*$")):
+        raise ValueError("ボート公式ページの開催場が不一致です")
+    heading=next((h for h in soup.find_all("h2") if text_clean(h.get_text(" ",strip=True))),None)
+    if not heading:raise ValueError("開催節名を確認できません")
+    event=text_clean(heading.get_text(" ",strip=True))
+    final_heading=next((h for h in soup.find_all("h3")
+                        if re.match(r"^優勝戦(?:\s|$)",
+                                    text_clean(h.get_text(" ",strip=True)))),None)
+    if not final_heading:raise ValueError("ボート12Rの優勝戦を確認できません")
+    profiles=[]
+    seen=set()
+    for link in soup.select('a[href*="racersearch/profile"]'):
+        raw=text_clean(link.get_text(" ",strip=True))
+        name=re.sub(r"^\d{4}\s*/\s*[AB][12]\s*","",raw)
+        if not re.fullmatch(r"[一-龯々ぁ-んァ-ヶー・\s]{2,18}",name):
+            continue
+        identity=link.get("href","")
+        if identity in seen:continue
+        seen.add(identity)
+        profiles.append(name)
+    if len(profiles)!=6:
+        raise ValueError(f"ボート公式出走者6人を確認できません: {len(profiles)}人")
+    closing=None
+    for row in soup.find_all("tr"):
+        cells=row.find_all(["td","th"],recursive=False)
+        if not cells or "締切予定時刻" not in text_clean(cells[0].get_text(" ",strip=True)):
+            continue
+        times=re.findall(r"(?<!\d)(?:[01]?\d|2[0-3]):[0-5]\d(?!\d)",
+                         text_clean(row.get_text(" ",strip=True)))
+        if len(times)>=12:
+            closing=times[11].zfill(5)
+            break
+    if not closing or not CLOCK.fullmatch(closing):
+        raise ValueError("公式12R締切時刻を照合できません")
+    return {"sport":"soda","venue":venue,"grade":grade,"event":event,
+            "raceName":"優勝戦","race":12,"startTime":None,
+            "officialClosingTime":closing,
+            "riders":[{"number":i+1,"name":name} for i,name in enumerate(profiles)],
+            "sourceUrl":BOAT_FINAL.format(day=selected.strftime("%Y%m%d"),
+                                          venue=SODA_CODES[venue])}
+
+
 def collect(s,selected,sections,u,previous=None):
     """Fetch verified grade finals only. Stable order is start time then sport/venue."""
     keirin=[m for m in sections.get("keirin",{}).get("items",[])
             if m.get("grade") in KEIRIN_GRADES and m.get("day")=="最終日"]
     auto=[m for m in sections.get("auto",{}).get("items",[])
           if m.get("grade") in AUTO_GRADES and m.get("day")=="最終日"]
+    soda=[m for m in sections.get("soda",{}).get("items",[])
+          if m.get("day")=="最終日" and m.get("name") in SODA_CODES]
     found=[];errors=[]
     if keirin:
         try:
@@ -286,13 +367,36 @@ def collect(s,selected,sections,u,previous=None):
                 results[key]=item
             except Exception as exc:
                 errors.append(f"森且行 {mori['name']} {number}R: {exc}")
-    graded=[x for x in results.values() if x.get("feature")!="mori"]
-    mori_cards=[x for x in results.values() if x.get("feature")=="mori"]
-    sort_key=lambda x:(x["startTime"],x["sport"],x["venue"],x["race"])
-    ordered=sorted(graded,key=sort_key)+sorted(mori_cards,key=sort_key)
+    # SODA final: verify all six competitors on the BOAT RACE official
+    # racecard. Actual start time is a separate concept from its deadline.
+    for meeting in soda:
+        venue=meeting["name"]
+        uri=BOAT_FINAL.format(day=selected.strftime("%Y%m%d"),
+                              venue=SODA_CODES[venue])
+        try:
+            card=parse_soda_final(u.fetch(s,uri),selected,venue,meeting["grade"])
+            try:
+                start_url=BOAT_START.format(venue=int(SODA_CODES[venue]))
+                card["startTime"]=parse_soda_start(
+                    u.fetch(s,start_url),selected,venue,
+                    card["officialClosingTime"])
+                card["startSourceUrl"]=start_url
+            except Exception as exc:
+                # An official closing time is never an actual start time.
+                errors.append(f"SODA {venue} 発走時刻未確認: {exc}")
+            results[("soda",venue,12)]=card
+        except Exception as exc:
+            errors.append(f"SODA {venue} 優勝戦未確認: {exc}")
+    priority=lambda x:(0 if x["sport"]=="keirin" else
+                       2 if x.get("feature")=="mori" else
+                       1 if x["sport"]=="auto" else 3)
+    ordered=sorted(results.values(),key=lambda x:(
+        priority(x),x.get("startTime") or "99:99",x["venue"],x["race"]))
     status="ok" if not errors else "partial"
     return {"status":status,"items":ordered,
             "verification":{"targetDate":selected.isoformat(),
-                            "eligibleMeetings":len(keirin)+len(auto),
+                            "eligibleMeetings":len(keirin)+len(auto)+len(soda),
                             "confirmedRaces":len(ordered),
-                            "moriRaces":len(mori_cards),"errors":errors}}
+                            "moriRaces":sum(x.get("feature")=="mori" for x in ordered),
+                            "sodaRaces":sum(x["sport"]=="soda" for x in ordered),
+                            "errors":errors}}

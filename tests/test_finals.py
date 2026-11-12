@@ -8,7 +8,8 @@ from types import SimpleNamespace
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"scripts"))
 from finals import (
     candidate_hex_finals,parse_hex_final,parse_autorace_final,collect,
-    AUTO_RACE,HEX_DAILY,read_riders,parse_autorace_race
+    AUTO_RACE,HEX_DAILY,read_riders,parse_autorace_race,
+    parse_soda_final,parse_soda_start,BOAT_FINAL,BOAT_START
 )
 from bs4 import BeautifulSoup
 
@@ -175,6 +176,44 @@ class GradeFinalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"森且行"):
             parse_autorace_race(auto_detail(11,"一般戦"),DAY,"浜松",11,"SG",
                                 require_final=False,require_mori=True)
+
+    def test_soda_official_final_and_start_time_source(self):
+        racers="".join(
+            f'<tr><td><a href="/owpc/pc/data/racersearch/profile?toban={1000+i}">'
+            f'選手{i}</a></td></tr>' for i in range(6))
+        racers="".join(
+            f'<tr><td><a href="/owpc/pc/data/racersearch/profile?toban={1000+i}">'
+            f'佐藤 太郎</a></td></tr>' for i in range(6))
+        clocks="".join(f"<td>15:{i+10:02d}</td>" for i in range(12))
+        official=(
+            '<img alt="宮島" src="venue.png">'
+            '<h2>宮島オータムカップ</h2>'
+            '<nav><span>11月12日最終日</span></nav>'
+            f'<table><tr><th>締切予定時刻</th>{clocks}</tr></table>'
+            '<h3>優勝戦 1800m</h3>'
+            '<table>'+racers+'</table>')
+        data=parse_soda_final(official,date(2026,11,12),"宮島","一般")
+        self.assertEqual(data["sport"],"soda")
+        self.assertEqual(data["officialClosingTime"],"15:21")
+        self.assertEqual(len(data["riders"]),6)
+        self.assertIsNone(data["startTime"])
+        self.assertEqual(parse_soda_start(
+            "<h1>宮島 12R</h1><p>11月12日 / 宮島オータムカップ / 15:25 発走</p>",
+            date(2026,11,12),"宮島","15:21"),"15:25")
+        with self.assertRaisesRegex(ValueError,"同一"):
+            parse_soda_start(
+                "<h1>宮島 12R</h1><p>11月12日 / イベント / 15:21 発走</p>",
+                date(2026,11,12),"宮島","15:21")
+
+    def test_mori_race_types(self):
+        html=auto_detail(11,"準優勝戦").replace("中村　雅人","森　且行")
+        race=parse_autorace_race(html,DAY,"浜松",11,"SG",
+                                 require_final=False,require_mori=True)
+        self.assertEqual(race["raceName"],"準優勝戦")
+        html2=auto_detail(11,"予選").replace("中村　雅人","森　且行")
+        race2=parse_autorace_race(html2,DAY,"浜松",11,"SG",
+                                  require_final=False,require_mori=True)
+        self.assertEqual(race2["raceName"],"予選")
 
     def test_reject_unverified_riders(self):
         table=BeautifulSoup("<table><tr><td>1</td><td>佐藤太郎東京・S1</td></tr></table>","html.parser").table

@@ -338,6 +338,14 @@ h1 {
   font-size: 80px;
 }
 .final-title[data-sport="auto"] { background: var(--auto); }
+.final-title[data-sport="soda"] { background: var(--soda); }
+.final-title-text {
+  display: inline-block;
+  flex: none;
+  width: max-content;
+  white-space: nowrap;
+  transform-origin: center center;
+}
 .final-race {
   padding: 0 20px;
   font-size: 60px;
@@ -407,6 +415,8 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.final-rider.is-mori { color: var(--grade-major); }
 
 /* Two horizontal red lines across the name, but never the vehicle-number badge. */
 .final-rider.is-scratched::after {
