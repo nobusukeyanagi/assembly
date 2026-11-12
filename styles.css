@@ -9,6 +9,8 @@
   --grade-regular: hsl(175 41.67% 32.94%);
   --tile-height: 146px;
   --tile-gap: 12px;
+  --keirin-rows: 3;
+  --soda-rows: 2;
   --band-pad-y: 8px;
 }
 * { box-sizing: border-box; }
@@ -63,7 +65,13 @@ h1 {
 #weekday-label.is-holiday,
 #weekday-label.is-sunday { color: #d32f2f; }
 #weekday-label.is-saturday { color: #1976d2; }
-/* Reserve the maximum 3 + 1 + 2 card rows. Never resize tiles by date. */
+/* The 1080px stage reserves 12px at the top, 100px for the date, and 8px
+   below the date, leaving 960px for the three sports bands.
+   Every band has 16px of vertical inset and every adjacent card row has a
+   12px gap. Thus: tile = (960 - 48 - (totalRows - 3)*12)/totalRows.
+   6 rows: 146px; 5 rows: 177.6px; 4 rows: 225px. */
+.stage[data-total-rows="5"] { --tile-height: 177.6px; }
+.stage[data-total-rows="4"] { --tile-height: 225px; }
 .dashboard {
   display: flex;
   flex-direction: column;
@@ -86,12 +94,9 @@ h1 {
   border-radius: 0;
   overflow: hidden;
 }
-.keirin { background: var(--keirin); height: calc(3 * var(--tile-height) + 2 * var(--tile-gap) + 2 * var(--band-pad-y)); }
+.keirin { background: var(--keirin); height: calc(var(--keirin-rows) * var(--tile-height) + (var(--keirin-rows) - 1) * var(--tile-gap) + 2 * var(--band-pad-y)); }
 .auto { background: var(--auto); height: calc(var(--tile-height) + 2 * var(--band-pad-y)); }
-.soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap) + 2 * var(--band-pad-y)); }
-/* Shared top/bottom inset for each sport; 5/6-row layouts both fit 1080px. */
-.stage.five-rows { --tile-height: 177.6px; }
-.stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap) + 2 * var(--band-pad-y)); }
+.soda { background: var(--soda); height: calc(var(--soda-rows) * var(--tile-height) + (var(--soda-rows) - 1) * var(--tile-gap) + 2 * var(--band-pad-y)); }
 .panel-head {
   display: flex;
   flex-direction: column;
@@ -128,10 +133,9 @@ h1 {
   min-height: 0;
   overflow: hidden;
 }
-.keirin .entries { grid-template-rows: repeat(3, var(--tile-height)); }
-.stage.five-rows .keirin .entries { grid-template-rows: repeat(2, var(--tile-height)); }
+.keirin .entries { grid-template-rows: repeat(var(--keirin-rows), var(--tile-height)); }
 .auto .entries { grid-template-rows: var(--tile-height); }
-.soda .entries { grid-template-rows: repeat(2, var(--tile-height)); }
+.soda .entries { grid-template-rows: repeat(var(--soda-rows), var(--tile-height)); }
 .auto-items { display: contents; }
 .entry {
   display: grid;

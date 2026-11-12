@@ -138,12 +138,21 @@ function mori(section,stale,targetDate){
   root.replaceChildren(venue,meta);
   if(isToday)root.classList.add('mori-today');
 }
+function layoutRows(sections,stale){
+  const hasVerifiedItems=section=>!stale&&section&&
+    (section.status==='ok'||section.status==='cached')&&Array.isArray(section.items);
+  const keirinRows=hasVerifiedItems(sections.keirin)&&sections.keirin.items.length<=8?2:3;
+  const sodaRows=hasVerifiedItems(sections.soda)&&sections.soda.items.length<=4?1:2;
+  return {keirinRows,sodaRows,totalRows:keirinRows+1+sodaRows};
+}
 function render(data,targetDate,mode){
   latest=data;
   const stale=data.date!==targetDate,s=data.sections||{};
-  const keirinItems=s.keirin?.items;
-  const fiveRows=!stale&&s.keirin?.status!=='error'&&Array.isArray(keirinItems)&&keirinItems.length<=8;
-  get('stage').classList.toggle('five-rows',fiveRows);
+  const layout=layoutRows(s,stale);
+  const stage=get('stage');
+  stage.style.setProperty('--keirin-rows',String(layout.keirinRows));
+  stage.style.setProperty('--soda-rows',String(layout.sodaRows));
+  stage.dataset.totalRows=String(layout.totalRows);
   get('display-mode-indicator').hidden=mode!=='selected';
   dateDisplay(targetDate);
   entries('keirin',s.keirin,stale,mode);
@@ -177,6 +186,9 @@ async function refresh(){
     console.warn(err);
   }
 }
+// Allow unit testing the actual row selection logic without a browser.
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows};
+if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
