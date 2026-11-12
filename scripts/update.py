@@ -18,7 +18,10 @@ AUTO='https://www.winticket.jp/autorace/schedules/'
 BOAT='https://www.boatrace.jp/owpc/pc/race/index'
 MORI='https://www.winticket.jp/autorace/autoracer/2529/'
 ASSEN='https://sp.atrc.jp/racer/racerasseninfo/player_id/2529'
-SOURCES={'keirin':KEIRIN,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI}
+ODDSPARK='https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529'
+AUTO_OFFICIAL='https://autorace.jp/race_info/Program/'
+NIGHT_BOAT={'桐生','蒲郡','若松'}
+SOURCES={'keirin':KEIRIN,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL}
 KEIRIN_NAMES='函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本'.split()
 AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
 SODA_NAMES='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
@@ -121,6 +124,26 @@ def parse_auto(html,name,today):
     return {'name':name,'grade':grade(gm.group(1)),'day':'初日' if n==1 else str(n)+'日目'}
 
 
+def race_time_type(title):
+    """Use only explicit meeting descriptions to classify a race time slot."""
+    t=normalize('NFKC',title).replace(' ','').replace('　','').lower()
+    if 'ミッドナイト' in t:return 'ミッドナイト'
+    if any(x in t for x in ('ナイトレース','ナイター','アフター5')):return 'ナイター'
+    if 'デイ' in t:return 'デイ'
+    return None
+
+def check_auto_official(html,name,today):
+    """Independently match the official racecard by venue, start date and day number."""
+    soup=BeautifulSoup(html,'html.parser')
+    for tag in soup(['script','style','noscript']):tag.decompose()
+    text=normalize('NFKC',soup.get_text(' ',strip=True))
+    m=re.search(r'開催期間[：:]\s*(20\d{2})年(\d{1,2})月(\d{1,2})日',text)
+    if not m or name not in text[:650]:return None
+    st=date(*map(int,m.groups()))
+    d=re.search(r'開催\s*第\s*(\d{1,2})\s*日目',text[m.end():m.end()+130])
+    if not d or (today-st).days!=int(d.group(1))-1:return None
+    return {'name':name,'timeType':race_time_type(text[:m.start()])}
+
 def parse_auto_calendar(html,today):
     """Read all five track blocks and dates, not a misleading racecard default."""
     soup=BeautifulSoup(html,'html.parser')
@@ -144,7 +167,7 @@ def parse_auto_calendar(html,today):
             if not dates or not dates[0]<=today<=dates[1]:continue
             name_event=block[p.end():periods[i+1].start() if i+1<len(periods) else len(block)]
             gm=re.search(r'(特G(?:III|II|I|[123])|SG|G(?:III|II|I|[123]))',name_event[:120],re.I)
-            items.append({'name':name,'grade':grade(gm.group(1)) if gm else '一般','day':day_label(today,*dates)})
+            items.append({'name':name,'grade':grade(gm.group(1)) if gm else '一般','timeType':race_time_type(name_event),'day':day_label(today,*dates)})
     if len(verified)!=5 or count<8:raise ValueError('全5場の開催日程を確認できません')
     return items
 
@@ -182,7 +205,14 @@ def parse_boat(html,today):
             bounds=period(today,*map(int,pm.groups()))
             if not bounds or not bounds[0]<=today<=bounds[1]:continue
             grades=[grade(a) for a in imgs if GRADES.fullmatch(a)]
-            result[name]={'name':name,'grade':grades[0] if grades else '一般','day':normalize('NFKC',dm.group(1))}
+            icons={normalize('NFKC',a) for a in imgs}
+            is_night='ナイター' in icons or (name in NIGHT_BOAT and 'モーニング' not in icons)
+            morning='モーニング' in icons and not is_night
+            ladies=bool(re.search(r'オールレディース|ヴィーナスシリーズ|レディースチャンピオン|レディースオールスター|クイーンズクライマックス|女子戦',normalize('NFKC',text))) or '女子戦' in icons
+            result[name]={'name':name,'grade':grades[0] if grades else '一般',
+                          'day':normalize('NFKC',dm.group(1)),
+                          'timeType':'ナイター' if is_night else 'モーニング' if morning else None,
+                          'girls':ladies}
     if not result and len(soup.select('tr'))<12:raise ValueError('BOAT RACE公式開催表の構造を解析できません')
     return [result[name] for name in SODA_NAMES if name in result]
 
@@ -202,17 +232,39 @@ def parse_mori(html,today):
     return sorted(entries,key=lambda e:(e['date'],e['race']))
 
 def parse_assen(html,today):
+    """Parse official racer assignments, including events crossing month boundaries."""
     soup=BeautifulSoup(html,'html.parser')
-    text=soup.get_text(' ',strip=True)
+    for tag in soup(['script','style','noscript']):tag.decompose()
+    text=normalize('NFKC',soup.get_text(' ',strip=True))
+    if '森且行' not in re.sub(r'\s+','',text):raise ValueError('公式選手情報を検証できません')
     start=text.find('出場情報')
-    if start<0:return []
+    if start<0:raise ValueError('公式出場情報欄がありません')
+    pattern=(r'(\d{1,2})\s*月\s*(\d{1,2})\s*日(?:\s*\([^)]{0,6}\))?\s*[～〜~\-]\s*'
+             r'(?:(\d{1,2})\s*月\s*)?(\d{1,2})\s*日(?:\s*\([^)]{0,6}\))?\s*'
+             r'(川口|伊勢崎|浜松|飯塚|山陽)\s*/')
     entries=[]
-    for m in re.finditer(r'(\d{1,2})\s*月\s*(\d{1,2})\s*日.{0,30}?[～〜~\-]\s*\d{1,2}\s*日.{0,35}?(川口|伊勢崎|浜松|飯塚|山陽)\s*/',text[start:]):
-        for year in (today.year,today.year+1):
-            try:d=date(year,int(m.group(1)),int(m.group(2)))
-            except ValueError:continue
-            if 0<(d-today).days<180:entries.append({'date':d.isoformat(),'name':m.group(3)})
-    return sorted(entries,key=lambda e:e['date'])
+    for m in re.finditer(pattern,text[start:]):
+        start_m,start_d=int(m.group(1)),int(m.group(2))
+        end_m,end_d=int(m.group(3) or m.group(1)),int(m.group(4))
+        bounds=period(today,start_m,start_d,end_m,end_d)
+        if not bounds or bounds[1]<today:continue
+        current=bounds[0]<=today<=bounds[1]
+        entries.append({'date':today.isoformat() if current else bounds[0].isoformat(),
+                        'name':m.group(5),'type':'today' if current else 'next','unconfirmed':True})
+    return sorted(entries,key=lambda x:x['date'])
+
+def mori_previous_item(previous,today):
+    """Retain a verified assignment only while its displayed date is still in the future."""
+    if not isinstance(previous,dict):return None
+    section=previous.get('sections',{}).get('mori',{})
+    item=section.get('item') if isinstance(section,dict) else None
+    if not isinstance(item,dict) or item.get('name') not in AUTO_NAMES:return None
+    try:dt=date.fromisoformat(item.get('date',''))
+    except (TypeError,ValueError):return None
+    if dt<today:return None
+    if item.get('type')=='today' and dt!=today:return None
+    return item
+
 
 def ok(items=None,item=None,note=None):
     d={'status':'ok','items':items or []}
@@ -223,13 +275,24 @@ def ok(items=None,item=None,note=None):
 def bad(error):
     return {'status':'error','items':[],'message':str(error)[:150]}
 
-def collect(today,s):
+def collect(today,s,previous=None):
     out={'date':today.isoformat(),'updatedAt':datetime.now(TZ).isoformat(timespec='minutes'),'sources':SOURCES,'sections':{}}
     sections=out['sections']
     try:sections['keirin']=ok(parse_keirin(fetch(s,KEIRIN),today))
     except Exception as e:log.exception('競輪取得');sections['keirin']=bad(e)
     try:
         auto=parse_auto_calendar(fetch(s,AUTO),today)
+        for meet in auto:
+            try:
+                url=AUTO_OFFICIAL+AUTO_NAMES[meet['name']]+'/'+today.isoformat()
+                official=check_auto_official(fetch(s,url),meet['name'],today)
+                if not official:continue
+                primary=meet.get('timeType');other=official.get('timeType')
+                if primary and other and primary!=other:
+                    log.warning('オート開催時間帯が不一致: %s (%s vs %s)',meet['name'],primary,other)
+                    meet['timeType']=None
+                elif other:meet['timeType']=other
+            except Exception as e:log.info('オートの公式照合ができません: %s: %s',meet['name'],e)
         sections['auto']=ok(auto)
     except Exception as e:
         log.warning('オート日程取得: %s',e)
@@ -239,21 +302,37 @@ def collect(today,s):
         sections['soda']=ok(parse_boat(fetch(s,BOAT,{'hd':today.strftime('%Y%m%d')}),today),
             note='SODA対応場で開催。SODAライブ配信を保証するものではありません。')
     except Exception as e:log.exception('SODA開催場');sections['soda']=bad(e)
-    try:
-        calendar=parse_mori_calendar(fetch(s,MORI),today)
-        if calendar:
-            item=calendar[0]
-            if item['type']=='today':
-                sections['mori']={'status':'partial','items':[],'item':item,
-                    'message':'本日の出走Rは未確認','note':'開催期間中 / 出走Rは未確認'}
-            else:
-                sections['mori']=ok(item=item)
+    candidates={}
+    for url,parser,source in (
+            (ASSEN,parse_assen,'official'),
+            (MORI,parse_mori_calendar,'winticket'),
+            (ODDSPARK,parse_mori,'oddspark')):
+        try:
+            for item in parser(fetch(s,url),today):
+                candidate=dict(item)
+                dt=date.fromisoformat(candidate['date'])
+                if dt<today or candidate.get('name') not in AUTO_NAMES:continue
+                candidate.setdefault('type','today' if dt==today else 'next')
+                candidates.setdefault((candidate['date'],candidate['name']),[]).append((source,candidate))
+        except Exception as e:log.warning('森選手 %s 日程取得失敗: %s',source,e)
+    if candidates:
+        scored=[]
+        for key,records in candidates.items():
+            sources={name for name,_ in records}
+            item=next((x for _,x in records if x.get('type')=='today' and isinstance(x.get('race'),int)),None)
+            if item is None:item=next((x for name,x in records if name=='official'),records[0][1])
+            scored.append((item['date'],0 if len(sources)>=2 else 1,0 if 'official' in sources else 1,item))
+        item=min(scored,key=lambda x:x[:3])[3]
+        if item['type']=='today' and not isinstance(item.get('race'),int):
+            sections['mori']={'status':'partial','items':[],'item':item,'message':'出走R確認中'}
+        else:sections['mori']=ok(item=item)
+    else:
+        cached=mori_previous_item(previous,today)
+        if cached:
+            sections['mori']=ok(item=cached)
+            log.warning('森選手: 前回確認済みの将来予定を継続')
         else:
-            sections['mori']=bad('次回の出走予定日を確認できません')
-
-    except Exception as e:
-        log.warning('森選手の出走予定: %s',e)
-        sections['mori']=bad('出走予定を確認できません')
+            sections['mori']=bad('公式・WINTICKET・オッズパークの日程を確認できません')
     return out
 
 def main():
@@ -262,7 +341,12 @@ def main():
     parser.add_argument('--output',default=str(ROOT/'data'/'today.json'))
     args=parser.parse_args()
     today=date.fromisoformat(args.date) if args.date else datetime.now(TZ).date()
-    out=collect(today,session())
+    previous=None
+    snapshot=ROOT/'data'/'today.json'
+    if snapshot.exists():
+        try:previous=json.loads(snapshot.read_text(encoding='utf-8'))
+        except (OSError,ValueError):pass
+    out=collect(today,session(),previous)
     override=ROOT/'overrides'/(today.isoformat()+'.json')
     if override.exists():
         patch=json.loads(override.read_text(encoding='utf-8'))

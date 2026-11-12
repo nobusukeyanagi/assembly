@@ -1,8 +1,9 @@
 import unittest,sys
+from unittest.mock import patch
 from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_mori_calendar,grade
+from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_grade(self):
@@ -39,7 +40,7 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(parse_auto(h,'山陽',D),{'name':'山陽','grade':'G2','day':'初日'})
     def test_boat(self):
         h='<table><tr><td><img alt="蒲郡"></td><td><img alt="G1"></td><td>11/9-11/14 ３日目</td></tr></table>'
-        self.assertEqual(parse_boat(h,D),[{'name':'蒲郡','grade':'G1','day':'3日目'}])
+        self.assertEqual(parse_boat(h,D),[{'name':'蒲郡','grade':'G1','day':'3日目','timeType':'ナイター','girls':False}])
     def test_autorace_calendar(self):
         names=['川口','伊勢崎','浜松','飯塚','山陽']
         blocks=[]
@@ -50,10 +51,34 @@ class ParserTests(unittest.TestCase):
                 part+=f'<a>{start}</a>'
             blocks.append(part)
         h='<main><h2>2026年11月 開催日程</h2>'+''.join(blocks)+'</main>'
-        self.assertEqual(parse_auto_calendar(h,D),[{'name':'山陽','grade':'G2','day':'初日'}])
+        self.assertEqual(parse_auto_calendar(h,D),[{'name':'山陽','grade':'G2','timeType':None,'day':'初日'}])
     def test_winticket_mori_calendar(self):
         h='<h1>森且行</h1><h2>出場予定</h2><a>令和8年</a> 飯塚 オートレース 11/16〜11/18 川口 オートレース 11/22〜11/25 <h2>直近5走</h2>'
         self.assertEqual(parse_mori_calendar(h,D)[0]['date'],'2026-11-16')
+    def test_auto_classification(self):
+        self.assertEqual(race_time_type('伊勢崎アフター５'),'ナイター')
+        self.assertEqual(race_time_type('飯塚オーバーミッドナイト'),'ミッドナイト')
+        self.assertIsNone(race_time_type('GⅡ若獅子杯'))
+    def test_auto_official_confirmation(self):
+        h='<h2>伊勢崎アフター５</h2><div>開催期間：2026年11月10日(火)～12日(木) 開催 第3日目</div>'
+        self.assertEqual(check_auto_official(h,'伊勢崎',date(2026,11,12))['timeType'],'ナイター')
+    def test_boat_ladies(self):
+        h='<table><tr><td><img alt="蒲郡"></td><td>11/9-11/14 3日目 ヴィーナスシリーズ</td></tr></table>'
+        self.assertTrue(parse_boat(h,D)[0]['girls'])
+    def test_assen_official(self):
+        h='<html><body>森 且行 出場情報 11月 07日(土)～10日(火) 川口/普通開催 '
+        h+='11月 22日(日)～25日(水) 川口/ナイト 11月 30日(月)～12月03日(木) 川口/ナイト</body></html>'
+        self.assertEqual([x['date'] for x in parse_assen(h,date(2026,11,12))],['2026-11-22','2026-11-30'])
+    def test_verified_future_cache(self):
+        old={'sections':{'mori':{'item':{'date':'2026-11-22','name':'川口','type':'next'}}}}
+        self.assertEqual(mori_previous_item(old,date(2026,11,12))['name'],'川口')
+        self.assertIsNone(mori_previous_item(old,date(2026,11,23)))
+    def test_mori_official_fallback(self):
+        h='<html><body>森且行 出場情報 11月 22日(日)～25日(水) 川口/普通開催</body></html>'
+        with patch('update.fetch',side_effect=lambda s,url,params=None:
+                h if url==ASSEN else (_ for _ in ()).throw(RuntimeError('unavailable'))):
+            out=collect(date(2026,11,12),object())
+        self.assertEqual(out['sections']['mori']['item']['date'],'2026-11-22')
     def test_mori(self):
         h='<p>出場予定</p><p>2026/11/11 川口 9R</p><h2>総合成績</h2>'
         self.assertEqual(parse_mori(h,D),[{'date':'2026-11-11','name':'川口','race':9}])
