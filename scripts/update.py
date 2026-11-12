@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse, json, logging, re, sys
 import verified_sources
+import finals
 from unicodedata import normalize
 from datetime import date, datetime
 from pathlib import Path
@@ -606,6 +607,7 @@ def collect(today,s,previous=None):
             old=previous.get('sections',{}).get('mori')
             if isinstance(old,dict) and old.get('status') in ('ok','cached') and old.get('item',{}).get('source')=='historical-results':
                 sections['mori']=dict(old,status='cached',note='同日・前回確認済みの出走履歴を表示')
+        out['finals']=finals.collect(s,today,sections,active,previous)
         return out
     candidates={}
     for url,parser,source in (
@@ -655,6 +657,7 @@ def collect(today,s,previous=None):
             log.warning('森選手: 前回確認済みの将来予定を継続')
         else:
             sections['mori']=bad('公式・WINTICKET・オッズパークの日程を確認できません')
+    out['finals']=finals.collect(s,today,sections,active,previous)
     return out
 
 def main():
@@ -674,6 +677,8 @@ def main():
         patch=json.loads(override.read_text(encoding='utf-8'))
         for key,value in patch.get('sections',{}).items():
             if key in out['sections']:out['sections'][key]=value
+        if 'finals' in patch:
+            out['finals']=patch['finals']
         out['overridden']=True
     dst=Path(args.output);dst.parent.mkdir(parents=True,exist_ok=True)
     dst.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
