@@ -13,7 +13,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
 body {
-  background: #e5ebe8;
+  background: #ffffff;
   font-family: "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
   color: var(--ink);
   font-weight: 600;
@@ -31,7 +31,7 @@ body {
   padding: 16px 30px;
   display: flex;
   flex-direction: column;
-  background: #f5f6f3;
+  background: #ffffff;
   overflow: hidden;
 }
 .header {
@@ -41,7 +41,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  border-bottom: 1px solid #d0d9d7;
+  border-bottom: 3px solid #25323a;
   margin-bottom: 10px;
 }
 h1 {
@@ -75,16 +75,22 @@ h1 {
   flex: none;
   min-width: 0;
   padding: 7px 9px;
-  background: #fff;
-  border: 1px solid #e0e7e4;
-  border-radius: 14px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 2px solid #d6dfe0;
   overflow: hidden;
 }
 .keirin { height: 466px; }
 .auto { height: 162px; }
 .soda { height: 314px; }
 /* When Keirin has at most eight meets, use five fixed-height rows overall. */
-.dashboard.five-rows .keirin { height: 314px; }
+.dashboard.five-rows {
+  --tile-height: 176.4px;
+}
+.dashboard.five-rows .keirin { height: 374.8px; }
+.dashboard.five-rows .auto { height: 192.4px; }
+.dashboard.five-rows .soda { height: 374.8px; }
 .panel-head {
   display: flex;
   flex-direction: column;
@@ -161,11 +167,16 @@ h2 {
   min-height: 0;
   height: var(--tile-height);
   padding: 0 4px;
-  border: 1px solid #e5ebe8;
-  border-radius: 9px;
-  background: #f8faf9;
+  border: 0;
+  border-right: 1px solid #d8e0e1;
+  border-bottom: 1px solid #d8e0e1;
+  border-radius: 0;
+  background: transparent;
   overflow: hidden;
 }
+#keirin-entries > .entry:nth-child(4n),
+#soda-entries > .entry:nth-child(4n),
+.mori-tile { border-right: 0; }
 .entry .venue {
   font-size: 90px;
   font-weight: 900;
