@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 const date=process.env.PREVIEW_DATE || '2026-11-23';
 const countText=process.env.KEIRIN_COUNT || '12';
 const count=Number(countText);
-if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) ||
+if(!/^\d{4}-\d{2}-\d{2}$/.test(date) ||
    !Number.isFinite(Date.parse(date+'T00:00:00Z')) ||
    new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date){
   throw Error('Invalid PREVIEW_DATE (YYYY-MM-DD): '+date);
@@ -52,7 +52,7 @@ const fixture={
 
 const directory=resolve(process.cwd(),'preview-output');
 await mkdir(directory,{recursive:true});
-const json=(obj)=>JSON.stringify(obj,null,2)+'\\n';
+const json=(obj)=>JSON.stringify(obj,null,2)+'\n';
 await writeFile(resolve(directory,'fixture.json'),json(fixture),'utf8');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
 const assetPaths={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/holidays.js':'holidays.js','/styles.css':'styles.css'};
