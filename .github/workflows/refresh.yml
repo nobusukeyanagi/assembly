@@ -79,6 +79,20 @@ jobs:
           out=finals.collect(update.session(),target,sections,update)
           print("LIVE FINALS",[(r["sport"],r["venue"],r["event"],r["raceName"],r["race"],r["startTime"],len(r["riders"])) for r in out["items"]])
           print("LIVE ERRORS",out["verification"]["errors"])
+          try:
+              from bs4 import BeautifulSoup, NavigableString
+              uri=finals.AUTO_RACE.format(day="20261103",venue="04",race=12)
+              soup=BeautifulSoup(update.fetch(update.session(),uri),"html.parser")
+              print("AUTO DEBUG TITLE",soup.title.get_text(" ",strip=True) if soup.title else "-")
+              print("AUTO DEBUG H1",[(h.get_text(" ",strip=True))[:120] for h in soup.find_all("h1")][:5])
+              print("AUTO DEBUG H2",[(h.get_text(" ",strip=True))[:120] for h in soup.find_all("h2")][:8])
+              print("AUTO DEBUG TEXT",soup.get_text(" ",strip=True)[:1200])
+              print("AUTO DEBUG TABLES",len(soup.find_all("table")))
+              for h in soup.find_all("h1")[:2]:
+                  values=[str(t).strip() for t in h.next_elements if isinstance(t,NavigableString)]
+                  print("AUTO DEBUG AFTER H1",values[:35])
+          except Exception as exc:
+              print("AUTO DEBUG ERROR",repr(exc))
           PY
       - name: Select the public display mode
         if: ${{ github.event_name == 'workflow_dispatch' }}
