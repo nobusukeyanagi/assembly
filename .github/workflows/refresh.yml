@@ -25,6 +25,7 @@ on:
       - app.js
       - styles.css
       - scripts/update.py
+      - scripts/verified_sources.py
       - scripts/display_mode.py
       - requirements.txt
       - data/**
@@ -57,6 +58,7 @@ jobs:
         run: |
           node --check app.js
           node --check holidays.js
+          python -m py_compile scripts/update.py scripts/verified_sources.py
       - name: Unit tests
         run: |
           python -m unittest discover -s tests -v

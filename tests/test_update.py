@@ -3,6 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+from verified_sources import parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
@@ -76,6 +77,95 @@ class ParserTests(unittest.TestCase):
         html='<p>出場予定</p><p>2026/11/12 川口 3R 2026/11/12 川口 12R</p><h2>総合成績</h2>'
         self.assertEqual([x['race'] for x in parse_mori(html,date(2026,11,12))],[3,12])
 
+
+    def test_auto_oct12_dated_month_and_secondary_racecard(self):
+        d=date(2026,10,12)
+        names=['川口','伊勢崎','浜松','飯塚','山陽']
+        calendar='<h2>2026年10月 開催日程</h2>'
+        for n in names:
+            cal='<h3>'+n+' オートレース</h3>'
+            cal+=('<a>10月10日 〜 10月12日浜松アーリーレース</a>' if n=='浜松' else
+                  '<a>10月8日 〜 10月12日ＧⅡオーバルチャンピオンカップ</a>' if n=='飯塚' else
+                  '<a>10月13日 〜 10月16日普通開催</a>')
+            calendar+=cal
+        # The parser requires >=8 date ranges to certify a full monthly calendar.
+        calendar+='<div>10月20日 〜 10月22日普通開催</div>'*6
+        self.assertEqual({r['name'] for r in parse_auto_calendar(calendar,d)},{'浜松','飯塚'})
+        race=('<h1>開催日（2026年10月12日（月）） 飯塚｜レース一覧</h1><h2>飯塚</h2>'
+              '<h3>最終日 令和8年度G2オーバルチャンピオン（ナイター）</h3><p>1R 発売終了</p>')
+        self.assertEqual(parse_oddspark_auto(race,d,'飯塚',autorace_grade,race_time_type),
+                         {'name':'飯塚','grade':'G2','day':'最終日','timeType':'ナイター'})
+        with self.assertRaises(ValueError):
+            parse_oddspark_auto(race,date(2026,10,11),'飯塚',autorace_grade,race_time_type)
+        with self.assertRaises(ValueError):
+            parse_oddspark_auto(race,d,'浜松',autorace_grade,race_time_type)
+
+    def test_boat_independent_date_and_full_count(self):
+        d=date(2026,10,12)
+        source='<h1>2026年10月12日（月）のボートレース全6場・72レース</h1>'
+        source+=''.join('<h2>'+title+'</h2>' for title in (
+            '桐生一般・最終日・杯','戸田一般・最終日・杯',
+            '江戸川G3・最終日・レディース','浜名湖一般・3日目・杯',
+            '津一般・最終日・杯','びわこ一般・初日・杯'))
+        names='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
+        got=parse_ikachi_boat(source,d,names,{'桐生','蒲郡','若松'})
+        self.assertEqual([x['name'] for x in got],['桐生','戸田','浜名湖','びわこ'])
+        self.assertEqual(got[2]['day'],'3日目')
+        with self.assertRaises(ValueError):
+            parse_ikachi_boat(source.replace('全6場','全7場'),d,names,{'桐生'})
+
+    def test_sources_union_disagreements_audited(self):
+        a=[{'name':'川口','grade':'普通','day':'2日目','timeType':None}]
+        b=[{'name':'川口','grade':'G1','day':'2日目','timeType':'ナイター'},
+           {'name':'飯塚','grade':'G2','day':'最終日','timeType':'ナイター'}]
+        got=reconcile('auto',[('a',a),('b',b)],['川口','飯塚'],sort_by_time)
+        self.assertEqual(len(got['items']),2)
+        self.assertEqual(got['items'][0]['grade'],'普通')
+        self.assertEqual(got['items'][0]['timeType'],'ナイター')
+        self.assertEqual(got['verification']['crossConfirmed'],1)
+        self.assertEqual(got['verification']['singleSource'],1)
+        self.assertEqual(len(got['verification']['conflicts']),1)
+
+    def test_same_date_verified_cache_only(self):
+        old={'date':'2026-10-12','updatedAt':'2026-10-12T01:10+09:00',
+             'sections':{'soda':{'status':'ok','items':[{'name':'桐生','day':'最終日'}]}}}
+        ok=cached_section(old,date(2026,10,12),'soda')
+        self.assertEqual(ok['status'],'cached')
+        self.assertIsNone(cached_section(old,date(2026,10,11),'soda'))
+        self.assertIsNone(cached_section({'date':'2026-10-12','sections':{'soda':{'status':'error','items':[]}}},
+                                          date(2026,10,12),'soda'))
+
+    def test_auto_secondary_works_when_monthly_site_fails(self):
+        from types import SimpleNamespace
+        d=date(2026,10,12)
+        race=('<h1>開催日（2026年10月12日（月）） 飯塚｜レース一覧</h1><h2>飯塚</h2>'
+              '<h3>最終日 G2チャンピオン（ナイター）</h3><div>1R</div>')
+        def mocked_fetch(s,url,params=None):
+            if url=='https://sp.oddspark.com/autorace/SpRaceList.do' and params['joCd']=='05':
+                return race
+            raise RuntimeError('offline')
+        upstream=SimpleNamespace(fetch=mocked_fetch,parse_auto_calendar=parse_auto_calendar,
+            autorace_grade=autorace_grade,race_time_type=race_time_type,
+            sort_by_time=sort_by_time,AUTO_OFFICIAL='https://autorace.jp/race_info/Program/',
+            AUTO_NAMES={'飯塚':'iizuka'},check_auto_official=lambda *a:None,bad=lambda msg:{'status':'error','items':[]})
+        out=verified_auto(object(),d,None,upstream)
+        self.assertEqual([x['name'] for x in out['items']],['飯塚'])
+        self.assertEqual(out['items'][0]['grade'],'G2')
+        self.assertEqual(out['verification']['providers'],{'オッズパーク日別':1})
+
+    def test_soda_secondary_works_when_official_is_unavailable(self):
+        from types import SimpleNamespace
+        d=date(2026,10,12)
+        h='<h1>2026年10月12日（月）のボートレース全1場・12レース</h1><h2>桐生一般・最終日・杯</h2>'
+        def mock(s,url,params=None):
+            if 'ikachi.org' in url:return h
+            raise RuntimeError('official unavailable')
+        up=SimpleNamespace(fetch=mock,BOAT='https://www.boatrace.jp/owpc/pc/race/index',
+                           parse_boat=lambda *args:[],SODA_NAMES=['桐生'],NIGHT_BOAT={'桐生'},
+                           sort_by_time=sort_by_time,bad=lambda msg:{'status':'error','items':[]})
+        got=verified_soda(object(),d,None,up)
+        self.assertEqual([x['name'] for x in got['items']],['桐生'])
+        self.assertEqual(got['verification']['singleSource'],1)
     def test_grade(self):
         self.assertEqual(grade('GⅡ'),'G2')
         self.assertEqual(grade('特GI'),'特G1')

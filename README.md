@@ -29,13 +29,23 @@ https://nobusukeyanagi.github.io/assembly/
 - 元に戻す場合は **Run workflow → 当日** を選択します。
 - 選択モードは `data/display.json` に保存し、毎日の自動更新をまたいでも保持します。`data/today.json` は引き続き日次更新します。
 
+## 複数サイトの照合と取得失敗対策
+
+- 競輪：**楽天Kドリームスの指定日開催情報・KEIRIN HEXの日別出走表・当日以降はKEIRIN.JP公式**の最大3サイトを取得し、同日・同場のグレードや開催日数・時間帯を照合します。
+- オートレース：**指定年月に対応するWINTICKET月間日程**と**オッズパークの指定日・場別レース一覧**を照合します。さらにAUTORACE.JP個別レース表で時間帯を確認します。過去日を選択しても現在月のデータと混同しません。
+- SODA：**BOAT RACE公式の日付指定開催表**と**「きょうの競艇」の日別全レース記録**を照合し、SODA対応の場だけを表示します。
+- 日付・開催場を確かめた記録だけを統合します。1サイトでエラーが起きても、別サイトで確認できた開催情報は表示します。開催場名・開催日数等が食い違う場合は、優先サイトの値を保持し、照合結果の不一致をJSONに記録します。
+- `sections.*.verification` に、取得成功元の件数、2サイト以上で確認された場数、1サイトのみの場数、相違、取得失敗を記録します。
+- **全サイトが失敗した場合のみ、同じ日付で以前に正常取得済みのデータを再利用**します。違う日の開催情報を流用したり、架空の場を追加したりしません。
+- 全サイトが取得失敗し、同日確認済みデータもなければ、推測を避けて取得エラーを表示します。
+
 ## 取得元と注意点
 
 | 表示項目 | 取得元 |
 |---|---|
 | 競輪 | 当日・未来：[KEIRIN.JP公式開催日程](https://keirin.jp/sp/raceschedule)。過去：[楽天Kドリームスの日別開催情報](https://keirin.kdreams.jp/kaisai/2026/11/01/)と[KEIRIN HEXのレース一覧](https://keirinhex.jp/races/20261101/)を照合 |
-| オートレース | [WINTICKET月間開催日程](https://www.winticket.jp/autorace/schedules/)（[AUTORACE.JP](https://autorace.jp/calendar/)の個別出走表は開催日程判定に使用できないため補完） |
-| SODA対象場 | [SODA](https://so-da.jp/aud/top) の対応場を、[BOAT RACE公式開催日程](https://www.boatrace.jp/owpc/pc/race/index) と照合 |
+| オートレース | [WINTICKETの年月別開催日程](https://www.winticket.jp/autorace/schedules/202610)、[オッズパークの場別レース情報](https://sp.oddspark.com/autorace/SpRaceList.do?joCd=05&kaisaiBi=20261012)、[AUTORACE.JP](https://autorace.jp/) |
+| SODA対象場 | SODA対応場を[BOAT RACE公式開催日程](https://www.boatrace.jp/owpc/pc/race/index?hd=20261012)と[きょうの競艇の日別開催記録](https://www.ikachi.org/kyotei/2026-10-12)から検証 |
 | 森且行選手 | 当日・未来：[WINTICKET選手プロフィール](https://www.winticket.jp/autorace/autoracer/2529/)・公式あっせん。過去日：[Handicapper.jpの出走履歴](https://handicapper.jp/riders/118) |
 
 **SODA欄は「SODA対応場で開催されるレース場」です。SODAでそのレースが配信されることを保証しません。**
