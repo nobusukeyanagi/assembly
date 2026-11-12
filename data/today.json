@@ -1,13 +1,16 @@
 {
   "date": "2026-11-12",
-  "updatedAt": "2026-11-12T10:22+09:00",
+  "updatedAt": "2026-11-12T10:27+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "auto": "https://www.winticket.jp/autorace/schedules/",
     "auto_official": "https://autorace.jp/",
     "soda": "https://so-da.jp/aud/top",
     "soda_schedule": "https://www.boatrace.jp/owpc/pc/race/index",
-    "mori": "https://www.winticket.jp/autorace/autoracer/2529/"
+    "mori": "https://www.winticket.jp/autorace/autoracer/2529/",
+    "mori_official": "https://sp.atrc.jp/racer/racerasseninfo/player_id/2529",
+    "mori_racecard": "https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529",
+    "auto_racecard": "https://autorace.jp/race_info/Program/"
   },
   "sections": {
     "keirin": {
@@ -77,16 +80,19 @@
         {
           "name": "伊勢崎",
           "grade": "一般",
+          "timeType": "ナイター",
           "day": "最終日"
         },
         {
           "name": "飯塚",
           "grade": "一般",
+          "timeType": "ミッドナイト",
           "day": "最終日"
         },
         {
           "name": "山陽",
           "grade": "G2",
+          "timeType": null,
           "day": "2日目"
         }
       ]
@@ -97,27 +103,37 @@
         {
           "name": "戸田",
           "grade": "一般",
-          "day": "初日"
+          "day": "初日",
+          "timeType": null,
+          "girls": false
         },
         {
           "name": "蒲郡",
           "grade": "一般",
-          "day": "4日目"
+          "day": "4日目",
+          "timeType": "ナイター",
+          "girls": false
         },
         {
           "name": "三国",
           "grade": "一般",
-          "day": "3日目"
+          "day": "3日目",
+          "timeType": null,
+          "girls": false
         },
         {
           "name": "宮島",
           "grade": "一般",
-          "day": "最終日"
+          "day": "最終日",
+          "timeType": null,
+          "girls": false
         },
         {
           "name": "芦屋",
           "grade": "一般",
-          "day": "最終日"
+          "day": "最終日",
+          "timeType": null,
+          "girls": false
         }
       ],
       "note": "SODA対応場で開催。SODAライブ配信を保証するものではありません。"
