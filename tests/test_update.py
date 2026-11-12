@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from verified_sources import parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
-from update import parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
+from update import parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_autorace_grade(self):
@@ -78,6 +78,19 @@ class ParserTests(unittest.TestCase):
         self.assertEqual([x['race'] for x in parse_mori(html,date(2026,11,12))],[3,12])
 
 
+
+    def test_autorace_official_independent_record(self):
+        from verified_sources import parse_autorace_official_card
+        from types import SimpleNamespace
+        up=SimpleNamespace(parse_auto=parse_auto,check_auto_official=check_auto_official,day_label=day_label)
+        h=('<h2>普通浜松</h2><h3>令和8年度浜松市営 浜松アーリー</h3>'
+           '<div>開催期間：2026年10月10日(土)～12日(月) 開催 第3日目</div>'
+           '<p>一般戦1R</p>')
+        item=parse_autorace_official_card(h,date(2026,10,12),'浜松',up)
+        self.assertEqual(item['day'],'最終日')
+        self.assertEqual(item['grade'],'普通')
+        with self.assertRaises(ValueError):
+            parse_autorace_official_card(h,date(2026,10,11),'川口',up)
     def test_auto_oct12_dated_month_and_secondary_racecard(self):
         d=date(2026,10,12)
         names=['川口','伊勢崎','浜松','飯塚','山陽']

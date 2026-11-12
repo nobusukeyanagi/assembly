@@ -131,7 +131,7 @@ def parse_keirin_archive(html, target):
     for tag in soup(['script','style','noscript']):tag.decompose()
     heading_text=f'{target.year}年{target.month}月{target.day}日 開催一覧'
     heading=next((h for h in soup.find_all(['h1','h2','h3'])
-                  if normalize('NFKC',h.get_text(' ',strip=True))==heading_text),None)
+                  if normalize('NFKC',h.get_text(' ',strip=True)).removeprefix('本日').strip()==heading_text),None)
     if heading is None:raise ValueError('指定日の開催一覧がありません: '+heading_text)
     names='|'.join(map(re.escape,sorted(KEIRIN_NAMES,key=len,reverse=True)))
     pattern=re.compile(r'^('+names+r')(GP|GIII|GII|GI|G[123]|FII|FI|F[12])$',re.I)

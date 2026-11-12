@@ -93,6 +93,15 @@ def reconcile(category,lists,venue_order,sort_by_time):
                 if old.get(key) in (None,'確認中'):
                     old[key]=new
                 elif old[key]!=new:
+                    # Different wording for the same day: a numbered day can
+                    # also be the final day. Prefer the more informative label.
+                    if key=='day' and (old[key]=='最終日' or new=='最終日'):
+                        old[key]='最終日'
+                        continue
+                    if key=='day' and ((old[key]=='初日' and new=='1日目') or
+                                       (new=='初日' and old[key]=='1日目')):
+                        old[key]='初日'
+                        continue
                     differences.append({'name':name,'field':key,'primary':old[key],
                                         'alternative':new,'source':source})
             if row.get('girls') is True:old['girls']=True
@@ -134,49 +143,81 @@ def keirin(s,selected,previous,u):
     result['verification']['errors']=errors
     return result
 
+
+def parse_autorace_official_card(html,selected,venue,u):
+    """An independent official, date-and-track checked racecard."""
+    parsed=u.parse_auto(html,venue,selected)
+    checked=u.check_auto_official(html,venue,selected)
+    if not parsed or not checked:
+        raise ValueError('AUTORACE.JPの指定日・開催場を照合できません')
+    result=dict(parsed,timeType=checked.get('timeType'))
+    normalized=normalize('NFKC',BeautifulSoup(html,'html.parser').get_text(' ',strip=True))
+    m=re.search(
+        r'開催期間\s*[：:]\s*(20\d{2})年(\d{1,2})月(\d{1,2})日\s*(?:\([^)]*\))?\s*'
+        r'[～〜~\-]\s*(?:(\d{1,2})月)?\s*(\d{1,2})日',
+        normalized)
+    if m:
+        from datetime import date
+        y,mo,d=map(int,m.group(1,2,3))
+        end_m=int(m.group(4) or mo)
+        end_d=int(m.group(5))
+        try:
+            st=date(y,mo,d);en=date(y+int(end_m<mo),end_m,end_d)
+            if st<=selected<=en:result['day']=u.day_label(selected,st,en)
+        except ValueError:pass
+    return result
+
+
 def auto(s,selected,previous,u):
     lists=[];errors=[]
     try:
-        month_html=u.fetch(s,AUTO_MONTH.format(year=selected.year,month=selected.month))
-        rows=u.parse_auto_calendar(month_html,selected)
-        lists.append(('WINTICKET指定月',rows))
+        html=u.fetch(s,AUTO_MONTH.format(year=selected.year,month=selected.month))
+        month=u.parse_auto_calendar(html,selected)
+        lists.append(('WINTICKET指定月',month))
     except Exception as exc:errors.append(('WINTICKET指定月',str(exc)))
 
-    def fetch_track(pair):
-        name,code=pair
-        params={'gamenId':'S711','gamenKoumokuId':'iconAutoraceRaceList',
-                'joCd':code,'kaisaiBi':selected.strftime('%Y%m%d')}
+    def check_official(pair):
+        name,_=pair
         try:
-            html=u.fetch(s,AUTO_ODDSPARK,params)
-            return name,parse_oddspark_auto(html,selected,name,u.autorace_grade,u.race_time_type),None
+            url=u.AUTO_OFFICIAL+u.AUTO_NAMES[name]+'/'+selected.isoformat()
+            html=u.fetch(s,url)
+            return name,parse_autorace_official_card(html,selected,name,u),None
         except Exception as exc:return name,None,str(exc)
 
-    racecard=[];missed=[]
+    official=[];missed_official=[]
     with ThreadPoolExecutor(max_workers=5) as pool:
-        for name,item,issue in pool.map(fetch_track,AUTO_CODES.items()):
-            if item:racecard.append(item)
-            else:missed.append({'name':name,'reason':issue})
-    if racecard:lists.append(('オッズパーク日別',racecard))
+        for name,item,issue in pool.map(check_official,AUTO_CODES.items()):
+            if item:official.append(item)
+            else:missed_official.append({'name':name,'reason':issue})
+    if official:lists.append(('AUTORACE.JP出走表',official))
+
+    # Oddspark is an additional fallback. Its site may reject cloud runners,
+    # so do not make any venue depend on its successful response.
+    racecard=[];missed_oddspark=[]
+    if not official or not lists or (lists and len(lists)>1 and
+                                     len(official)<len(lists[0][1])):
+        def check_oddspark(pair):
+            name,code=pair
+            params={'gamenId':'S711','gamenKoumokuId':'iconAutoraceRaceList',
+                    'joCd':code,'kaisaiBi':selected.strftime('%Y%m%d')}
+            try:
+                html=u.fetch(s,AUTO_ODDSPARK,params)
+                return name,parse_oddspark_auto(html,selected,name,u.autorace_grade,u.race_time_type),None
+            except Exception as exc:return name,None,str(exc)
+        with ThreadPoolExecutor(max_workers=5) as pool:
+            for name,item,issue in pool.map(check_oddspark,AUTO_CODES.items()):
+                if item:racecard.append(item)
+                else:missed_oddspark.append({'name':name,'reason':issue})
+        if racecard:lists.append(('オッズパーク日別',racecard))
+
     if not lists:
         saved=cached_section(previous,selected,'auto')
         return saved if saved else u.bad('すべてのオートレース開催日程が取得できません')
     result=reconcile('auto',lists,list(AUTO_CODES),u.sort_by_time)
-    result['verification'].update(errors=errors,unconfirmedRacecards=missed)
-    # Additional independent grade/time validation when official racecards exist.
-    for row in result['items']:
-        try:
-            url=u.AUTO_OFFICIAL+u.AUTO_NAMES[row['name']]+'/'+selected.isoformat()
-            details=u.check_auto_official(u.fetch(s,url),row['name'],selected)
-            if not details or not details.get('timeType'):continue
-            if row.get('timeType') in (None,'確認中'):row['timeType']=details['timeType']
-            elif row['timeType']!=details['timeType']:
-                result['verification']['conflicts'].append({
-                    'name':row['name'],'field':'timeType',
-                    'primary':row['timeType'],'alternative':details['timeType'],
-                    'source':'AUTORACE.JP'})
-        except Exception as exc:LOG.info('AUTORACE.JP照合不可: %s %s',row['name'],exc)
-    result['items']=u.sort_by_time(result['items'])
+    result['verification'].update(errors=errors,unconfirmedOfficial=missed_official,
+                                   unconfirmedRacecards=missed_oddspark)
     return result
+
 
 def soda(s,selected,previous,u):
     lists=[];errors=[]
