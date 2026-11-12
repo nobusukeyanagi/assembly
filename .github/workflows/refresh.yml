@@ -10,7 +10,7 @@ on:
       - index.html
       - app.js
       - styles.css
-      - scripts/**
+      - scripts/update.py
       - requirements.txt
       - data/**
       - tests/**
