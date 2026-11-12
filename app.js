@@ -31,6 +31,13 @@ function error(root,message,detail){
 function isMajorGrade(grade){
   return /^(?:GP|SG|G[123]|特G1)$/.test(String(grade||'').replaceAll('Ⅰ','1').replaceAll('Ⅱ','2').replaceAll('Ⅲ','3'));
 }
+// Keep source grade codes normalized; use Roman numerals only in Keirin/Autorace labels.
+function displayGrade(grade,id){
+  const value=String(grade||'—');
+  if(id!=='keirin'&&id!=='auto')return value;
+  const roman={'1':'Ⅰ','2':'Ⅱ','3':'Ⅲ'};
+  return value.replace(/([GF])([123])/g,(_,letter,number)=>letter+roman[number]);
+}
 const timeIcons={'モーニング':'☀','ミッドナイト':'★'};
 function filledMoon(){
   const ns='http://www.w3.org/2000/svg';
@@ -47,7 +54,7 @@ function card(item,id){
   const el=node('article','entry');
   const title=node('div','venue',item.name||'—');
   const meta=node('div','meta');
-  const grade=node('span','grade',item.grade||'—');
+  const grade=node('span','grade',displayGrade(item.grade,id));
   grade.dataset.tier=isMajorGrade(item.grade)?'major':'regular';
   meta.append(grade);
   meta.append(node('span','day',String(item.day||'—').normalize('NFKC')));
