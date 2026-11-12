@@ -1,6 +1,6 @@
 {
   "date": "2026-11-12",
-  "updatedAt": "2026-11-12T13:03+09:00",
+  "updatedAt": "2026-11-12T13:12+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -88,13 +88,13 @@
         },
         {
           "name": "伊勢崎",
-          "grade": "一般",
+          "grade": "普通",
           "timeType": "ナイター",
           "day": "最終日"
         },
         {
           "name": "飯塚",
-          "grade": "一般",
+          "grade": "普通",
           "timeType": "ミッドナイト",
           "day": "最終日"
         }
@@ -149,7 +149,7 @@
         "name": "川口",
         "type": "next",
         "unconfirmed": true,
-        "grade": "一般",
+        "grade": "普通",
         "timeType": "ナイター"
       }
     }
