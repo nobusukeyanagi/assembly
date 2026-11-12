@@ -195,9 +195,9 @@ h1 {
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 38px;
-  height: 38px;
-  font-size: 38px;
+  width: 44px;
+  height: 44px;
+  font-size: 44px;
   line-height: 1;
   font-weight: 900;
 }
@@ -206,16 +206,19 @@ h1 {
 .entry .time-type[data-type="ミッドナイト"] .time-icon { color: #e4a529; }
 .moon-symbol {
   display: block;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   fill: currentColor;
+  stroke: currentColor;
+  stroke-width: .45px;
+  stroke-linejoin: round;
 }
-.entry .girls { color: #cf4a7a; font-weight: 900; }
+.entry .girls { color: #cf4a7a; font-size: 44px; font-weight: 900; line-height: 1; }
 .mori-tile {
   grid-column: 4;
-  grid-template-rows: auto auto;
+  grid-template-rows: 26px auto;
   align-content: center;
-  row-gap: 8px;
+  row-gap: 4px;
 }
 .mori-heading {
   display: flex;
@@ -234,16 +237,16 @@ h1 {
 }
 .mori-tile h3 { margin: 0; }
 .mori-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
+  display: grid;
+  grid-template-rows: 66px 36px;
+  justify-items: center;
+  align-content: center;
+  gap: 3px;
   min-width: 0;
 }
-.mori-primary { color: var(--ink); font-size: 39px; font-weight: 900; white-space: nowrap; line-height: 1.1; letter-spacing: -.03em; }
-.mori-today .mori-primary { color: var(--ink); }
-.mori-meta { font-size: 14px; color: var(--ink); white-space: nowrap; }
+.entry .mori-primary { font-size: 62px; height: 66px; line-height: 66px; }
+.mori-detail { justify-content: center; }
+.mori-race { font-size: 26px; font-weight: 800; color: var(--ink); }
 .message, .detail {
   color: var(--ink);
   font-size: 20px;

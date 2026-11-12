@@ -50,6 +50,22 @@ function filledMoon(){
   svg.append(path);
   return svg;
 }
+function timeBadge(type){
+  if(!type||type==='デイ'||type==='確認中')return null;
+  const tag=node('span','time-type');
+  tag.dataset.type=type;
+  if(type==='ナイター'){
+    const icon=node('span','time-icon');
+    icon.append(filledMoon());
+    tag.append(icon);
+  } else if(timeIcons[type]){
+    tag.append(node('span','time-icon',timeIcons[type]));
+  } else {
+    tag.append(node('span','time-text',type));
+  }
+  tag.setAttribute('aria-label',type);
+  return tag;
+}
 function card(item,id){
   const el=node('article','entry');
   const title=node('div','venue',item.name||'—');
@@ -59,22 +75,8 @@ function card(item,id){
   meta.append(grade);
   meta.append(node('span','day',String(item.day||'—').normalize('NFKC')));
   if(id==='keirin'||id==='auto'||id==='soda'){
-    const type=item.timeType||null;
-    if(type&&type!=='デイ'){
-      const tag=node('span','time-type');
-      tag.dataset.type=type;
-      if(type==='ナイター'){
-        const icon=node('span','time-icon');
-        icon.append(filledMoon());
-        tag.append(icon);
-      } else if(timeIcons[type]){
-        tag.append(node('span','time-icon',timeIcons[type]));
-      } else {
-        tag.append(node('span','time-text',type));
-      }
-      tag.setAttribute('aria-label',type);
-      meta.append(tag);
-    }
+    const icon=timeBadge(item.timeType);
+    if(icon)meta.append(icon);
     if(item.girls) {
       const heart=node('span','girls','♥');
       heart.setAttribute('aria-label','ガールズ');
@@ -114,8 +116,18 @@ function mori(section,stale){
   const d=/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?
     Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';
   status.textContent=hasRace?'本日出走':isToday?'出走R確認中':'次回予定';
-  const primary=hasRace?x.name+' '+x.race+'R':isToday?x.name+' R確認中':d+' '+(x.name||'');
-  root.replaceChildren(node('div','mori-primary',primary));
+  const venue=node('div','venue mori-primary',x.name||'—');
+  const meta=node('div','meta mori-detail');
+  if(x.grade){
+    const gr=node('span','grade',displayGrade(x.grade,'auto'));
+    gr.dataset.tier=isMajorGrade(x.grade)?'major':'regular';
+    meta.append(gr);
+  }
+  meta.append(node('span','day',d));
+  const timeIcon=timeBadge(x.timeType);
+  if(timeIcon)meta.append(timeIcon);
+  if(hasRace)meta.append(node('span','mori-race',String(x.race)+'R'));
+  root.replaceChildren(venue,meta);
   if(isToday)root.classList.add('mori-today');
 }
 function render(data){

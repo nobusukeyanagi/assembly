@@ -20,8 +20,9 @@ MORI='https://www.winticket.jp/autorace/autoracer/2529/'
 ASSEN='https://sp.atrc.jp/racer/racerasseninfo/player_id/2529'
 ODDSPARK='https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529'
 AUTO_OFFICIAL='https://autorace.jp/race_info/Program/'
+KAWAGUCHI_SCHEDULE='https://www.kawaguchiauto.jp/race-calender/'
 NIGHT_BOAT={'桐生','蒲郡','若松'}
-SOURCES={'keirin':KEIRIN,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL}
+SOURCES={'keirin':KEIRIN,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
 KEIRIN_NAMES='函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本'.split()
 AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
 SODA_NAMES='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
@@ -171,6 +172,43 @@ def parse_auto_calendar(html,today):
     if len(verified)!=5 or count<8:raise ValueError('全5場の開催日程を確認できません')
     return items
 
+def parse_kawaguchi_official_meeting(html,scheduled):
+    """Match the venue's published event start date, not just the track name."""
+    soup=BeautifulSoup(html,'html.parser')
+    for tag in soup(['script','style','noscript']):tag.decompose()
+    lines=[normalize('NFKC',x.strip()) for x in soup.get_text('\n').splitlines() if x.strip()]
+    event_dates=re.compile(r'^(\d{1,2})/(\d{1,2})\s*\([^)]{1,12}\)\s*[〜～~\-]\s*(\d{1,2})/(\d{1,2})\s*\([^)]{1,12}\)')
+    for n,line in enumerate(lines):
+        match=event_dates.match(line)
+        if not match or n==0:continue
+        bounds=period(scheduled,*map(int,match.groups()))
+        if not bounds or bounds[0]!=scheduled:continue
+        title=lines[n-1]
+        if '場外' in title:continue
+        gr=re.search(r'(SG|特G(?:III|II|I|[123])|G(?:III|II|I|[123]))',title,re.I)
+        return {'grade':grade(gr.group(1)) if gr else '一般',
+                'timeType':race_time_type(title)}
+    return None
+
+def mori_meeting_metadata(schedule_html,scheduled,name,official_html=None):
+    """Add grades/slots only for the meeting matching Mori's venue and start date."""
+    if schedule_html is None:return {}
+    try:
+        meeting=next((x for x in parse_auto_calendar(schedule_html,scheduled)
+                      if x['name']==name),None)
+    except ValueError:return {}
+    if not meeting:return {}
+    details={key:meeting[key] for key in ('grade','timeType') if meeting.get(key)}
+    # Match an independent official venue schedule when available; conflicting
+    # information must not be shown until the sources agree.
+    if name=='川口' and official_html:
+        official=parse_kawaguchi_official_meeting(official_html,scheduled)
+        if official:
+            for key in ('grade','timeType'):
+                if official.get(key) and details.get(key) and official[key]!=details[key]:
+                    details.pop(key,None)
+    return details
+
 def parse_mori_calendar(html,today):
     """WINTICKET race meeting assignments; days/race numbers are not guaranteed."""
     soup=BeautifulSoup(html,'html.parser')
@@ -281,7 +319,8 @@ def collect(today,s,previous=None):
     try:sections['keirin']=ok(parse_keirin(fetch(s,KEIRIN),today))
     except Exception as e:log.exception('競輪取得');sections['keirin']=bad(e)
     try:
-        auto=parse_auto_calendar(fetch(s,AUTO),today)
+        auto_html=fetch(s,AUTO)
+        auto=parse_auto_calendar(auto_html,today)
         for meet in auto:
             try:
                 url=AUTO_OFFICIAL+AUTO_NAMES[meet['name']]+'/'+today.isoformat()
@@ -323,6 +362,17 @@ def collect(today,s,previous=None):
             if item is None:item=next((x for name,x in records if name=='official'),records[0][1])
             scored.append((item['date'],0 if len(sources)>=2 else 1,0 if 'official' in sources else 1,item))
         item=min(scored,key=lambda x:x[:3])[3]
+        # Resolve the exact future/current event in the published calendar.
+        # Do not invent a grade/time from the rider's biography or past races.
+        scheduled=date.fromisoformat(item['date'])
+        try:
+            monthly_html=auto_html if 'auto_html' in locals() else fetch(s,AUTO)
+            venue_html=None
+            if item['name']=='川口':
+                try:venue_html=fetch(s,KAWAGUCHI_SCHEDULE)
+                except Exception as e:log.info('森選手の川口公式開催日程を照合できません: %s',e)
+            item.update(mori_meeting_metadata(monthly_html,scheduled,item['name'],venue_html))
+        except Exception as e:log.warning('森選手の次回開催属性を確認できません: %s',e)
         if item['type']=='today' and not isinstance(item.get('race'),int):
             sections['mori']={'status':'partial','items':[],'item':item,'message':'出走R確認中'}
         else:sections['mori']=ok(item=item)

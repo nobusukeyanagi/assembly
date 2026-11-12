@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade
+from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_grade(self):
@@ -79,6 +79,27 @@ class ParserTests(unittest.TestCase):
                 h if url==ASSEN else (_ for _ in ()).throw(RuntimeError('unavailable'))):
             out=collect(date(2026,11,12),object())
         self.assertEqual(out['sections']['mori']['item']['date'],'2026-11-22')
+    def test_mori_kawaguchi_venue_calendar(self):
+        official='<h4>テレ玉presents 川口ナイトレース(無観客開催)</h4><p>11/22(日) ～ 11/25(水)</p>'
+        detail=parse_kawaguchi_official_meeting(official,date(2026,11,22))
+        self.assertEqual(detail,{'grade':'一般','timeType':'ナイター'})
+    def test_mori_grade_and_night_from_matching_meeting(self):
+        venues=['川口','伊勢崎','浜松','飯塚','山陽']
+        blocks=[]
+        for venue in venues:
+            block=f'<h3>{venue} オートレース</h3>'
+            block+='<a>11月1日 〜 11月4日令和8年度 普通開催</a>'
+            block+='<a>11月22日 〜 11月25日令和8年度川口ナイトレース</a>' if venue=='川口' else '<a>11月8日 〜 11月11日一般開催</a>'
+            blocks.append(block)
+        html='<main><h2>2026年11月 開催日程</h2>'+''.join(blocks)+'</main>'
+        official='<h4>テレ玉presents 川口ナイトレース(無観客開催)</h4><p>11/22(日) ～ 11/25(水)</p>'
+        result=mori_meeting_metadata(html,date(2026,11,22),'川口',official)
+        self.assertEqual(result,{'grade':'一般','timeType':'ナイター'})
+        mismatch='<h4>SG第58回</h4><p>11/22(日) ～ 11/25(水)</p>'
+        self.assertNotIn('grade',mori_meeting_metadata(html,date(2026,11,22),'川口',mismatch))
+    def test_mori_missing_meeting_no_guessed_metadata(self):
+        html='<h2>2026年12月 開催日程</h2>'
+        self.assertEqual(mori_meeting_metadata(html,date(2026,11,22),'川口'),{})
     def test_mori(self):
         h='<p>出場予定</p><p>2026/11/11 川口 9R</p><h2>総合成績</h2>'
         self.assertEqual(parse_mori(h,D),[{'date':'2026-11-11','name':'川口','race':9}])
