@@ -112,7 +112,7 @@ class ParserTests(unittest.TestCase):
         h='<h2>GII 山陽</h2><p>開催期間：2026年11月11日(水)～15日(日) 開催 第1日目</p>'
         self.assertEqual(parse_auto(h,'山陽',D),{'name':'山陽','grade':'G2','day':'初日'})
     def test_auto_regular(self):
-        h='<h2>普通 川口</h2><p>開催期間：2026年11月11日(水)～13日(金) 開催 第2日目</p>'
+        h='<h2>普通 川口</h2><p>開催期間：2026年11月10日(火)～12日(木) 開催 第2日目</p>'
         self.assertEqual(parse_auto(h,'川口',D)['grade'],'普通')
 
     def test_boat(self):
