@@ -63,7 +63,8 @@ h1 {
 .dashboard {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 9px;
   flex: 1;
   min-height: 0;
 }
@@ -82,6 +83,8 @@ h1 {
 .keirin { height: 466px; }
 .auto { height: 162px; }
 .soda { height: 314px; }
+/* When Keirin has at most eight meets, use five fixed-height rows overall. */
+.dashboard.five-rows .keirin { height: 314px; }
 .panel-head {
   display: flex;
   flex-direction: column;
@@ -144,6 +147,7 @@ h2 {
   overflow: hidden;
 }
 .keirin .entries { grid-template-rows: repeat(3, var(--tile-height)); }
+.dashboard.five-rows .keirin .entries { grid-template-rows: repeat(2, var(--tile-height)); }
 .auto .entries { grid-template-rows: var(--tile-height); }
 .soda .entries { grid-template-rows: repeat(2, var(--tile-height)); }
 .auto-items { display: contents; }
@@ -219,9 +223,9 @@ h2 {
   line-height: 1;
   font-weight: 900;
 }
-.entry .time-type[data-type="モーニング"] .time-icon { color: #e4a529; }
-.entry .time-type[data-type="ナイター"] .time-icon { color: #4a6c9b; }
-.entry .time-type[data-type="ミッドナイト"] .time-icon { color: #7b57ad; }
+.entry .time-type[data-type="モーニング"] .time-icon,
+.entry .time-type[data-type="ナイター"] .time-icon,
+.entry .time-type[data-type="ミッドナイト"] .time-icon { color: #e4a529; }
 .moon-symbol {
   display: block;
   width: 38px;

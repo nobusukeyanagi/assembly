@@ -113,6 +113,9 @@ function mori(section,stale){
 function render(data){
   latest=data;
   const d=today(),stale=data.date!==d,s=data.sections||{};
+  const keirinItems=s.keirin?.items;
+  const fiveRows=!stale&&s.keirin?.status!=='error'&&Array.isArray(keirinItems)&&keirinItems.length<=8;
+  document.querySelector('.dashboard').classList.toggle('five-rows',fiveRows);
   dateDisplay(d);
   entries('keirin',s.keirin,stale);
   entries('auto',s.auto,stale);
