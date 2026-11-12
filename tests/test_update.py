@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,sort_by_time
+from update import parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,grade,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_grade(self):
@@ -50,6 +50,46 @@ class ParserTests(unittest.TestCase):
             'morning','day-A','unverified-A','unverified-B','day-B',
             'night-A','night-B','midnight'])
         self.assertIsNone(got[2]['timeType'])
+
+    def test_nov1_past_nine_venues_and_time_categories(self):
+        selected=date(2026,11,1)
+        meetings=[
+            ('防府','G3','2日目'),('弥彦','F1','最終日'),('久留米','F1','初日'),
+            ('宇都宮','F2','最終日'),('西武園','F2','最終日'),('松戸','F2','最終日'),
+            ('名古屋','F2','最終日'),('熊本','F2','2日目'),('小田原','F2','初日')]
+        archive='<h2>2026年11月1日 開催一覧</h2><ul>'
+        archive+=''.join(f'<li>{name}{g}</li>' for name,g,day in meetings)+'</ul>'
+        archive+=''.join(f'<h3><a>{name}競輪</a> 大会名 {day}</h3>' for name,g,day in meetings)
+        self.assertEqual(len(parse_keirin_archive(archive,selected)),9)
+        race='<h1>2026年11月1日（日）の競輪 82レース</h1>'
+        schedule=[
+            ('モーニング',[('小田原','F2','1日目'),('熊本','F2','2日目')]),
+            ('デイ',[('防府','G3','2日目'),('弥彦','F1','3日目')]),
+            ('ナイター',[('久留米','F1','1日目'),('宇都宮','F2','3日目')]),
+            ('ミッドナイト',[('西武園','F2','3日目'),('松戸','F2','3日目'),('名古屋','F2','3日目')])]
+        for time_type,rows in schedule:
+            race+=f'<h2>{time_type}</h2>'
+            for name,g,day in rows:
+                race+=f'<h3>{g}{name}競輪{day}</h3>'
+                race+='<ul><li>6R L級 ガールズ予選</li></ul>' if name in ('小田原','西武園') else '<ul><li>6R A級 予選</li></ul>'
+        self.assertEqual(len(parse_keirin_race_times(race,selected)),9)
+        urls={KEIRIN_ARCHIVE.format(year=2026,month=11,day=1):archive,
+              KEIRIN_RACES.format(day='20261101'):race}
+        with patch('update.fetch',side_effect=lambda s,url,params=None:urls[url]):
+            items=collect_past_keirin(object(),selected)
+        self.assertEqual([x['name'] for x in items],
+                         ['小田原','熊本','防府','弥彦','久留米','宇都宮','西武園','松戸','名古屋'])
+        self.assertEqual([x['timeType'] for x in items],
+                         ['モーニング','モーニング','デイ','デイ','ナイター','ナイター',
+                          'ミッドナイト','ミッドナイト','ミッドナイト'])
+        self.assertTrue(next(x for x in items if x['name']=='西武園')['girls'])
+        self.assertEqual(next(x for x in items if x['name']=='弥彦')['day'],'最終日')
+
+    def test_past_keirin_missing_sources_is_error(self):
+        with patch('update.fetch',side_effect=RuntimeError('blocked')):
+            with self.assertRaisesRegex(ValueError,'網羅できません'):
+                collect_past_keirin(object(),date(2026,11,1))
+
     def test_auto(self):
         h='<h2>GII 山陽</h2><p>開催期間：2026年11月11日(水)～15日(日) 開催 第1日目</p>'
         self.assertEqual(parse_auto(h,'山陽',D),{'name':'山陽','grade':'G2','day':'初日'})

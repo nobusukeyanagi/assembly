@@ -24,7 +24,7 @@ https://nobusukeyanagi.github.io/assembly/
 - **日付指定**の場合は日付を `YYYY-MM-DD` で入力します。初期値 `2026-11-23`。
 - **当日**の場合、日付入力の値は処理上**無効（無視）**になります。GitHub Actionsの標準フォームは選択内容に応じた入力欄の非活性化に対応していないため、画面上の入力欄は操作できます。
 - 実行後、通常の公開URL（https://nobusukeyanagi.github.io/assembly/）の画面自体が切り替わります。画像出力ではありません。
-- 日付指定の場合は公開日程の取得処理をその日付に対して実行し、`data/selected.json` を作成します。架空の開催場・サンプルデータは使用しません。過去・未来の日程を取得できない情報源では空欄や取得エラー表示になります。
+- 日付指定の場合は指定日の実開催情報を取得し、`data/selected.json` を作成します。過去日の競輪は、終了済み開催が消える現行日程ではなく日別の開催記録を利用し、別のレース一覧で時間帯を照合します。サンプルデータは使用しません。取得できない情報源では取得エラーを表示します。
 - 日付指定中は画面右上に「日付指定表示」と示します。
 - 元に戻す場合は **Run workflow → 当日** を選択します。
 - 選択モードは `data/display.json` に保存し、毎日の自動更新をまたいでも保持します。`data/today.json` は引き続き日次更新します。
@@ -33,7 +33,7 @@ https://nobusukeyanagi.github.io/assembly/
 
 | 表示項目 | 取得元 |
 |---|---|
-| 競輪 | [KEIRIN.JP公式開催日程](https://keirin.jp/sp/raceschedule) |
+| 競輪 | 当日・未来：[KEIRIN.JP公式開催日程](https://keirin.jp/sp/raceschedule)。過去：[楽天Kドリームスの日別開催情報](https://keirin.kdreams.jp/kaisai/2026/11/01/)と[KEIRIN HEXのレース一覧](https://keirinhex.jp/races/20261101/)を照合 |
 | オートレース | [WINTICKET月間開催日程](https://www.winticket.jp/autorace/schedules/)（[AUTORACE.JP](https://autorace.jp/calendar/)の個別出走表は開催日程判定に使用できないため補完） |
 | SODA対象場 | [SODA](https://so-da.jp/aud/top) の対応場を、[BOAT RACE公式開催日程](https://www.boatrace.jp/owpc/pc/race/index) と照合 |
 | 森且行選手 | [WINTICKET選手プロフィール](https://www.winticket.jp/autorace/autoracer/2529/) と、当日開催期間中は WINTICKET の出走表 |

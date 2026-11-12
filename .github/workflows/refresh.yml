@@ -69,10 +69,11 @@ jobs:
         run: python scripts/display_mode.py set --mode "$DISPLAY_MODE" --date "$DISPLAY_DATE"
 
       - name: Gather the selected date from public schedules
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == '日付指定' }}
-        env:
-          DISPLAY_DATE: ${{ inputs.date }}
-        run: python scripts/update.py --date "$DISPLAY_DATE" --output data/selected.json
+        run: |
+          SELECTED_DATE=$(python -c 'import json; from pathlib import Path; x=json.loads(Path("data/display.json").read_text()); print(x["date"] if x.get("mode")=="selected" else "")')
+          if [ -n "$SELECTED_DATE" ]; then
+            python scripts/update.py --date "$SELECTED_DATE" --output data/selected.json
+          fi
 
       - name: Gather today's information
         run: python scripts/update.py
