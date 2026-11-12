@@ -228,7 +228,7 @@ h1 {
 .mori-tile h3,
 .mori-status {
   font-size: 26px;
-  color: var(--ink);
+  color: var(--auto);
   font-weight: 900;
   line-height: 1;
 }
