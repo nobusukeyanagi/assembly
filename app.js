@@ -177,7 +177,7 @@ function verifiedFinals(data,targetDate){
   return data.finals.items.filter(r=>(
     (r.sport==='keirin'||r.sport==='auto')&&
     typeof r.event==='string'&&r.event.length>0&&
-    typeof r.raceName==='string'&&r.raceName.includes('決勝'||'優勝')&&
+    typeof r.raceName==='string'&&/決勝|優勝戦/.test(r.raceName)&&
     typeof r.venue==='string'&&r.venue.length>0&&
     Number.isInteger(r.race)&&r.race>=1&&r.race<=12&&
     /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime)&&
