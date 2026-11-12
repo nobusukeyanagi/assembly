@@ -94,7 +94,7 @@ function card(item,id){
   return el;
 }
 function isEmptyVenueSection(section,stale){
-  return !stale&&section&&
+  return !stale&&Boolean(section)&&
     (section.status==='ok'||section.status==='cached')&&
     Array.isArray(section.items)&&section.items.length===0;
 }
