@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {verifiedFinals,nextFinalIndex}=require('../app.js');
+const {verifiedFinals,nextFinalIndex,splitFinalRiders}=require('../app.js');
 const day='2026-11-03';
 const card=(sport,venue,race,time)=>({
   sport,venue,race,startTime:time,event:'SG日本選手権オートレース',
@@ -20,13 +20,26 @@ assert.equal(verifiedFinals({date:day,finals:{items:[
   {...card('auto','浜松',12,'16:10'),raceName:'最終予選'}]}},day).length,0);
 assert.deepEqual([-1,0,1,2,3].map(i=>nextFinalIndex(i,3)),[0,1,2,-1,-1]);
 assert.equal(nextFinalIndex(-1,0),-1);
+for(const [size,left,right] of [[6,3,3],[7,4,3],[8,4,4],[9,5,4]]){
+  const riders=Array.from({length:size},(_,i)=>({number:size-i,name:'選手'+i}));
+  const [lhs,rhs]=splitFinalRiders(riders);
+  assert.equal(lhs.length,left,'left rider count: '+size);
+  assert.equal(rhs.length,right,'right rider count: '+size);
+  assert.deepEqual([...lhs,...rhs].map(r=>r.number),
+    Array.from({length:size},(_,i)=>i+1),'riders in ascending car number: '+size);
+}
 
 const css=fs.readFileSync(path.join(__dirname,'..','styles.css'),'utf8');
 const sizes=[...css.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px\b/g)].map(m=>Number(m[1]));
 assert.ok(sizes.length>15);
 assert.ok(sizes.every(n=>n%10===0),'all font sizes must be multiples of 10px: '+sizes);
-assert.match(css,/\.final-screen\s*\{[^}]*width:\s*1920px;[^}]*height:\s*980px;/s);
-assert.match(css,/\.final-riders\s*\{[^}]*grid-template-rows:\s*repeat\(9,/s);
+assert.match(css,/\.stage\.is-final \.header\s*\{[^}]*height:\s*100px;/s);
+assert.match(css,/\.final-screen\s*\{[^}]*top:\s*120px;[^}]*width:\s*1920px;[^}]*height:\s*960px;/s);
+assert.match(css,/\.final-screen\s*\{[^}]*background:\s*#fff;/s);
+assert.match(css,/\.final-title\s*\{[^}]*background:\s*var\(--keirin\);/s);
+assert.match(css,/\.final-title\[data-sport="auto"\]\s*\{[^}]*background:\s*var\(--auto\);/s);
+assert.match(css,/\.final-riders\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
+assert.match(css,/\.final-rider-column\s*\{[^}]*grid-template-rows:\s*repeat\(5,/s);
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 assert.match(html,/id="final-screen"[^>]*hidden/);
-console.log('Final board tests passed: cycle, date, 8/9 riders, fonts in 10px steps and 1920×980px viewport');
+console.log('Final board tests passed: cycle, date header, 2-column 6–9 riders, sport band, white margins and font sizes');

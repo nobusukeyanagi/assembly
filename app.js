@@ -192,6 +192,11 @@ function finalIdentity(item){
 function nextFinalIndex(index,length){
   return length>0 ? (index+1<length ? index+1 : -1) : -1;
 }
+function splitFinalRiders(riders){
+  const sorted=[...riders].sort((a,b)=>a.number-b.number);
+  const leftCount=Math.ceil(sorted.length/2);
+  return [sorted.slice(0,leftCount),sorted.slice(leftCount)];
+}
 function paintFinal(){
   const active=activeFinalIndex>=0&&activeFinalIndex<finalCards.length;
   const stage=get('stage');
@@ -202,25 +207,31 @@ function paintFinal(){
   const data=finalCards[activeFinalIndex];
   const board=get('final-card');
   const heading=node('div','final-title',data.event);
-  const name=node('div','final-race',data.raceName);
-  const venue=node('div','final-venue',data.venue+' '+data.race+'R　発走 '+data.startTime);
+  heading.dataset.sport=data.sport;
+  const grade=displayGrade(data.grade||'—',data.sport);
+  const race=node('div','final-race',
+    '['+grade+'] '+data.venue+' '+data.race+'R '+data.raceName+' '+data.startTime+'発走');
   const grid=node('div','final-riders');
-  const byNumber=new Map(data.riders.map(r=>[r.number,r.name]));
-  for(let n=1;n<=9;n++){
-    const row=node('div','final-row'+(byNumber.has(n)?'':' final-row-empty'));
-    if(byNumber.has(n)){
-      const number=node('span','final-number',String(n));
-      number.dataset.number=String(n);
-      const [background,color]=vehiclePalette[n];
+  for(const riders of splitFinalRiders(data.riders)){
+    const column=node('div','final-rider-column');
+    for(const rider of riders){
+      const row=node('div','final-row');
+      const number=node('span','final-number',String(rider.number));
+      number.dataset.number=String(rider.number);
+      const [background,color]=vehiclePalette[rider.number];
       number.style.backgroundColor=background;
       number.style.color=color;
-      row.append(number,node('span','final-rider',byNumber.get(n)));
-    }else{
-      row.setAttribute('aria-hidden','true');
+      row.append(number,node('span','final-rider',rider.name));
+      column.append(row);
     }
-    grid.append(row);
+    for(let n=riders.length;n<5;n++){
+      const empty=node('div','final-row final-row-empty');
+      empty.setAttribute('aria-hidden','true');
+      column.append(empty);
+    }
+    grid.append(column);
   }
-  board.replaceChildren(heading,name,venue,grid);
+  board.replaceChildren(heading,race,grid);
 }
 function advanceFinal(){
   activeFinalIndex=nextFinalIndex(activeFinalIndex,finalCards.length);
@@ -283,7 +294,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
