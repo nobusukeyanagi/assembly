@@ -35,11 +35,11 @@ const timeIcons={'モーニング':'☀','ミッドナイト':'★'};
 function filledMoon(){
   const ns='http://www.w3.org/2000/svg';
   const svg=document.createElementNS(ns,'svg');
-  svg.setAttribute('viewBox','0 0 24 24');
+  svg.setAttribute('viewBox','0 0 16 16');
   svg.setAttribute('class','moon-symbol');
   svg.setAttribute('aria-hidden','true');
   const path=document.createElementNS(ns,'path');
-  path.setAttribute('d','M20.985 12.486A9 9 0 0 1 11.514 3.015a9 9 0 1 0 9.47 9.47Z');
+  path.setAttribute('d','M6 .278a.768.768 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.48c0 4.072 3.314 7.385 7.385 7.385a7.2 7.2 0 0 0 3.48-.878.77.77 0 0 1 .858.08A8 8 0 1 1 6 .278');
   svg.append(path);
   return svg;
 }

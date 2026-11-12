@@ -7,8 +7,9 @@
   --soda: #17a2b8;
   --grade-major: hsl(345 44.31% 50%);
   --grade-regular: hsl(175 41.67% 32.94%);
-  --tile-height: 150px;
+  --tile-height: 147px;
   --tile-gap: 10px;
+  --band-pad-y: 8px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
@@ -70,24 +71,24 @@ h1 {
 }
 .panel {
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-columns: 180px minmax(0, 1fr);
   gap: 12px;
   flex: none;
   min-width: 0;
   width: calc(100% + 60px);
   margin-inline: -30px;
-  padding: 3px 30px;
+  padding: var(--band-pad-y) 30px;
   color: #fff;
   border: 0;
   border-radius: 0;
   overflow: hidden;
 }
-.keirin { background: var(--keirin); height: calc(3 * var(--tile-height) + 2 * var(--tile-gap) + 6px); }
-.auto { background: var(--auto); height: calc(var(--tile-height) + 6px); }
-.soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap) + 18px); }
-/* 100px date; six or five fixed-height rows fill the screen exactly. */
-.stage.five-rows { --tile-height: 182px; }
-.stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap) + 6px); }
+.keirin { background: var(--keirin); height: calc(3 * var(--tile-height) + 2 * var(--tile-gap) + 2 * var(--band-pad-y)); }
+.auto { background: var(--auto); height: calc(var(--tile-height) + 2 * var(--band-pad-y)); }
+.soda { background: var(--soda); height: calc(2 * var(--tile-height) + var(--tile-gap) + 2 * var(--band-pad-y)); }
+/* Shared top/bottom inset for each sport; 5/6-row layouts both fit 1080px. */
+.stage.five-rows { --tile-height: 178.4px; }
+.stage.five-rows .keirin { height: calc(2 * var(--tile-height) + var(--tile-gap) + 2 * var(--band-pad-y)); }
 .panel-head {
   display: flex;
   flex-direction: column;
@@ -96,7 +97,7 @@ h1 {
   text-align: center;
   gap: 18px;
   min-width: 0;
-  padding: 0 14px;
+  padding: 0;
   color: #fff;
 }
 .keirin .panel-head { background: var(--keirin); }
