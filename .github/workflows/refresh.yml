@@ -26,6 +26,7 @@ on:
       - styles.css
       - scripts/update.py
       - scripts/verified_sources.py
+      - scripts/finals.py
       - scripts/display_mode.py
       - requirements.txt
       - data/**
@@ -58,12 +59,13 @@ jobs:
         run: |
           node --check app.js
           node --check holidays.js
-          python -m py_compile scripts/update.py scripts/verified_sources.py
+          python -m py_compile scripts/update.py scripts/verified_sources.py scripts/finals.py
       - name: Unit tests
         run: |
           python -m unittest discover -s tests -v
           node tests/test_holidays.cjs
           node tests/test_layout.cjs
+          node tests/test_final_board.cjs
       - name: Select the public display mode
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
@@ -96,6 +98,17 @@ jobs:
               path=Path('data') / (fname+'.json')
               if not path.exists():continue
               data=json.loads(path.read_text(encoding='utf-8'))
+              finals=data.get('finals',{})
+              found=finals.get('items',[])
+              finals_note=f"決勝出走表 {fname} {data.get('date','')}: {len(found)}件（対象開催 {finals.get('verification',{}).get('eligibleMeetings','-')}）"
+              print(finals_note)
+              lines.append(finals_note)
+              for item in found:
+                  note=f"  {item['venue']} {item['race']}R {item['raceName']} 発走 {item['startTime']} {len(item['riders'])}車"
+                  print(note)
+                  lines.append(note)
+              for issue in finals.get('verification',{}).get('errors',[]):
+                  print(f"::warning::決勝出走表: {issue}")
               for key,title in (('keirin','競輪'),('auto','オート'),('soda','SODA'),('mori','森選手')):
                   section=data.get('sections',{}).get(key,{})
                   checked=section.get('verification',{})
