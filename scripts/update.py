@@ -561,12 +561,12 @@ def parse_mori_official_start(html,selected,venue,race):
     if date_label not in title or venue+'オート' not in title:
         raise ValueError('オート公式出走表の日付・開催場が不一致')
     text=normalize('NFKC',soup.get_text(' ',strip=True))
-    # Restrict race-number matching to the dated race header, not older results.
-    day_label=f'{selected.month}月{selected.day}日'
-    date_index=text.find(day_label)
-    if date_index<0:
-        raise ValueError('対象日のレース詳細がありません')
-    header=text[date_index:date_index+240]
+    # The page title certifies the date. The target race number must appear
+    # immediately before its own 発走予定 block, never in past-performance rows.
+    start_at=text.find('発走予定')
+    if start_at<0:
+        raise ValueError('対象日の発走予定表示がありません')
+    header=text[max(0,start_at-450):start_at]
     if not re.search(rf'(?<!\d){race}R\b',header):
         raise ValueError('オート公式出走表のレース番号が不一致')
     if '森且行' not in re.sub(r'\s+','',text):
