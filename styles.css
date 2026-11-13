@@ -280,12 +280,11 @@ h1 {
 .mori-detail { justify-content: center; }
 .message, .detail {
   color: var(--ink);
-  font-size: 20px;
+  font-size: 30px;
   text-align: center;
   grid-column: 1/-1;
   margin: 0;
 }
-.detail { color: var(--ink); font-size: 20px; }
 
 
 /* The date header matches the venue dashboard: top padding 12px,
@@ -501,7 +500,7 @@ h1 {
   color: #fff;
   border: 0;
   border-radius: 6px;
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 700;
   white-space: nowrap;
 }
