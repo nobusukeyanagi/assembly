@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from verified_sources import parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
-from update import parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
+from update import parse_mori_chariloto_starts,MORI_CHARILOTO_START,parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_autorace_grade(self):
@@ -87,6 +87,35 @@ class ParserTests(unittest.TestCase):
             parse_mori_race_start(h.replace('発走：12:22','発走：12:22 発走：12:23'),d,'浜松',5)
         with self.assertRaisesRegex(ValueError,'一意'):
             parse_mori_race_start(h.replace('発走：12:22','締切：12:22'),d,'浜松',5)
+
+    def test_dated_chariloto_race_times(self):
+        selected=date(2026,10,2)
+        html=('<html><h1>飯塚オートレース 出走表一覧</h1>'
+              '<h2>飯　塚 2026年10月2日 初日</h2>'
+              '<table><tr><th>レース</th><th>発走予定</th><th>賭式</th></tr>'
+              '<tr><td>1R <a>出走表</a></td><td>15:26</td><td>3連単</td></tr>'
+              '<tr><td>2R <a>出走表</a></td><td>15:51</td><td>3連単</td></tr>'
+              '<tr><td>8R <a>出走表</a></td><td>18:34</td><td>3連単</td></tr>'
+              '</table></html>')
+        self.assertEqual(parse_mori_chariloto_starts(html,selected,'飯塚',[2,8]),
+                         {2:'15:51',8:'18:34'})
+        self.assertEqual(MORI_CHARILOTO_START.format(day=selected.isoformat(),venue='005'),
+                         'https://www.chariloto.com/auto/athletes/2026-10-02/005')
+        for dt,venue in ((date(2026,10,3),'飯塚'),(selected,'浜松')):
+            with self.assertRaises(ValueError):
+                parse_mori_chariloto_starts(html,dt,venue,[2,8])
+        with self.assertRaises(ValueError):
+            parse_mori_chariloto_starts(html.replace('出走表一覧','別開催'),selected,'飯塚',[2])
+        with self.assertRaisesRegex(ValueError,'指定R'):
+            parse_mori_chariloto_starts(html,selected,'飯塚',[3])
+        target={'name':'飯塚','date':selected.isoformat(),'type':'today','race':2,'races':[2,8]}
+        def fetched(s,url,params=None):
+            if url==MORI_CHARILOTO_START.format(day=selected.isoformat(),venue='005'):
+                return html
+            raise AssertionError('No other source needed: '+url)
+        with patch('update.fetch',side_effect=fetched):
+            mori_start_times(object(),target,selected=selected)
+        self.assertEqual(target['startTimes'],{'2':'15:51','8':'18:34'})
 
     def test_mori_official_start_time_verified_date_race_and_rider(self):
         selected=date(2026,10,2)
