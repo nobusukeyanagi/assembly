@@ -135,16 +135,21 @@ jobs:
                   if key in ('keirin','auto','soda'):
                       coverage=checked.get('fieldCoverage',{})
                       if coverage:
+                          # 競輪にはモーニング/デイ/ナイター/ミッドナイトの分類が
+                          # 必要。オート・ボートでは区分表示なしの通常昼開催があり、
+                          # timeType=None は必ずしも取得失敗ではない。
+                          slot_label=('時間帯' if key=='keirin' else
+                                      '特別時間帯ラベル（未表示は通常昼または未判定）')
                           note=(f"  {title}: グレード {coverage.get('grade',0)}/{count}、"
                                 f"開催日目 {coverage.get('day',0)}/{count}、"
-                                f"時間帯 {coverage.get('timeType',0)}/{count}、"
+                                f"{slot_label} {coverage.get('timeType',0)}/{count}、"
                                 f"ガールズ等検出 {coverage.get('girlsDetected',0)}場、"
                                 f"グレード2元照合 {checked.get('gradeCrossConfirmed',0)}場")
                           print(note)
                           lines.append(note)
-                          if count and any(coverage.get(field,0)<count
-                                           for field in ('grade','day','timeType')):
-                              print(f"::warning::{fname} {title}: 未取得項目があります。照合結果を確認してください")
+                          required=('grade','day','timeType') if key=='keirin' else ('grade','day')
+                          if count and any(coverage.get(field,0)<count for field in required):
+                              print(f"::warning::{fname} {title}: 必須項目に欠落があります。照合結果を確認してください")
                       for meeting in section.get('items',[]):
                           evidence=meeting.get('fieldSources',{})
                           detail=(f"  {title} {meeting.get('name','-')} "
