@@ -68,7 +68,10 @@ assert.match(css,/\.entry \.grade,\s*\.final-race \.grade\s*\{[^}]*height:\s*35p
              'shared venue grade badge height must be 35px');
 assert.match(css,/\.final-race \.grade\s*\{[^}]*height:\s*80px;/s,
              'racecard badge retains its special 80px height');
-assert.match(css,/\.stage\.is-final \.header\s*\{[^}]*height:\s*100px;/s);
+assert.match(css,/\.header\s*\{[^}]*height:\s*100px;[^}]*margin-bottom:\s*8px;/s,
+             'the header is shared unchanged by both venue and final screens');
+assert.doesNotMatch(css,/\.stage\.is-final \.header\s*\{/,
+                    'do not duplicate the shared date header styles');
 assert.match(css,/\.final-screen\s*\{[^}]*top:\s*120px;[^}]*width:\s*1920px;[^}]*height:\s*960px;/s);
 assert.match(css,/\.final-screen\s*\{[^}]*background:\s*#fff;/s);
 assert.match(css,/\.final-title\s*\{[^}]*background:\s*var\(--keirin\);/s);
