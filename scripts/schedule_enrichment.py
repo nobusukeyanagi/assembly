@@ -31,12 +31,16 @@ def official_morning(html, selected, records, u):
             if value:pieces.append(value)
     block=' '.join(pieces)
     periods=list(re.finditer(
-        r'(\d{1,2})月(\d{1,2})日(?:\([^)]*\))?\s*[~〜～\-]+\s*'
-        r'(\d{1,2})月(\d{1,2})日(?:\([^)]*\))?',block))
+        r'(?:(\d{1,2})月)?(\d{1,2})日(?:\([^)]*\))?\s*[~〜～\-]+\s*'
+        r'(?:(\d{1,2})月)?(\d{1,2})日(?:\([^)]*\))?',block))
     known=set(u.KEIRIN_NAMES)
     matched=set()
     for i,period in enumerate(periods):
-        a,b,c,d=map(int,period.groups())
+        start_month,start_day,end_month,end_day=period.groups()
+        a=int(start_month or selected.month)
+        b=int(start_day)
+        c=int(end_month or a)
+        d=int(end_day)
         years=[selected.year] if a<=c else [selected.year,selected.year-1]
         bounds=[]
         for year in years:
