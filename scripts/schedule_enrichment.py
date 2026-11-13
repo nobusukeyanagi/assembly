@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 
 
 JKA_MORNING='https://keirin.jp/pc/dfw/portal/guest/campaign/morning/index.html'
+JKA_MIDNIGHT='https://keirin.jp/pc/dfw/portal/guest/campaign/midnight_keirin/'
 CTC_SCHEDULE='https://ctc.gr.jp/schedule/'
 
 
@@ -56,6 +57,47 @@ def official_morning(html, selected, records, u):
     # badges as accessible text. Confirm only the time classification.
     return [{'name':r['name'],'timeType':'モーニング'}
             for r in records if r.get('name') in matched]
+
+
+def official_midnight(html, selected, records, u):
+    """Confirm dates and venues in a year-qualified official midnight calendar.
+
+    The calendar lists day cells and event names, not a guaranteed
+    girls-race classification. Do not assign girls flags or invent meetings.
+    If the calendar markup cannot be verified, accept no evidence.
+    """
+    soup=BeautifulSoup(html,'html.parser')
+    headings=[h for h in soup.find_all(['h2','h3','h4']) if
+              re.fullmatch(rf'\s*{selected.year}年\s*{selected.month}月\s*',
+                           normalize('NFKC',h.get_text(' ',strip=True)))]
+    if len(headings)!=1:
+        raise ValueError('公式ミッドナイト日程に指定年月の見出しがありません')
+    heading=headings[0]
+    table=None
+    for element in heading.next_elements:
+        if getattr(element,'name',None) in ('h2','h3','h4') and element is not heading:
+            break
+        if getattr(element,'name',None)=='table':
+            table=element
+            break
+    if table is None:
+        raise ValueError('公式ミッドナイト開催の月別カレンダーがありません')
+    matches=set()
+    all_venues=set(u.KEIRIN_NAMES)
+    # A day must be in a single calendar cell. This avoids mixing the
+    # first half of a month with the previous day's events.
+    for cell in table.find_all(['td'],recursive=True):
+        value=normalize('NFKC',cell.get_text(' ',strip=True))
+        days=re.findall(r'(?<!\d)(\d{1,2})日(?!\d)',value)
+        if len(days)!=1 or int(days[0])!=selected.day:continue
+        classes=' '.join(cell.get('class',[])).lower()
+        if any(m in classes for m in ('prev','next','other','outside','offmonth')):
+            continue
+        found={name for name in all_venues if re.search(
+            r'(?<![一-龥])'+re.escape(name)+r'(?![一-龥])',value)}
+        matches.update(found)
+    return [{'name':row['name'],'timeType':'ミッドナイト'}
+            for row in records if row.get('name') in matches]
 
 
 def ctc_listing(html,selected,records,u):
