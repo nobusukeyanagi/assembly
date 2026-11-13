@@ -8,6 +8,7 @@ import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from unicodedata import normalize
 
 from bs4 import BeautifulSoup
@@ -247,6 +248,62 @@ def enumerate_entries(entries):
         yield index,(source,row)
 
 
+
+def restore_same_date_fields(result,previous,selected,category):
+    """Re-use independently sourced fields on completed dates only.
+
+    A previous snapshot must have been verified for the *same date*, track,
+    grade and compatible meeting day. Do not borrow from stale dates or
+    overwrite newer verified values. Never revive unproven False girls flags.
+    """
+    if selected>=datetime.now(ZoneInfo('Asia/Tokyo')).date():
+        return result
+    if not isinstance(previous,dict) or previous.get('date')!=selected.isoformat():
+        return result
+    section=previous.get('sections',{}).get(category,{})
+    if not isinstance(section,dict) or section.get('status') not in ('ok','cached'):
+        return result
+    records={row.get('name'):row for row in section.get('items',[])
+             if isinstance(row,dict) and isinstance(row.get('name'),str)}
+    restorations=[]
+    for row in result.get('items',[]):
+        prior=records.get(row.get('name'))
+        if not prior or not valid_field('grade',row.get('grade')):
+            continue
+        if prior.get('grade')!=row['grade'] or not (
+            valid_field('day',row.get('day')) and
+            valid_field('day',prior.get('day')) and
+            compatible_day(row['day'],prior['day'])):
+            continue
+        old_sources=prior.get('fieldSources',{})
+        if not isinstance(old_sources,dict):
+            continue
+        if (not valid_field('timeType',row.get('timeType')) and
+            valid_field('timeType',prior.get('timeType')) and
+            old_sources.get('timeType')):
+            row['timeType']=prior['timeType']
+            row['fieldSources']['timeType']=old_sources['timeType']
+            row.setdefault('sameDateRestored',[]).append('timeType')
+            restorations.append({'name':row['name'],'field':'timeType',
+                                 'originalSource':old_sources['timeType']})
+        positive_sources=prior.get('girlsConfirmedBy',[])
+        if (row.get('girls') is not True and prior.get('girls') is True and
+            isinstance(positive_sources,list) and positive_sources):
+            row['girls']=True
+            row['girlsConfirmedBy']=list(positive_sources)
+            row['fieldSources']['girls']=old_sources.get('girls',positive_sources[0])
+            row.setdefault('sameDateRestored',[]).append('girls')
+            restorations.append({'name':row['name'],'field':'girls',
+                                 'originalSource':row['fieldSources']['girls']})
+    if restorations:
+        coverage=result['verification']['fieldCoverage']
+        coverage['timeType']=sum(valid_field('timeType',r.get('timeType'))
+                                 for r in result['items'])
+        coverage['girlsDetected']=sum(r.get('girls') is True for r in result['items'])
+        result['verification']['sameDateRestored']=restorations
+        LOG.info('%s 過去日の同日データ補完: %s',category,restorations)
+    return result
+
 def parse_keirin_month_finals(html,selected,archive,u):
     """Recover slots and girls race evidence from a published monthly final list.
 
@@ -357,6 +414,7 @@ def keirin(s,selected,previous,u):
         saved=cached_section(previous,selected,'keirin')
         return saved if saved else u.bad('すべての競輪開催日程が取得できません')
     result=reconcile('keirin',lists,u.KEIRIN_NAMES,u.sort_by_time)
+    result=restore_same_date_fields(result,previous,selected,'keirin')
     result['verification']['errors']=errors
     return result
 
@@ -431,6 +489,7 @@ def auto(s,selected,previous,u):
         saved=cached_section(previous,selected,'auto')
         return saved if saved else u.bad('すべてのオートレース開催日程が取得できません')
     result=reconcile('auto',lists,list(AUTO_CODES),u.sort_by_time)
+    result=restore_same_date_fields(result,previous,selected,'auto')
     result['verification'].update(errors=errors,unconfirmedOfficial=missed_official,
                                    unconfirmedRacecards=missed_oddspark)
     return result
@@ -510,6 +569,7 @@ def soda(s,selected,previous,u):
     except Exception as exc:
         errors.append(('BOAT RACE公式G3日程',str(exc)))
     result=reconcile('soda',lists,u.SODA_NAMES,u.sort_by_time)
+    result=restore_same_date_fields(result,previous,selected,'soda')
     result['verification']['errors']=errors
     result['note']='SODA対象場で開催。SODAライブ配信を保証するものではありません。'
     return result
