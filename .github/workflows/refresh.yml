@@ -31,6 +31,7 @@ on:
       - styles.css
       - scripts/update.py
       - scripts/verified_sources.py
+      - scripts/autorace_official.py
       - scripts/schedule_enrichment.py
       - scripts/history_cache.py
       - scripts/finals.py
@@ -66,7 +67,7 @@ jobs:
         run: |
           node --check app.js
           node --check holidays.js
-          python -m py_compile scripts/update.py scripts/verified_sources.py scripts/schedule_enrichment.py scripts/history_cache.py scripts/finals.py
+          python -m py_compile scripts/update.py scripts/verified_sources.py scripts/autorace_official.py scripts/schedule_enrichment.py scripts/history_cache.py scripts/finals.py
       - name: Unit tests
         run: |
           python -m unittest discover -s tests -v
@@ -166,8 +167,16 @@ jobs:
                       official_note=f"  AUTORACE.JP公式出走表による独立確認: {official_count}場（{names}）"
                       print(official_note)
                       lines.append(official_note)
+                      for source,venues in checked.get('organizerConfirmed',{}).items():
+                          line=f"  公式開催日程による独立確認: {source}　{'・'.join(venues)}"
+                          print(line)
+                          lines.append(line)
+                      verified='・'.join(checked.get('officialVerifiedVenues',[])) or 'なし'
+                      line=f"  公式情報で確認できた開催場: {verified}"
+                      print(line)
+                      lines.append(line)
                       for missed in checked.get('unconfirmedOfficial',[]):
-                          line=f"  公式未照合 {missed.get('name','-')}: {missed.get('reason','-')}"
+                          line=f"  公式出走表の未照合 {missed.get('name','-')}: {missed.get('reason','-')}"
                           print(line)
                           lines.append(line)
                   if section.get('status')=='error':

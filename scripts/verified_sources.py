@@ -13,6 +13,7 @@ from unicodedata import normalize
 
 from bs4 import BeautifulSoup
 import schedule_enrichment
+import autorace_official
 
 LOG=logging.getLogger('assembly')
 AUTO_MONTH='https://www.winticket.jp/autorace/schedules/{year}{month:02d}'
@@ -113,9 +114,9 @@ FIELD_SOURCE_PRIORITY={
     'auto':{
         # WINTICKET supplies the comprehensive schedule; when its date
         # disagrees with a verified official racecard, the official facts win.
-        'grade':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
-        'day':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
-        'timeType':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
+        'grade':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','WINTICKET指定月','オッズパーク日別'),
+        'day':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','WINTICKET指定月','オッズパーク日別'),
+        'timeType':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','WINTICKET指定月','オッズパーク日別'),
         'girls':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
     },
     'soda':{
@@ -513,6 +514,31 @@ def auto(s,selected,previous,u):
             else:missed_official.append({'name':name,'reason':issue})
     if official:lists.append(('AUTORACE.JP出走表',official))
 
+    # These two organizers publish their schedules as readable server-side
+    # HTML, unlike the JS-populated per-race AUTORACE.JP Program pages.
+    # A dated grade event or Kawaguchi's matching meeting is independent
+    # evidence, even when an individual racecard cannot be rendered here.
+    organizer_sources={}
+    try:
+        grade_rows=autorace_official.grade_meetings(
+            u.fetch(s,autorace_official.JKA_GRADE_CALENDAR),selected,u)
+        if grade_rows:
+            lists.append(('AUTORACE.JP年間グレード日程',grade_rows))
+            organizer_sources['AUTORACE.JP年間グレード日程']=[
+                row['name'] for row in grade_rows]
+    except Exception as exc:
+        errors.append(('AUTORACE.JP年間グレード日程',str(exc)))
+    if abs((selected-datetime.now(u.TZ).date()).days)<=120:
+        try:
+            local_rows=autorace_official.kawaguchi_meetings(
+                u.fetch(s,autorace_official.KAWAGUCHI_CALENDAR),selected,u)
+            if local_rows:
+                lists.append(('川口オート公式日程',local_rows))
+                organizer_sources['川口オート公式日程']=[
+                    row['name'] for row in local_rows]
+        except Exception as exc:
+            errors.append(('川口オート公式日程',str(exc)))
+
     # Oddspark is an additional fallback. Its site may reject cloud runners,
     # so do not make any venue depend on its successful response.
     racecard=[];missed_oddspark=[]
@@ -541,6 +567,10 @@ def auto(s,selected,previous,u):
         errors=errors,
         officialConfirmed=[row['name'] for row in official],
         officialConfirmedCount=len(official),
+        organizerConfirmed=organizer_sources,
+        officialVerifiedVenues=list(dict.fromkeys(
+            [row['name'] for row in official]+
+            [venue for names in organizer_sources.values() for venue in names])),
         unconfirmedOfficial=missed_official,
         unconfirmedRacecards=missed_oddspark)
     return result
