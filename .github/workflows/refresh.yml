@@ -122,6 +122,11 @@ jobs:
                   line=f"| {fname} {data.get('date','')} | {title} | {count} | {checked.get('crossConfirmed','-')} | {sources or '-'} |"
                   print(line)
                   lines.append(line)
+                  if key in ('keirin','auto','soda'):
+                      for meeting in section.get('items',[]):
+                          print(f"  {title} {meeting.get('name','-')} {meeting.get('grade','-')} "
+                                f"{meeting.get('day','-')} 時間帯={meeting.get('timeType') or '-'} "
+                                f"ガールズ等={meeting.get('girls',False)}")
                   if section.get('status')=='error':
                       print(f"::warning::{fname} {title}: 全取得元を確認できませんでした")
                   if key=='mori' and isinstance(section.get('item'),dict):
