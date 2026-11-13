@@ -494,22 +494,24 @@ def auto(s,selected,previous,u):
             html=u.fetch(s,url)
             return name,parse_autorace_official_card(html,selected,name,u),None
         except Exception as exc:
-            # Public page diagnostics (never include scripts, cookies or full
-            # HTML) help distinguish an access restriction from JS-only markup.
             try:
                 soup=BeautifulSoup(html,'html.parser')
-                title=normalize('NFKC',soup.title.get_text(' ',strip=True)) if soup.title else '-'
                 for node in soup(['script','style','noscript']):node.decompose()
                 visible=normalize('NFKC',soup.get_text(' ',strip=True))
-                detail=(f" | HTML={len(html)} title={title[:85]!r} "
-                        f"period={'開催期間' in visible} body={visible[:125]!r}")
+                detail=('（公式出走表の詳細がHTMLになく、動的表示のため照合不可）'
+                        if '開催期間' not in visible else '')
             except (NameError,ValueError,TypeError,AttributeError):
                 detail=''
             return name,None,str(exc)+detail
 
     official=[];missed_official=[]
+    # For independently confirmed monthly venues, request their dated official
+    # racecards rather than downloading five large JS shells every time.
+    known={item.get('name') for _,items in lists for item in items}
+    official_candidates=[pair for pair in AUTO_CODES.items()
+                         if not known or pair[0] in known]
     with ThreadPoolExecutor(max_workers=5) as pool:
-        for name,item,issue in pool.map(check_official,AUTO_CODES.items()):
+        for name,item,issue in pool.map(check_official,official_candidates):
             if item:official.append(item)
             else:missed_official.append({'name':name,'reason':issue})
     if official:lists.append(('AUTORACE.JP出走表',official))
