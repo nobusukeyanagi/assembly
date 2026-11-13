@@ -24,12 +24,13 @@ MORI='https://www.winticket.jp/autorace/autoracer/2529/'
 MORI_HISTORY='https://handicapper.jp/riders/118'
 MORI_RACE_START='https://autorace.tokyo-sports.co.jp/list/race/{day}{venue}{race}'
 MORI_OFFICIAL_START='https://autorace.jp/race_info/{section}/{venue}/{date}_{race}'
+MORI_CHARILOTO_START='https://www.chariloto.com/auto/athletes/{day}/{venue}'
 ASSEN='https://sp.atrc.jp/racer/racerasseninfo/player_id/2529'
 ODDSPARK='https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529'
 AUTO_OFFICIAL='https://autorace.jp/race_info/Program/'
 KAWAGUCHI_SCHEDULE='https://www.kawaguchiauto.jp/race-calender/'
 NIGHT_BOAT={'桐生','蒲郡','若松'}
-SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_start_time':MORI_RACE_START,'mori_official_start_time':MORI_OFFICIAL_START,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
+SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_start_time':MORI_RACE_START,'mori_official_start_time':MORI_OFFICIAL_START,'mori_chariloto_start_time':MORI_CHARILOTO_START,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
 KEIRIN_NAMES='函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本'.split()
 AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
 SODA_NAMES='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
@@ -578,6 +579,48 @@ def parse_mori_official_start(html,selected,venue,race):
     return f'{int(times[0][0]):02d}:{times[0][1]}'
 
 
+CHARILOTO_AUTO_CODES={'川口':'002','伊勢崎':'003','浜松':'004','飯塚':'005','山陽':'006'}
+
+
+def parse_mori_chariloto_starts(html,selected,venue,races):
+    """Cross-check dated venue and race rows before accepting listed 発走予定 times.
+
+    Race rows are parsed separately: never use a cutoff, navigation entry,
+    or another day's/venue's start time.
+    """
+    soup=BeautifulSoup(html,'html.parser')
+    h1=soup.find('h1')
+    h2=next((h for h in soup.find_all('h2')
+             if selected.strftime('%Y年') in normalize('NFKC',h.get_text(' ',strip=True))),None)
+    if not h1 or '出走表一覧' not in h1.get_text(' ',strip=True) or not h2:
+        raise ValueError('チャリロトの開催日別出走表を確認できません')
+    heading=re.sub(r'\s+','',normalize('NFKC',h2.get_text(' ',strip=True)))
+    if (venue not in heading or
+        f'{selected.year}年{selected.month}月{selected.day}日' not in heading):
+        raise ValueError('チャリロトの指定日・場が不一致')
+    table=next((t for t in soup.find_all('table')
+                if '発走予定' in t.get_text(' ',strip=True) and
+                   'レース' in t.get_text(' ',strip=True)),None)
+    if table is None:
+        raise ValueError('発走予定時刻の一覧表がありません')
+    found={}
+    target=set(races)
+    for row in table.find_all('tr'):
+        cells=row.find_all(['th','td'],recursive=False)
+        if len(cells)<2:continue
+        marker=re.match(r'^\s*(1[0-2]|[1-9])\s*R\b',
+                        normalize('NFKC',cells[0].get_text(' ',strip=True)),re.I)
+        if not marker:continue
+        number=int(marker.group(1))
+        if number not in target or number in found:continue
+        value=normalize('NFKC',cells[1].get_text(' ',strip=True))
+        if not re.fullmatch(r'(?:[01]?\d|2[0-3]):[0-5]\d',value):continue
+        found[number]=value.zfill(5)
+    if not found:
+        raise ValueError('指定Rの発走予定時刻が取得できません')
+    return found
+
+
 def mori_start_times(s,item,previous=None,selected=None):
     """Enrich Mori's verified race numbers with separately verified start times."""
     if not isinstance(item,dict) or item.get('type')!='today':return item
@@ -590,7 +633,17 @@ def mori_start_times(s,item,previous=None,selected=None):
     if selected is not None and day!=selected:return item
     venue=AUTO_SITE_CODES[item['name']]
     found={}
+    # A dated race-list table supplies each scheduled start independently;
+    # unlike the official JS-rendered racecard, it is readable by our collector.
+    source=MORI_CHARILOTO_START.format(day=day.isoformat(),
+                                      venue=CHARILOTO_AUTO_CODES[item['name']])
+    try:
+        found.update({str(n):v for n,v in parse_mori_chariloto_starts(
+            fetch(s,source),day,item['name'],races).items()})
+    except Exception as exc:
+        log.info('チャリロト日別発走時刻 %s: %s',item['name'],exc)
     for number in races:
+        if str(number) in found:continue
         uri=MORI_RACE_START.format(day=day.strftime('%Y%m%d'),venue=venue,race=number)
         try:
             found[str(number)]=parse_mori_race_start(fetch(s,uri),day,item['name'],number)
