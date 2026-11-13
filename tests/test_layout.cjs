@@ -39,7 +39,7 @@ assert.equal(isEmptyVenueSection({status:'error',items:[]},false),false);
 assert.equal(isEmptyVenueSection({status:'partial',items:[]},false),false);
 assert.equal(isEmptyVenueSection({status:'ok',items:[]},true),false);
 assert.equal(isEmptyVenueSection(null,false),false);
-// The same white 50px band notice is used by empty and error states.
+// The same white 60px band notice is used by empty and error states.
 assert.equal(venueStatusText({status:'ok',items:[]},false,'today'),'開催情報がありません');
 assert.equal(venueStatusText({status:'cached',items:[]},false,'selected'),'開催情報がありません');
 assert.equal(venueStatusText({status:'error',items:[]},false,'today'),'開催情報を確認できません');

@@ -137,7 +137,7 @@ function mori(section,stale,targetDate){
     Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';
   status.textContent=hasRace?'本日出走':isToday?'出走R確認中':'次回予定';
   const venue=node('div','venue mori-primary',(x.name||'—')+(hasRace?' '+races.map(n=>n+'R').join('・'):''));
-  const meta=node('div','meta mori-detail');
+  const meta=node('div','meta');
   if(x.grade){
     const gr=node('span','grade',displayGrade(x.grade,'auto'));
     gr.dataset.tier=isMajorGrade(x.grade)?'major':'regular';

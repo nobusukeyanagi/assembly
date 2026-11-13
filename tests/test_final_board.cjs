@@ -63,6 +63,11 @@ const css=fs.readFileSync(path.join(__dirname,'..','styles.css'),'utf8');
 const sizes=[...css.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px\b/g)].map(m=>Number(m[1]));
 assert.ok(sizes.length>15);
 assert.ok(sizes.every(n=>n%10===0),'all font sizes must be multiples of 10px: '+sizes);
+assert.doesNotMatch(css,/--muted\s*:/,'unused secondary-text variable must be removed');
+assert.match(css,/\.entry \.grade,\s*\.final-race \.grade\s*\{[^}]*height:\s*35px;/s,
+             'shared venue grade badge height must be 35px');
+assert.match(css,/\.final-race \.grade\s*\{[^}]*height:\s*80px;/s,
+             'racecard badge retains its special 80px height');
 assert.match(css,/\.stage\.is-final \.header\s*\{[^}]*height:\s*100px;/s);
 assert.match(css,/\.final-screen\s*\{[^}]*top:\s*120px;[^}]*width:\s*1920px;[^}]*height:\s*960px;/s);
 assert.match(css,/\.final-screen\s*\{[^}]*background:\s*#fff;/s);

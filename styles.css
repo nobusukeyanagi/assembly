@@ -1,6 +1,5 @@
 :root {
   --ink: #25323a;
-  --muted: #6f7e83;
   --line: #e1e8e6;
   --keirin: #477A94;
   --auto: #AC605A;
@@ -44,7 +43,6 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  border-bottom: 0;
   margin-bottom: 8px;
 }
 h1 {
@@ -75,8 +73,6 @@ h1 {
 .dashboard {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 0;
   flex: 1;
   min-height: 0;
 }
@@ -90,8 +86,6 @@ h1 {
   margin-inline: -30px;
   padding: var(--band-pad-y) var(--tile-gap) var(--band-pad-y) 30px;
   color: #fff;
-  border: 0;
-  border-radius: 0;
   overflow: hidden;
 }
 .keirin { background: var(--keirin); height: calc(var(--keirin-rows) * var(--tile-height) + (var(--keirin-rows) - 1) * var(--tile-gap) + 2 * var(--band-pad-y)); }
@@ -103,16 +97,10 @@ h1 {
   justify-content: center;
   align-items: center;
   text-align: center;
-  gap: 18px;
   min-width: 0;
-  padding: 0;
-  color: #fff;
 }
-.keirin .panel-head { background: var(--keirin); }
-.auto .panel-head { background: var(--auto); }
-.soda .panel-head { background: var(--soda); }
+/* Sport bands supply the heading background and text color directly. */
 .panel-head h2 {
-  color: #fff;
   font-size: 60px;
   font-weight: 900;
   line-height: 1.05;
@@ -128,7 +116,6 @@ h1 {
   grid-auto-rows: var(--tile-height);
   align-content: start;
   gap: var(--tile-gap);
-  padding: 0;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -201,7 +188,7 @@ h1 {
   align-items: center;
   flex: none;
   min-width: 60px;
-  height: 34px;
+  height: 35px;
   padding: 0 5px;
   border-radius: 5px;
   font-size: 30px;
@@ -277,7 +264,6 @@ h1 {
   min-width: 0;
 }
 .entry .mori-primary { font-size: 60px; height: 66px; line-height: 66px; }
-.mori-detail { justify-content: center; }
 .message, .detail {
   color: var(--ink);
   font-size: 30px;
@@ -286,13 +272,7 @@ h1 {
   margin: 0;
 }
 
-
-/* The date header matches the venue dashboard: top padding 12px,
-   date 100px, bottom gap 8px. The rest of the stage is 960px tall. */
-.stage.is-final .header {
-  height: 100px;
-  margin-bottom: 8px;
-}
+/* Finals reuse the same date header and show the racecard instead of venue tiles. */
 .stage.is-final .dashboard { display: none; }
 .final-screen {
   position: absolute;
@@ -310,7 +290,6 @@ h1 {
 .final-card {
   width: 1600px;
   height: 960px;
-  padding: 0;
   background: #fff;
   color: var(--ink);
   display: grid;
@@ -342,7 +321,6 @@ h1 {
   display: inline-block;
   flex: none;
   width: max-content;
-  white-space: nowrap;
   transform-origin: center center;
 }
 .final-race {
@@ -361,7 +339,6 @@ h1 {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .final-riders {
   height: 100%;
@@ -498,7 +475,6 @@ h1 {
   padding: 6px 12px;
   background: var(--grade-major);
   color: #fff;
-  border: 0;
   border-radius: 6px;
   font-size: 30px;
   font-weight: 700;
