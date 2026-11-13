@@ -206,8 +206,10 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(result,[{'name':'佐世保','timeType':'モーニング'}])
         self.assertEqual(official_morning(html,date(2026,10,3),archive,upstream),
                          [{'name':'松戸','timeType':'モーニング'}])
-        self.assertEqual(official_morning(html,date(2026,11,13),archive,upstream),[])
-        self.assertEqual(official_morning(html,date(2026,9,2),archive,upstream),[])
+        self.assertEqual(official_morning(html,date(2026,11,13),archive,upstream),
+                         [{'name':'松戸','timeType':'モーニング'}])
+        with self.assertRaises(ValueError):
+            official_morning(html,date(2026,9,2),archive,upstream)
         with self.assertRaises(ValueError):
             official_morning(html.replace('2026年10月','2025年10月'),
                              date(2026,10,2),archive,upstream)
