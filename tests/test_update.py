@@ -293,10 +293,88 @@ class ParserTests(unittest.TestCase):
         got=reconcile('auto',[('a',a),('b',b)],['川口','飯塚'],sort_by_time)
         self.assertEqual(len(got['items']),2)
         self.assertEqual(got['items'][0]['grade'],'普通')
-        self.assertEqual(got['items'][0]['timeType'],'ナイター')
+        self.assertIsNone(got['items'][0]['timeType'])
+        # Do not import the night category from a contradictory G1 meeting
+        # when the selected source says this is an ordinary meeting.
         self.assertEqual(got['verification']['crossConfirmed'],1)
         self.assertEqual(got['verification']['singleSource'],1)
         self.assertEqual(len(got['verification']['conflicts']),1)
+
+    def test_reconcile_field_priority_is_independent_of_scrape_order(self):
+        sources=[
+            ('WINTICKET指定月',[{'name':'飯塚','grade':'G2','day':'2日目',
+                                   'timeType':None}]),
+            ('AUTORACE.JP出走表',[{'name':'飯塚','grade':'普通','day':'初日',
+                                     'timeType':'ナイター'}]),
+            ('オッズパーク日別',[{'name':'飯塚','grade':'G2','day':'2日目',
+                                   'timeType':'ミッドナイト'}])]
+        for order in (sources,list(reversed(sources))):
+            out=reconcile('auto',order,['飯塚'],sort_by_time)
+            item=out['items'][0]
+            self.assertEqual(item['grade'],'普通')
+            self.assertEqual(item['day'],'初日')
+            self.assertEqual(item['timeType'],'ナイター')
+            self.assertEqual(item['fieldSources'],{
+                'grade':'AUTORACE.JP出走表','day':'AUTORACE.JP出走表',
+                'timeType':'AUTORACE.JP出走表'})
+            self.assertEqual(len(out['verification']['conflicts']),2)
+            self.assertEqual(len(out['verification']['ignoredFields']),2)
+            self.assertEqual(out['verification']['fieldCoverage']['timeType'],1)
+            self.assertEqual(out['verification']['gradeCrossConfirmed'],0)
+
+    def test_reconcile_fills_missing_fields_only_from_matching_meeting(self):
+        archive=[{'name':'青森','grade':'F2','day':'最終日',
+                  'timeType':'確認中','girls':False}]
+        race=[{'name':'青森','grade':'F2','day':'3日目',
+               'timeType':'ミッドナイト','girls':True}]
+        out=reconcile('keirin',[('楽天Kドリームス',archive),
+                                ('KEIRIN HEX',race)],['青森'],sort_by_time)
+        item=out['items'][0]
+        self.assertEqual(item['grade'],'F2')
+        self.assertEqual(item['day'],'最終日')
+        self.assertEqual(item['timeType'],'ミッドナイト')
+        self.assertTrue(item['girls'])
+        self.assertEqual(item['fieldSources'],{
+            'grade':'楽天Kドリームス','day':'楽天Kドリームス',
+            'timeType':'KEIRIN HEX','girls':'KEIRIN HEX'})
+        self.assertEqual(item['girlsConfirmedBy'],['KEIRIN HEX'])
+        self.assertEqual(out['verification']['fieldCoverage']['girlsDetected'],1)
+
+    def test_reconcile_soda_official_g3_preserves_night_details_and_audit(self):
+        daily=[{'name':'蒲郡','grade':'一般','day':'4日目','timeType':'ナイター',
+                'girls':False}]
+        alternate=[{'name':'蒲郡','grade':'G3','day':'4日目','timeType':'ナイター',
+                    'girls':False}]
+        annual=[{'name':'蒲郡','grade':'G3','girls':False}]
+        out=reconcile('soda',[('BOAT RACE公式',daily),
+                              ('きょうの競艇',alternate),
+                              ('BOAT RACE公式G3日程',annual)],['蒲郡'],sort_by_time)
+        item=out['items'][0]
+        self.assertEqual((item['grade'],item['day'],item['timeType']),
+                         ('G3','4日目','ナイター'))
+        self.assertEqual(item['fieldSources']['grade'],'BOAT RACE公式G3日程')
+        self.assertEqual(item['fieldSources']['timeType'],'BOAT RACE公式')
+        conflict=next(x for x in out['verification']['conflicts'] if x['field']=='grade')
+        self.assertEqual(conflict['selectedSource'],'BOAT RACE公式G3日程')
+        self.assertEqual(conflict['source'],'BOAT RACE公式')
+        self.assertEqual(out['verification']['gradeCrossConfirmed'],1)
+
+    def test_reconcile_unverified_girls_does_not_set_positive_false(self):
+        rows=[{'name':'佐世保','grade':'F2','day':'最終日',
+               'timeType':None,'girls':False}]
+        result=reconcile('keirin',[('楽天Kドリームス',rows)],
+                         ['佐世保'],sort_by_time)['items'][0]
+        self.assertIsNone(result['timeType'])
+        self.assertFalse(result['girls'])
+        self.assertNotIn('girls',result['fieldSources'])
+        wrong=[{'name':'佐世保','grade':'G3','day':'最終日',
+                'timeType':'ミッドナイト','girls':True}]
+        result=reconcile('keirin',[('楽天Kドリームス',rows),
+                                   ('KEIRIN HEX',wrong)],
+                         ['佐世保'],sort_by_time)['items'][0]
+        self.assertIsNone(result['timeType'])
+        self.assertFalse(result['girls'])
+        self.assertNotIn('girls',result['fieldSources'])
 
     def test_same_date_verified_cache_only(self):
         old={'date':'2026-10-12','updatedAt':'2026-10-12T01:10+09:00',
@@ -339,6 +417,12 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(parse_boat_g3_schedule(html,selected,['浜名湖']),{})
         with self.assertRaises(ValueError):
             parse_boat_g3_schedule(html.replace('2026 年','2025 年'),selected,['蒲郡'])
+        # A previous year's G3 race must not leak into the selected year's list.
+        combined=('<h2>G3スケジュール</h2><h3>2025 年</h3>'
+                  '<table><tr><td>09/29-10/04</td><td><img alt="蒲郡"></td></tr></table>'
+                  '<h3>2026 年</h3><table>'
+                  '<tr><td>11/11-11/16</td><td><img alt="大村"></td></tr></table>')
+        self.assertEqual(parse_boat_g3_schedule(combined,selected,['蒲郡','大村']),{})
         # When the main official timetable omits the G3 label, the dated
         # annual grade schedule corrects it without changing its day or slot.
         from types import SimpleNamespace
