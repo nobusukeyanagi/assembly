@@ -169,6 +169,9 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+      # The artifact upload API can return before Pages can discover its metadata.
+      - name: Allow Pages artifact metadata to propagate
+        run: sleep 10
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

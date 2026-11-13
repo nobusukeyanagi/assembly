@@ -1,3 +1,4 @@
+/* Shared tokens are referenced directly; one-off values stay in component rules. */
 :root {
   --ink: #25323a;
   --line: #e1e8e6;

@@ -8,6 +8,14 @@ https://nobusukeyanagi.github.io/assembly/
 
 **初回だけ** リポジトリの [Settings → Pages](https://github.com/nobusukeyanagi/assembly/settings/pages) にある **Build and deployment > Source** を **GitHub Actions** に変更してください。その後、[Actions → 本番公開・日次更新](https://github.com/nobusukeyanagi/assembly/actions/workflows/refresh.yml) から `Run workflow` を実行します。初回の Pages 有効化は `GITHUB_TOKEN` だけでは行えません。
 
+## スタイル管理
+
+- `styles.css` に共通の色・レイアウト変数を定義し、利用箇所から `var(--...)` で**直接参照**します。変数同士の別名・多段参照は作りません。
+- 使用するフォントサイズは **30・60・80px**。個別の文字サイズは用途別セレクタに直接指定し、不要な重複定義を作りません。
+- 開催場のグレードラベルは **高さ35px**。出走表では共通ラベルを利用しつつ高さ80pxへ上書きします。
+- 未使用の補助文字変数は廃止。競技見出しは各競技帯の背景色と文字色をそのまま継承します。
+- 競技帯の高さと場枠の高さは、開催場数から算出した行数と既存の共通レイアウト変数で管理します。
+
 ## 自動更新
 
 - 毎日 **01:10 JST**（cron は UTC 16:10）。GitHub Actions の実行開始には遅延があり得ます。
