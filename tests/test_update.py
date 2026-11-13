@@ -318,7 +318,7 @@ class ParserTests(unittest.TestCase):
                 'grade':'AUTORACE.JP出走表','day':'AUTORACE.JP出走表',
                 'timeType':'AUTORACE.JP出走表'})
             self.assertEqual(len(out['verification']['conflicts']),2)
-            self.assertEqual(len(out['verification']['ignoredFields']),2)
+            self.assertEqual(len(out['verification']['ignoredFields']),3)
             self.assertEqual(out['verification']['fieldCoverage']['timeType'],1)
             self.assertEqual(out['verification']['gradeCrossConfirmed'],0)
 
