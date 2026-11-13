@@ -81,44 +81,146 @@ def cached_section(previous,selected,category):
     return dict(result,status='cached',note='取得元の障害により同じ日付の前回確認済みデータを再表示',
                 reusedFrom=previous.get('updatedAt'))
 
+# Highest-ranked, date-checked source wins per field, not per entire row.
+# For women's races, "False" often means "not detected", not "no race".
+# Names here correspond to collector result labels (not arbitrary domains).
+FIELD_SOURCE_PRIORITY={
+    'keirin':{
+        'grade':('KEIRIN.JP','楽天Kドリームス','KEIRIN HEX','WINTICKET '),
+        'day':('KEIRIN.JP','楽天Kドリームス','KEIRIN HEX','WINTICKET '),
+        'timeType':('KEIRIN.JP','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
+        'girls':('KEIRIN.JP','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
+    },
+    'auto':{
+        'grade':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
+        'day':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
+        'timeType':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
+        'girls':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
+    },
+    'soda':{
+        'grade':('BOAT RACE公式G3日程','BOAT RACE公式','きょうの競艇'),
+        'day':('BOAT RACE公式','きょうの競艇','BOAT RACE公式G3日程'),
+        'timeType':('BOAT RACE公式','きょうの競艇','BOAT RACE公式G3日程'),
+        'girls':('BOAT RACE公式G3日程','BOAT RACE公式','きょうの競艇'),
+    },
+}
+VALID_TIME_TYPES={'モーニング','デイ','ナイター','ミッドナイト'}
+
+
+def source_rank(category,field,source):
+    """Lower rank means more reliable *for this field*, not globally."""
+    preferred=FIELD_SOURCE_PRIORITY.get(category,{}).get(field,())
+    for rank,label in enumerate(preferred):
+        if source==label or (label.endswith(' ') and source.startswith(label)):
+            return rank
+    return len(preferred)
+
+
+def valid_field(field,value):
+    if field=='timeType':return isinstance(value,str) and value in VALID_TIME_TYPES
+    if field=='day':
+        return isinstance(value,str) and bool(re.fullmatch(r'初日|最終日|[1-9]\d*日目',value))
+    if field=='grade':
+        return isinstance(value,str) and bool(re.fullmatch(
+            r'(?:GP|SG|PG1|特G1|G[123]|F[12]|一般|普通)',value))
+    return value is not None and value!='確認中'
+
+
+def compatible_grade(category,selected_grade,other_grade,grade_source):
+    """A boat annual G3 confirmation can correct a generic daily '一般'."""
+    if not valid_field('grade',other_grade) or not valid_field('grade',selected_grade):
+        return True
+    if selected_grade==other_grade:return True
+    return (category=='soda' and grade_source=='BOAT RACE公式G3日程' and
+            selected_grade=='G3' and other_grade in ('一般','普通'))
+
+
 def reconcile(category,lists,venue_order,sort_by_time):
-    """Union independently dated records, retaining provenance and discrepancies."""
-    merged={};confirmed={};differences=[]
+    """Merge date-validated providers with field priorities and traceable evidence.
+
+    Do not borrow a time slot or a girls indicator from a differently graded
+    meeting. Never interpret missing/False girls data as evidence of absence.
+    Every displayed field records its source; incompatible fields are audited.
+    """
+    records={};providers={};differences=[];ignored=[]
     for source,items in lists:
+        providers[source]=len(items)
+        seen=set()
         for row in items:
             name=row.get('name')
             if not name:continue
-            if name not in merged:
-                merged[name]=dict(row);confirmed[name]=[source];continue
-            old=merged[name];confirmed[name].append(source)
-            for key in ('grade','day','timeType'):
-                new=row.get(key)
-                if new is None or new=='確認中':continue
-                if old.get(key) in (None,'確認中'):
-                    old[key]=new
-                elif old[key]!=new:
-                    # Different wording for the same day: a numbered day can
-                    # also be the final day. Prefer the more informative label.
-                    if key=='day' and (old[key]=='最終日' or new=='最終日'):
-                        old[key]='最終日'
-                        continue
-                    if key=='day' and ((old[key]=='初日' and new=='1日目') or
-                                       (new=='初日' and old[key]=='1日目')):
-                        old[key]='初日'
-                        continue
-                    differences.append({'name':name,'field':key,'primary':old[key],
-                                        'alternative':new,'source':source})
-            if row.get('girls') is True:old['girls']=True
-    items=list(merged.values())
-    items.sort(key=lambda x:venue_order.index(x['name']) if x['name'] in venue_order else len(venue_order))
-    for x in items:x['confirmedBy']=confirmed[x['name']]
-    result={'status':'ok','items':sort_by_time(items),'verification':{
-        'providers':{source:len(items) for source,items in lists},
-        'crossConfirmed':sum(len(v)>1 for v in confirmed.values()),
-        'singleSource':sum(len(v)==1 for v in confirmed.values()),
-        'conflicts':differences}}
-    if differences:LOG.warning('%s 取得元の不一致: %s',category,differences)
-    return result
+            if name in seen:
+                ignored.append({'name':name,'source':source,'reason':'同一情報源の開催場重複'})
+                continue
+            seen.add(name)
+            records.setdefault(name,[]).append((source,row))
+    merged=[]
+    for name,entries in records.items():
+        result={'name':name,'girls':False}
+        result['confirmedBy']=[source for source,_ in entries]
+        provenance={}
+        def choose(field,candidates):
+            usable=[(source,row[field],index) for index,(source,row) in candidates
+                    if valid_field(field,row.get(field))]
+            if not usable:return None,None
+            source,value,_=min(usable,key=lambda v:(source_rank(category,field,v[0]),v[2]))
+            provenance[field]=source
+            for rival,rival_value,_ in usable:
+                if rival_value!=value:
+                    differences.append({'name':name,'field':field,'primary':value,
+                                        'selectedSource':source,'alternative':rival_value,
+                                        'source':rival,'alternativeSource':rival})
+            return value,source
+        result['grade'],grade_source=choose('grade',list(enumerate_entries(entries)))
+        # Reject details belonging to a source describing a different meeting
+        # grade (except the documented BOAT RACE general/G3 correction).
+        eligible=[]
+        for index,(source,row) in enumerate(entries):
+            if compatible_grade(category,result['grade'],row.get('grade'),grade_source):
+                eligible.append((index,(source,row)))
+            else:
+                for field in ('day','timeType','girls'):
+                    if row.get(field) not in (None,False,'確認中'):
+                        ignored.append({'name':name,'field':field,'source':source,
+                                        'reason':'採用グレードとの不一致'})
+        result['day'],_=choose('day',eligible)
+        result['timeType'],_=choose('timeType',eligible)
+        positive=[source for _,(source,row) in eligible if row.get('girls') is True]
+        if positive:
+            result['girls']=True
+            result['girlsConfirmedBy']=list(dict.fromkeys(positive))
+            provenance['girls']=min(positive,key=lambda source:source_rank(category,'girls',source))
+        result['fieldSources']=provenance
+        merged.append(result)
+    merged.sort(key=lambda x:venue_order.index(x['name'])
+                if x['name'] in venue_order else len(venue_order))
+    ordered=sort_by_time(merged)
+    fields=('grade','day','timeType')
+    verification={
+        'providers':providers,
+        'crossConfirmed':sum(len(x['confirmedBy'])>1 for x in merged),
+        'singleSource':sum(len(x['confirmedBy'])==1 for x in merged),
+        'gradeCrossConfirmed':sum(
+            sum(valid_field('grade',row.get('grade')) and
+                compatible_grade(category,item['grade'],row.get('grade'),
+                                 item['fieldSources'].get('grade'))
+                for _,row in records[item['name']])>1 for item in merged),
+        'fieldCoverage':{f:sum(valid_field(f,item.get(f)) for item in merged) for f in fields}
+                        | {'girlsDetected':sum(item['girls'] for item in merged)},
+        'priorityPolicy':FIELD_SOURCE_PRIORITY.get(category,{}),
+        'conflicts':differences,
+        'ignoredFields':ignored,
+    }
+    if differences:LOG.warning('%s 情報源の不一致: %s',category,differences)
+    if ignored:LOG.warning('%s 採用しない情報: %s',category,ignored)
+    return {'status':'ok','items':ordered,'verification':verification}
+
+
+def enumerate_entries(entries):
+    """Stable insertion order also acts as a fallback for unlisted providers."""
+    for index,(source,row) in enumerate(entries):
+        yield index,(source,row)
+
 
 def parse_keirin_oct_2026_finals(html,selected,archive,u):
     """Recover explicitly named time slots and girls races from a dated final calendar.
