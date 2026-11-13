@@ -192,8 +192,10 @@ class GradeFinalTests(unittest.TestCase):
             f'<table><tr><th>締切予定時刻</th>{clocks}</tr></table>'
             '<h3>優勝戦 1800m</h3>'
             '<table>'+racers+'</table>')
-        data=parse_soda_final(official,date(2026,11,12),"宮島","一般")
+        data=parse_soda_final(official,date(2026,11,12),"宮島","G1")
         self.assertEqual(data["sport"],"soda")
+        with self.assertRaisesRegex(ValueError,"グレード以外"):
+            parse_soda_final(official,date(2026,11,12),"宮島","一般")
         self.assertEqual(data["officialClosingTime"],"15:21")
         self.assertEqual(len(data["riders"]),6)
         self.assertIsNone(data["startTime"])
@@ -204,6 +206,31 @@ class GradeFinalTests(unittest.TestCase):
             parse_soda_start(
                 "<h1>宮島 12R</h1><p>11月12日 / イベント / 15:21 発走</p>",
                 date(2026,11,12),"宮島","15:21")
+
+    def test_soda_only_graded_finals_and_never_general(self):
+        for grade in ("SG","PG1","G1","G2","G3"):
+            with self.subTest(grade=grade):
+                calls=[]
+                def fetch(_,url):
+                    calls.append(url)
+                    raise RuntimeError("test offline")
+                sections={"soda":{"items":[
+                    {"name":"戸田","grade":"一般","day":"最終日"},
+                    {"name":"宮島","grade":grade,"day":"最終日"},
+                    {"name":"芦屋","grade":"普通","day":"最終日"},
+                    {"name":"桐生","grade":"SG","day":"2日目"}]}}
+                out=collect(object(),DAY,sections,SimpleNamespace(fetch=fetch))
+                self.assertEqual(out["verification"]["eligibleMeetings"],1)
+                self.assertEqual(out["verification"]["sodaRaces"],0)
+                self.assertEqual(len(calls),1)
+                self.assertIn("jcd=17",calls[0])
+        calls=[]
+        sections={"soda":{"items":[{"name":"戸田","grade":"一般","day":"最終日"}]}}
+        out=collect(object(),DAY,sections,SimpleNamespace(
+            fetch=lambda _,url:calls.append(url)))
+        self.assertEqual(out["verification"]["eligibleMeetings"],0)
+        self.assertEqual(out["items"],[])
+        self.assertEqual(calls,[])
 
     def test_mori_race_types(self):
         html=auto_detail(11,"準優勝戦").replace("中村　雅人","森　且行")

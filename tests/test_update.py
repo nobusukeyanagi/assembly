@@ -8,6 +8,8 @@ from update import parse_mori_race_start,mori_start_times,MORI_RACE_START,parse_
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_autorace_grade(self):
+        self.assertEqual(grade('PGⅠ'),'PG1')
+        self.assertEqual(grade('PG1'),'PG1')
         self.assertEqual(autorace_grade('普通'),'普通')
         self.assertEqual(autorace_grade('一般'),'普通')
         self.assertEqual(autorace_grade('GⅡ'),'G2')
