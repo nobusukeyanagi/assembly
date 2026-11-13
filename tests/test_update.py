@@ -374,6 +374,8 @@ class ParserTests(unittest.TestCase):
             fake_dt.now.return_value=datetime(2026,11,13,16,0,tzinfo=__import__('update').TZ)
             result=verified_auto(object(),selected,None,u)
         self.assertIn(expected,seen)
+        self.assertEqual([url for url in seen if '/race_info/Program/' in url],
+                         [expected], 'only scheduled venues should be probed')
         self.assertEqual(result['verification']['officialConfirmed'],['山陽'])
         self.assertEqual(result['verification']['officialConfirmedCount'],1)
         self.assertEqual(result['verification']['gradeCrossConfirmed'],1)
