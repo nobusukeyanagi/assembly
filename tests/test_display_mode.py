@@ -25,10 +25,14 @@ class DisplayModeTests(unittest.TestCase):
             self.assertEqual(check(a,b)['mode'],'today')
             self.assertFalse(b.exists())
     def test_scheduled_refresh_overrides_manual_selection(self):
-        """Scheduled refresh selects today before fetching selected-date data."""
+        """Only the 01:10 run resets the date; daytime snapshots preserve it."""
         workflow=(Path(__file__).resolve().parents[1]/
                   '.github/workflows/refresh.yml').read_text(encoding='utf-8')
-        schedule_step="if: ${{ github.event_name == 'schedule' }}"
+        schedule_step="if: ${{ github.event_name == 'schedule' && github.event.schedule == '10 16 * * *' }}"
+        self.assertIn("- cron: '10 4 * * *'",workflow)
+        self.assertIn("- cron: '40 14 * * *'",workflow)
+        self.assertEqual(workflow.count("set --mode 当日"),1)
+        self.assertIn("python scripts/history_cache.py --input data/today.json",workflow)
         update_command="run: python scripts/display_mode.py set --mode 当日"
         selected_fetch="name: Gather the selected date from public schedules"
         self.assertIn(schedule_step,workflow)
