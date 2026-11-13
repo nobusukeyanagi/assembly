@@ -380,7 +380,7 @@ class ParserTests(unittest.TestCase):
         row=result['items'][0]
         self.assertEqual(row['grade'],'G2')
         self.assertEqual(row['day'],'3日目')
-        self.assertEqual(row['fieldSources']['grade'],'WINTICKET指定月')
+        self.assertEqual(row['fieldSources']['grade'],'AUTORACE.JP出走表')
         self.assertEqual(row['confirmedBy'],['WINTICKET指定月','AUTORACE.JP出走表'])
         with self.assertRaises(ValueError):
             parse_autorace_official_card(official_html,selected,'川口',u)

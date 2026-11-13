@@ -111,11 +111,11 @@ FIELD_SOURCE_PRIORITY={
         'girls':('KEIRIN.JP','CTC開催日程','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
     },
     'auto':{
-        # WINTICKET remains the regular schedule source; official JKA
-        # racecards independently corroborate its fields and fill gaps.
-        'grade':('WINTICKET指定月','AUTORACE.JP出走表','オッズパーク日別'),
-        'day':('WINTICKET指定月','AUTORACE.JP出走表','オッズパーク日別'),
-        'timeType':('WINTICKET指定月','AUTORACE.JP出走表','オッズパーク日別'),
+        # WINTICKET supplies the comprehensive schedule; when its date
+        # disagrees with a verified official racecard, the official facts win.
+        'grade':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
+        'day':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
+        'timeType':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
         'girls':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
     },
     'soda':{
