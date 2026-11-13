@@ -72,9 +72,9 @@ const css=fs.readFileSync(path.join(__dirname,'..','styles.css'),'utf8');
 const fontTokens={30:7,60:6,80:5};
 for(const [size,expectedCount] of Object.entries(fontTokens)){
   const token='--font-'+size;
-  const definition=new RegExp('\\\\s'+token+':\\\\s*'+size+'px;');
+  const definition=new RegExp('\\s'+token+':\\s*'+size+'px;');
   assert.match(css,definition,'font token must directly specify its px size: '+token);
-  const usages=[...css.matchAll(new RegExp('font-size:\\\\s*var\\\\('+token+'\\\\);','g'))];
+  const usages=[...css.matchAll(new RegExp('font-size:\\s*var\\('+token+'\\);','g'))];
   assert.equal(usages.length,expectedCount,'all existing '+size+'px styles must directly use '+token);
 }
 assert.doesNotMatch(css,/font-size:\s*\d+(?:\.\d+)?px\b/,
