@@ -276,6 +276,15 @@ def check_auto_official(html,name,today):
 
 def parse_auto_calendar(html,today):
     """Read all five track blocks and dates, not a misleading racecard default."""
+    def require_unique_meeting(items):
+        # A schedule cannot contribute two unrelated meeting descriptions
+        # for the same track/date. Reject rather than silently choose one.
+        seen=set()
+        for item in items:
+            if item['name'] in seen:
+                raise ValueError('同じ日付のオート開催が重複: '+item['name'])
+            seen.add(item['name'])
+        return items
     soup=BeautifulSoup(html,'html.parser')
     for tag in soup(['script','style','noscript']):tag.decompose()
     text=normalize('NFKC',soup.get_text(' ',strip=True))
@@ -304,7 +313,7 @@ def parse_auto_calendar(html,today):
         anchored.append({'name':name,'grade':autorace_grade(gm.group(1)) if gm else '普通',
                          'timeType':race_time_type(title),'day':day_label(today,*bounds)})
     if len(anchor_venues)==5 and anchor_count>=8:
-        return anchored
+        return require_unique_meeting(anchored)
     parts=list(re.finditer(r'(川口|伊勢崎|浜松|飯塚|山陽)\s*オートレース',text))
     items=[];verified=set();count=0
     for n,heading in enumerate(parts):
@@ -321,7 +330,7 @@ def parse_auto_calendar(html,today):
             gm=re.search(r'(特G(?:III|II|I|[123])|SG|G(?:III|II|I|[123]))',name_event[:120],re.I)
             items.append({'name':name,'grade':autorace_grade(gm.group(1)) if gm else '普通','timeType':race_time_type(name_event),'day':day_label(today,*dates)})
     if len(verified)!=5 or count<8:raise ValueError('全5場の開催日程を確認できません')
-    return items
+    return require_unique_meeting(items)
 
 def parse_kawaguchi_official_meeting(html,scheduled):
     """Match the venue's published event start date, not just the track name."""
