@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from verified_sources import parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
+from verified_sources import parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_chariloto_starts,MORI_CHARILOTO_START,parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
@@ -324,6 +324,36 @@ class ParserTests(unittest.TestCase):
         self.assertEqual([x['name'] for x in out['items']],['飯塚'])
         self.assertEqual(out['items'][0]['grade'],'G2')
         self.assertEqual(out['verification']['providers'],{'オッズパーク日別':1})
+
+    def test_official_boat_g3_calendar_matches_date_venue_and_year(self):
+        selected=date(2026,10,2)
+        html=('<h2>G3スケジュール</h2><h3>2026 年</h3><table>'
+              '<tr><th>開催日程</th><th>ボートレース場</th><th>タイトル</th></tr>'
+              '<tr><td>09/29-10/04</td><td><img alt="蒲郡"></td><td>企業杯</td></tr>'
+              '<tr><td>10/07-10/12</td><td><img alt="江戸川"></td>'
+              '<td>オールレディース</td></tr></table>')
+        got=parse_boat_g3_schedule(html,selected,['蒲郡','浜名湖','江戸川'])
+        self.assertEqual(got,{'蒲郡':{'name':'蒲郡','grade':'G3','girls':False}})
+        self.assertEqual(parse_boat_g3_schedule(html,date(2026,10,8),['江戸川']),
+                         {'江戸川':{'name':'江戸川','grade':'G3','girls':True}})
+        self.assertEqual(parse_boat_g3_schedule(html,selected,['浜名湖']),{})
+        with self.assertRaises(ValueError):
+            parse_boat_g3_schedule(html.replace('2026 年','2025 年'),selected,['蒲郡'])
+        # When the main official timetable omits the G3 label, the dated
+        # annual grade schedule corrects it without changing its day or slot.
+        from types import SimpleNamespace
+        daily='<h1>2026年10月2日（金）のボートレース全1場・12レース</h1><h2>蒲郡G3・4日目・企業杯</h2>'
+        up=SimpleNamespace(fetch=lambda s,url,params=None:html if 'gradesch' in url else daily,
+                           BOAT='https://www.boatrace.jp/owpc/pc/race/index',
+                           parse_boat=lambda *a:[{'name':'蒲郡','grade':'一般','day':'4日目',
+                                                    'timeType':'ナイター','girls':False}],
+                           SODA_NAMES=['蒲郡'],NIGHT_BOAT={'蒲郡'},
+                           sort_by_time=sort_by_time,bad=lambda msg:{'status':'error','items':[]})
+        out=verified_soda(object(),selected,None,up)
+        self.assertEqual(out['items'][0]['grade'],'G3')
+        self.assertEqual(out['items'][0]['timeType'],'ナイター')
+        self.assertEqual(out['items'][0]['day'],'4日目')
+        self.assertGreaterEqual(out['verification']['crossConfirmed'],1)
 
     def test_soda_secondary_works_when_official_is_unavailable(self):
         from types import SimpleNamespace
