@@ -76,8 +76,10 @@ assert.doesNotMatch(css,/--muted\s*:/,'unused secondary-text variable must be re
 assert.doesNotMatch(css,/\.message,\s*\.detail\s*\{/,'unused message styles removed');
 assert.doesNotMatch(css,/\.entry \.time-type\[data-type=/,'time icon color directly declared');
 assert.match(css,/\.entry \.time-icon\s*\{[^}]*color:\s*#e4a529;/s);
-assert.match(css,/\.entry \.grade,\s*\.final-race \.grade\s*\{[^}]*height:\s*35px;/s,
-             'shared venue grade badge height must be 35px');
+assert.match(css,/\.grade\s*\{[^}]*height:\s*35px;/s,
+             'all grade labels use the same 35px base height');
+assert.match(css,/\.grade\[data-tier="major"\]\s*\{[^}]*background:\s*var\(--grade-major\);/s,
+             'major grade labels use the shared grade selector');
 assert.match(css,/\.final-race \.grade\s*\{[^}]*height:\s*80px;/s,
              'racecard badge retains its special 80px height');
 assert.match(css,/\.header\s*\{[^}]*height:\s*100px;[^}]*margin-bottom:\s*8px;/s,
@@ -85,7 +87,10 @@ assert.match(css,/\.header\s*\{[^}]*height:\s*100px;[^}]*margin-bottom:\s*8px;/s
 assert.doesNotMatch(css,/\.stage\.is-final \.header\s*\{/,
                     'do not duplicate the shared date header styles');
 assert.match(css,/\.final-screen\s*\{[^}]*top:\s*120px;[^}]*width:\s*1920px;[^}]*height:\s*960px;/s);
-assert.match(css,/\.final-screen\s*\{[^}]*background:\s*#fff;/s);
+assert.match(css,/\.final-screen\s*\{[^}]*background:\s*var\(--white\);/s);
+assert.match(css,/:root\s*\{[^}]*--white:\s*#fff;/s);
+assert.doesNotMatch(css,/#ffffff\b/);
+assert.match(css,/\.panel\s*\{[^}]*gap:\s*var\(--tile-gap\);/s);
 assert.match(css,/\.final-title\s*\{[^}]*background:\s*var\(--keirin\);/s);
 assert.match(css,/\.final-title\[data-sport="auto"\]\s*\{[^}]*background:\s*var\(--auto\);/s);
 assert.match(css,/\.final-title\[data-sport="soda"\]\s*\{[^}]*background:\s*var\(--soda\);/s);
