@@ -17,6 +17,7 @@ AUTO_MONTH='https://www.winticket.jp/autorace/schedules/{year}{month:02d}'
 AUTO_ODDSPARK='https://sp.oddspark.com/autorace/SpRaceList.do'
 AUTO_CODES={'川口':'02','伊勢崎':'03','浜松':'04','飯塚':'05','山陽':'06'}
 BOAT_DAILY='https://www.ikachi.org/kyotei/{day}'
+BOAT_G3='https://www.boatrace.jp/owpc/pc/race/gradesch?hcd=03'
 # Verified completed-finals calendar for the October 2026 period only.
 # Never extrapolate its entries to another month.
 KEIRIN_2026_OCT_FINALS='https://www.winticket.jp/keirin/campaign/onYZ47mxGGoqRuAo3AzxdX'
@@ -300,6 +301,39 @@ def auto(s,selected,previous,u):
     return result
 
 
+def parse_boat_g3_schedule(html,selected,venue_names):
+    """Read BOAT RACE official G3 annual calendar with year/date/venue checks."""
+    soup=BeautifulSoup(html,'html.parser')
+    h2=next((h for h in soup.find_all('h2') if 'G3スケジュール' in h.get_text(' ',strip=True)),None)
+    current_year=next((h for h in soup.find_all(['h2','h3'])
+                       if re.fullmatch(r'\s*'+str(selected.year)+r'\s*年\s*',
+                                       normalize('NFKC',h.get_text(' ',strip=True)))),None)
+    if h2 is None or current_year is None:
+        raise ValueError('公式G3日程のグレード・対象年が一致しません')
+    found={}
+    for tr in soup.find_all('tr'):
+        cells=tr.find_all(['td','th'],recursive=False)
+        row=normalize('NFKC',tr.get_text(' ',strip=True))
+        bounds=re.search(r'(?<!\d)(\d{1,2})\s*/\s*(\d{1,2})\s*[-～〜~]\s*'
+                         r'(\d{1,2})\s*/\s*(\d{1,2})(?!\d)',row)
+        if bounds is None:continue
+        m1,d1,m2,d2=map(int,bounds.groups())
+        try:
+            start=date(selected.year,m1,d1)
+            finish=date(selected.year+int(m2<m1),m2,d2)
+        except ValueError:continue
+        if not start<=selected<=finish:continue
+        candidates=[normalize('NFKC',img.get('alt','')).strip()
+                    for img in tr.find_all('img',alt=True)]
+        matches=[name for name in venue_names if name in candidates]
+        if len(matches)!=1:continue
+        name=matches[0]
+        if name in found:raise ValueError('同じ日のG3開催が重複しています')
+        found[name]={'name':name,'grade':'G3',
+                     'girls':bool(re.search('オールレディース|女子戦',row))}
+    return found
+
+
 def soda(s,selected,previous,u):
     lists=[];errors=[]
     try:
@@ -314,6 +348,24 @@ def soda(s,selected,previous,u):
     if not lists:
         saved=cached_section(previous,selected,'soda')
         return saved if saved else u.bad('すべてのSODA対象開催日程が取得できません')
+    # The general official schedule can omit a G3 badge and default to 一般.
+    # Cross-check the separate official annual G3 schedule for the precise
+    # date and track, and correct only that verified grade.
+    try:
+        official_g3=parse_boat_g3_schedule(u.fetch(s,BOAT_G3),selected,u.SODA_NAMES)
+        for source,items in lists:
+            for row in items:
+                matching=official_g3.get(row['name'])
+                if matching and row.get('grade') in ('一般','普通','G3'):
+                    row['grade']='G3'
+                    if matching['girls']:row['girls']=True
+        matched=[dict(row) for row in official_g3.values()
+                 if any(row['name']==item['name'] for _,items in lists for item in items)]
+        if matched:
+            # Used solely as a third corroborating grade record.
+            lists.append(('BOAT RACE公式G3日程',matched))
+    except Exception as exc:
+        errors.append(('BOAT RACE公式G3日程',str(exc)))
     result=reconcile('soda',lists,u.SODA_NAMES,u.sort_by_time)
     result['verification']['errors']=errors
     result['note']='SODA対象場で開催。SODAライブ配信を保証するものではありません。'
