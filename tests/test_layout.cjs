@@ -1,6 +1,11 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {layoutRows,isEmptyVenueSection,venueStatusText}=require('../app.js');
+const {layoutRows,isEmptyVenueSection,venueStatusText,moriStatusText}=require('../app.js');
+
+// The status label is omitted for confirmed races, shortened for the next appearance.
+assert.equal(moriStatusText(true,true),'');
+assert.equal(moriStatusText(false,false),'次回');
+assert.equal(moriStatusText(false,true),'出走R確認中');
 
 // The same function used by the published browser determines all row counts.
 function sections(keirin,soda,keirinStatus='ok',sodaStatus='ok'){

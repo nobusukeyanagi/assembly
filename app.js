@@ -119,6 +119,9 @@ function entries(id,section,stale,mode){
   root.replaceChildren(...records.slice(0,max).map(i=>card(i,id)));
   if(records.length>max)console.warn(id+' : maximum displayed entries exceeded');
 }
+function moriStatusText(hasRace,isToday){
+  return hasRace?'':isToday?'出走R確認中':'次回';
+}
 function mori(section,stale,targetDate){
   const root=get('mori-body');
   const status=get('mori-status');
@@ -135,7 +138,7 @@ function mori(section,stale,targetDate){
   const hasRace=isToday&&races.length>0;
   const d=/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?
     Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';
-  status.textContent=hasRace?'本日出走':isToday?'出走R確認中':'次回予定';
+  status.textContent=moriStatusText(hasRace,isToday);
   const venue=node('div','venue mori-primary',(x.name||'—')+(hasRace?' '+races.map(n=>n+'R').join('・'):''));
   const meta=node('div','meta mori-detail');
   if(x.grade){
@@ -358,7 +361,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,moriStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
