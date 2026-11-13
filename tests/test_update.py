@@ -3,8 +3,8 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from verified_sources import parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
-from update import parse_mori_race_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
+from verified_sources import parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
+from update import parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
     def test_autorace_grade(self):
@@ -87,6 +87,92 @@ class ParserTests(unittest.TestCase):
             parse_mori_race_start(h.replace('発走：12:22','発走：12:22 発走：12:23'),d,'浜松',5)
         with self.assertRaisesRegex(ValueError,'一意'):
             parse_mori_race_start(h.replace('発走：12:22','締切：12:22'),d,'浜松',5)
+
+    def test_mori_official_start_time_verified_date_race_and_rider(self):
+        selected=date(2026,10,2)
+        def racepage(r,clock):
+            return (f'<html><head><title>2026/10/02 出走表 | 飯塚オート</title></head>'
+                    f'<body><h2>普通 飯塚</h2><section>'
+                    f'10月2日(金) 予選{r}R 3100m 晴</section>'
+                    f'<div>投票締切 14:00</div><div>発走予定 {clock}</div>'
+                    f'<table><tr><th>車</th><th>選手</th></tr>'
+                    f'<tr><td>8</td><td>森　　且行</td></tr></table></body></html>')
+        page2=racepage(2,'15:51')
+        self.assertEqual(parse_mori_official_start(page2,selected,'飯塚',2),'15:51')
+        for wrong_day,wrong_venue,wrong_race in (
+            (date(2026,10,3),'飯塚',2),(selected,'浜松',2),(selected,'飯塚',8)):
+            with self.assertRaises(ValueError):
+                parse_mori_official_start(page2,wrong_day,wrong_venue,wrong_race)
+        with self.assertRaisesRegex(ValueError,'森且行'):
+            parse_mori_official_start(page2.replace('森　　且行','別の選手'),selected,'飯塚',2)
+        with self.assertRaisesRegex(ValueError,'一意'):
+            parse_mori_official_start(page2.replace('発走予定 15:51','発走予定 15:51 発走予定 15:52'),
+                                      selected,'飯塚',2)
+        def mock_fetch(s,url,params=None):
+            if 'tokyo-sports' in url:raise RuntimeError('404 archived source')
+            if '/2026-10-02_2' in url:return racepage(2,'15:51')
+            if '/2026-10-02_8' in url:return racepage(8,'18:34')
+            raise AssertionError('unexpected URL: '+url)
+        item={'name':'飯塚','date':selected.isoformat(),'type':'today','race':2,'races':[2,8]}
+        with patch('update.fetch',side_effect=mock_fetch):
+            mori_start_times(object(),item,selected=selected)
+        self.assertEqual(item['startTimes'],{'2':'15:51','8':'18:34'})
+
+    def test_oct_2026_keirin_final_calendar_crosschecks_meeting_day(self):
+        from types import SimpleNamespace
+        selected=date(2026,10,2)
+        labels=[
+            ('10/2(金)','佐世保','F2','モーニング','6R L級ガールズ決勝'),
+            ('','青森','F2','ミッドナイト','6R L級ガールズ決勝'),
+            ('','前橋','F2','ミッドナイト','7R A級決勝'),
+            ('','奈良','F2','ミッドナイト','7R A級決勝'),
+            ('10/3(土)','大宮','F1','デイ','12R S級決勝'),
+            ('','川崎','F1','ナイター','12R S級決勝'),
+            ('','久留米','F2','ナイター','10R L級ガールズ決勝'),
+            ('10/4(日)','松阪','G3','デイ','12R S級決勝')]
+        rows=''.join(f'<tr><td>{d}</td><td>{n}({g}){t}</td><td>{race}</td></tr>'
+                     for d,n,g,t,race in labels)
+        html=('<h1>〖10月〗すべての決勝レースで5%還元！</h1>'
+              '<p>2026年10月1日（木）〜10月31日（土）</p>'
+              '<table><tr><th>日程</th><th>開催場</th><th>対象レース</th></tr>'
+              +rows+'</table>')
+        archive=[{'name':n,'grade':g,'day':'最終日' if n in ('青森','前橋','奈良','佐世保') else '2日目'}
+                 for n,g in [('青森','F2'),('前橋','F2'),('大宮','F1'),('川崎','F1'),
+                             ('松阪','G3'),('奈良','F2'),('久留米','F2'),('佐世保','F2')]]
+        upstream=SimpleNamespace(KEIRIN_NAMES=[x['name'] for x in archive],grade=grade)
+        got=parse_keirin_oct_2026_finals(html,selected,archive,upstream)
+        self.assertEqual(len(got),8)
+        by_name={x['name']:x for x in got}
+        self.assertEqual({n:by_name[n]['timeType'] for n in ('青森','前橋','奈良')},
+                         {'青森':'ミッドナイト','前橋':'ミッドナイト','奈良':'ミッドナイト'})
+        self.assertEqual(by_name['佐世保']['timeType'],'モーニング')
+        self.assertEqual(by_name['松阪']['timeType'],'デイ')
+        self.assertEqual(by_name['川崎']['timeType'],'ナイター')
+        self.assertTrue(by_name['青森']['girls'])
+        self.assertTrue(by_name['佐世保']['girls'])
+        self.assertTrue(by_name['久留米']['girls'])
+        self.assertFalse(by_name['前橋']['girls'])
+        self.assertEqual(parse_keirin_oct_2026_finals(html,date(2026,9,2),archive,upstream),[])
+        with self.assertRaises(ValueError):
+            parse_keirin_oct_2026_finals(html.replace('2026年10月1日','2025年10月1日'),
+                                          selected,archive,upstream)
+
+    def test_autorace_monthly_links_do_not_leak_next_meeting_grade(self):
+        selected=date(2026,10,2)
+        html='<h2>2026年10月 開催日程</h2>'
+        for n in ('川口','伊勢崎','浜松','飯塚','山陽'):
+            html+=f'<h3>{n} オートレース</h3>'
+            if n=='飯塚':
+                html+='<a>10月2日 〜 10月4日令和８年度飯塚市営　普通開催　１０／２～</a>'
+                html+='<a>10月8日 〜 10月12日ＧⅡオーバルチャンピオンカップ</a>'
+            else:
+                html+='<a>10月1日 〜 10月3日普通開催</a>'
+                html+='<a>10月20日 〜 10月22日ＧⅡ選手権</a>'
+        found=parse_auto_calendar(html,selected)
+        self.assertEqual(next(x['grade'] for x in found if x['name']=='飯塚'),'普通')
+        self.assertEqual(next(x['day'] for x in found if x['name']=='飯塚'),'初日')
+        self.assertEqual(next(x['grade'] for x in parse_auto_calendar(
+            html,date(2026,10,8)) if x['name']=='飯塚'),'G2')
 
     def test_mori_start_times_multiple_races_and_same_date_cache(self):
         d=date(2026,11,1)
