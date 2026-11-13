@@ -18,6 +18,9 @@ LOG=logging.getLogger('assembly')
 AUTO_MONTH='https://www.winticket.jp/autorace/schedules/{year}{month:02d}'
 AUTO_ODDSPARK='https://sp.oddspark.com/autorace/SpRaceList.do'
 AUTO_CODES={'川口':'02','伊勢崎':'03','浜松':'04','飯塚':'05','山陽':'06'}
+# AUTORACE.JP uses 'sanyou', unlike some third-party providers ('sanyo').
+AUTO_OFFICIAL_PATHS={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu',
+                     '飯塚':'iizuka','山陽':'sanyou'}
 BOAT_DAILY='https://www.ikachi.org/kyotei/{day}'
 BOAT_G3='https://www.boatrace.jp/owpc/pc/race/gradesch?hcd=03'
 # Published, dated final-race tables. Never guess a campaign URL for months
@@ -108,9 +111,11 @@ FIELD_SOURCE_PRIORITY={
         'girls':('KEIRIN.JP','CTC開催日程','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
     },
     'auto':{
-        'grade':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
-        'day':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
-        'timeType':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
+        # WINTICKET remains the regular schedule source; official JKA
+        # racecards independently corroborate its fields and fill gaps.
+        'grade':('WINTICKET指定月','AUTORACE.JP出走表','オッズパーク日別'),
+        'day':('WINTICKET指定月','AUTORACE.JP出走表','オッズパーク日別'),
+        'timeType':('WINTICKET指定月','AUTORACE.JP出走表','オッズパーク日別'),
         'girls':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
     },
     'soda':{
@@ -481,8 +486,10 @@ def auto(s,selected,previous,u):
 
     def check_official(pair):
         name,_=pair
+        # This is an official date- and venue-qualified racecard, not the
+        # venue landing page. Keep the third-party slug map separate.
+        url=u.AUTO_OFFICIAL+AUTO_OFFICIAL_PATHS[name]+'/'+selected.isoformat()
         try:
-            url=u.AUTO_OFFICIAL+u.AUTO_NAMES[name]+'/'+selected.isoformat()
             html=u.fetch(s,url)
             return name,parse_autorace_official_card(html,selected,name,u),None
         except Exception as exc:return name,None,str(exc)
@@ -518,8 +525,12 @@ def auto(s,selected,previous,u):
         return saved if saved else u.bad('すべてのオートレース開催日程が取得できません')
     result=reconcile('auto',lists,list(AUTO_CODES),u.sort_by_time)
     result=restore_same_date_fields(result,previous,selected,'auto')
-    result['verification'].update(errors=errors,unconfirmedOfficial=missed_official,
-                                   unconfirmedRacecards=missed_oddspark)
+    result['verification'].update(
+        errors=errors,
+        officialConfirmed=[row['name'] for row in official],
+        officialConfirmedCount=len(official),
+        unconfirmedOfficial=missed_official,
+        unconfirmedRacecards=missed_oddspark)
     return result
 
 

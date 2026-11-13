@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from schedule_enrichment import official_morning,ctc_listing
-from verified_sources import is_boat_women_event,restore_same_date_fields,KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
+from verified_sources import AUTO_OFFICIAL_PATHS,is_boat_women_event,restore_same_date_fields,KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_chariloto_starts,MORI_CHARILOTO_START,parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
@@ -341,6 +341,51 @@ class ParserTests(unittest.TestCase):
         rows=parse_auto_calendar(valid,day)
         self.assertEqual(len(rows),5)
         self.assertTrue(all(row['grade']=='普通' for row in rows))
+
+    def test_official_autorace_venue_urls_and_independent_validation(self):
+        from types import SimpleNamespace
+        from verified_sources import parse_autorace_official_card
+        self.assertEqual(AUTO_OFFICIAL_PATHS['山陽'],'sanyou')
+        self.assertEqual(AUTO_OFFICIAL_PATHS['川口'],'kawaguchi')
+        self.assertEqual(AUTO_OFFICIAL_PATHS['飯塚'],'iizuka')
+        selected=date(2026,11,13)
+        official_html=(
+            '<html><head><title>2026/11/13 出走表 | 山陽オート | レース情報 | AUTORACE.JP</title></head>'
+            '<body><h2>ＧⅡ若獅子杯争奪戦</h2><p>GII山陽　一般戦</p>'
+            '<p>開催期間：2026年11月11日(水)～15日(日)　開催 第3日目</p>'
+            '<p>11月13日(金) 一般戦1R</p></body></html>')
+        u=SimpleNamespace(AUTO_OFFICIAL='https://autorace.jp/race_info/Program/',
+                          AUTO_NAMES={'山陽':'sanyo','川口':'kawaguchi'},
+                          parse_auto=parse_auto,check_auto_official=check_auto_official,
+                          day_label=day_label,sort_by_time=sort_by_time,
+                          autorace_grade=autorace_grade,race_time_type=race_time_type,
+                          bad=lambda msg:{'status':'error','items':[]})
+        expected='https://autorace.jp/race_info/Program/sanyou/2026-11-13'
+        seen=[]
+        def fake_fetch(s,url,params=None):
+            seen.append(url)
+            if 'winticket.jp' in url:return '<html>placeholder</html>'
+            if url==expected:return official_html
+            raise RuntimeError('official racecard unavailable for this track')
+        u.fetch=fake_fetch
+        u.parse_auto_calendar=lambda html,d:[
+            {'name':'山陽','grade':'G2','day':'3日目','timeType':None,'girls':False}]
+        with patch('verified_sources.datetime') as fake_dt:
+            fake_dt.now.return_value=datetime(2026,11,13,16,0,tzinfo=__import__('update').TZ)
+            result=verified_auto(object(),selected,None,u)
+        self.assertIn(expected,seen)
+        self.assertEqual(result['verification']['officialConfirmed'],['山陽'])
+        self.assertEqual(result['verification']['officialConfirmedCount'],1)
+        self.assertEqual(result['verification']['gradeCrossConfirmed'],1)
+        row=result['items'][0]
+        self.assertEqual(row['grade'],'G2')
+        self.assertEqual(row['day'],'3日目')
+        self.assertEqual(row['fieldSources']['grade'],'WINTICKET指定月')
+        self.assertEqual(row['confirmedBy'],['WINTICKET指定月','AUTORACE.JP出走表'])
+        with self.assertRaises(ValueError):
+            parse_autorace_official_card(official_html,selected,'川口',u)
+        with self.assertRaises(ValueError):
+            parse_autorace_official_card(official_html,date(2026,11,12),'山陽',u)
 
     def test_autorace_official_independent_record(self):
         from verified_sources import parse_autorace_official_card

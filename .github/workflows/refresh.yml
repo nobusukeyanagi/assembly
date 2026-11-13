@@ -160,6 +160,16 @@ jobs:
                                   f"採用元={evidence}")
                           print(detail)
                           lines.append(detail)
+                  if key=='auto':
+                      official_count=checked.get('officialConfirmedCount',0)
+                      names='・'.join(checked.get('officialConfirmed',[])) or 'なし'
+                      official_note=f"  AUTORACE.JP公式出走表による独立確認: {official_count}場（{names}）"
+                      print(official_note)
+                      lines.append(official_note)
+                      for missed in checked.get('unconfirmedOfficial',[]):
+                          line=f"  公式未照合 {missed.get('name','-')}: {missed.get('reason','-')}"
+                          print(line)
+                          lines.append(line)
                   if section.get('status')=='error':
                       print(f"::warning::{fname} {title}: 全取得元を確認できませんでした")
                   if key=='mori' and isinstance(section.get('item'),dict):
