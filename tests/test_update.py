@@ -735,6 +735,16 @@ class ParserTests(unittest.TestCase):
     def test_auto_official_confirmation(self):
         h='<h2>伊勢崎アフター５</h2><div>開催期間：2026年11月10日(火)～12日(木) 開催 第3日目</div>'
         self.assertEqual(check_auto_official(h,'伊勢崎',date(2026,11,12))['timeType'],'ナイター')
+        # A global navigation element can list every track, but the actual
+        # official racecard page title must name the requested venue.
+        nav='<nav>川口 伊勢崎 浜松 飯塚 山陽</nav>'
+        actual=('<html><head><title>2026/11/13 出走表 | 山陽オート | レース情報 | AUTORACE.JP</title></head>'
+                '<body>'+nav+'<h2>GⅡ若獅子杯争奪戦 山陽</h2>'
+                '<p>開催期間：2026年11月11日(水)～15日(日) 開催 第3日目</p></body></html>')
+        self.assertIsNotNone(check_auto_official(actual,'山陽',date(2026,11,13)))
+        self.assertIsNone(check_auto_official(actual,'川口',date(2026,11,13)))
+        self.assertIsNone(check_auto_official(actual,'伊勢崎',date(2026,11,13)))
+        self.assertIsNone(check_auto_official(actual,'山陽',date(2026,11,12)))
     def test_boat_ladies(self):
         h='<table><tr><td><img alt="蒲郡"></td><td>11/9-11/14 3日目 ヴィーナスシリーズ</td></tr></table>'
         self.assertTrue(parse_boat(h,D)[0]['girls'])
