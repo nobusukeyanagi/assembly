@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse, json, logging, re, sys
 import verified_sources
 import finals
+import history_cache
 from unicodedata import normalize
 from datetime import date, datetime
 from pathlib import Path
@@ -793,7 +794,22 @@ def main():
     if snapshot.exists():
         try:previous=json.loads(snapshot.read_text(encoding='utf-8'))
         except (OSError,ValueError):pass
+    archive_path=ROOT/'data'/'history'/(today.isoformat()+'.json')
+    archived=None
+    if archive_path.exists():
+        try:
+            candidate=json.loads(archive_path.read_text(encoding='utf-8'))
+            if isinstance(candidate,dict) and candidate.get('date')==today.isoformat():
+                archived=candidate
+        except (OSError,ValueError):pass
+    if archived:
+        # Prefer current verified values, restoring only absent same-day facts.
+        previous=(history_cache.merge(archived,previous)
+                  if isinstance(previous,dict) and previous.get('date')==today.isoformat()
+                  else archived)
     out=collect(today,session(),previous)
+    if archived:
+        out=history_cache.merge(archived,out)
     override=ROOT/'overrides'/(today.isoformat()+'.json')
     if override.exists():
         patch=json.loads(override.read_text(encoding='utf-8'))
