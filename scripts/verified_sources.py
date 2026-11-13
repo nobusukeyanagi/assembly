@@ -139,6 +139,20 @@ def compatible_grade(category,selected_grade,other_grade,grade_source):
             selected_grade=='G3' and other_grade in ('一般','普通'))
 
 
+def compatible_day(selected_day,other_day):
+    """Reject details from an inconsistent day number of the same track.
+
+    Final day and an explicit 2nd/3rd/4th day can denote the same date,
+    but 初日 and 2日目 must never be merged as one meeting.
+    """
+    if not valid_field('day',selected_day) or not valid_field('day',other_day):
+        return True
+    if selected_day==other_day:return True
+    if {selected_day,other_day}=={'初日','1日目'}:return True
+    return ('最終日' in (selected_day,other_day)
+            and any(re.fullmatch(r'[2-9]\d*日目',x) for x in (selected_day,other_day)))
+
+
 def reconcile(category,lists,venue_order,sort_by_time):
     """Merge date-validated providers with field priorities and traceable evidence.
 
@@ -188,8 +202,17 @@ def reconcile(category,lists,venue_order,sort_by_time):
                         ignored.append({'name':name,'field':field,'source':source,
                                         'reason':'採用グレードとの不一致'})
         result['day'],_=choose('day',eligible)
-        result['timeType'],_=choose('timeType',eligible)
-        positive=[source for _,(source,row) in eligible if row.get('girls') is True]
+        detailed=[]
+        for index,(source,row) in eligible:
+            if compatible_day(result['day'],row.get('day')):
+                detailed.append((index,(source,row)))
+            else:
+                for field in ('timeType','girls'):
+                    if row.get(field) not in (None,False,'確認中'):
+                        ignored.append({'name':name,'field':field,'source':source,
+                                        'reason':'採用日目との不一致'})
+        result['timeType'],_=choose('timeType',detailed)
+        positive=[source for _,(source,row) in detailed if row.get('girls') is True]
         if positive:
             result['girls']=True
             result['girlsConfirmedBy']=list(dict.fromkeys(positive))
