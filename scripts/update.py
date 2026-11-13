@@ -23,12 +23,13 @@ BOAT='https://www.boatrace.jp/owpc/pc/race/index'
 MORI='https://www.winticket.jp/autorace/autoracer/2529/'
 MORI_HISTORY='https://handicapper.jp/riders/118'
 MORI_RACE_START='https://autorace.tokyo-sports.co.jp/list/race/{day}{venue}{race}'
+MORI_OFFICIAL_START='https://autorace.jp/race_info/{section}/{venue}/{date}_{race}'
 ASSEN='https://sp.atrc.jp/racer/racerasseninfo/player_id/2529'
 ODDSPARK='https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529'
 AUTO_OFFICIAL='https://autorace.jp/race_info/Program/'
 KAWAGUCHI_SCHEDULE='https://www.kawaguchiauto.jp/race-calender/'
 NIGHT_BOAT={'桐生','蒲郡','若松'}
-SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_start_time':MORI_RACE_START,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
+SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_start_time':MORI_RACE_START,'mori_official_start_time':MORI_OFFICIAL_START,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
 KEIRIN_NAMES='函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本'.split()
 AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
 SODA_NAMES='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
@@ -525,6 +526,36 @@ def parse_mori_race_start(html,selected,venue,race):
     return f'{h:02d}:{minute:02d}'
 
 
+def parse_mori_official_start(html,selected,venue,race):
+    """Verify an actual start time on the AUTORACE.JP dated racecard.
+
+    The official site's 発走予定 must be distinguished from 投票締切.
+    Date, track, race number and the rider's presence must all match.
+    """
+    soup=BeautifulSoup(html,'html.parser')
+    for tag in soup(['script','style','noscript']):tag.decompose()
+    title=normalize('NFKC',soup.title.get_text(' ',strip=True)) if soup.title else ''
+    date_label=selected.strftime('%Y/%m/%d')
+    if date_label not in title or venue+'オート' not in title:
+        raise ValueError('オート公式出走表の日付・開催場が不一致')
+    text=normalize('NFKC',soup.get_text(' ',strip=True))
+    # Restrict race-number matching to the dated race header, not older results.
+    day_label=f'{selected.month}月{selected.day}日'
+    date_index=text.find(day_label)
+    if date_index<0:
+        raise ValueError('対象日のレース詳細がありません')
+    header=text[date_index:date_index+240]
+    if not re.search(rf'(?<!\\d){race}R\\b',header):
+        raise ValueError('オート公式出走表のレース番号が不一致')
+    if '森且行' not in re.sub(r'\\s+','',text):
+        raise ValueError('対象レースに森且行選手が見つかりません')
+    # Do not use closing times, race navigation times, or past performances.
+    times=re.findall(r'発走予定\\s*[：:]?\\s*([01]?\\d|2[0-3]):([0-5]\\d)',text)
+    if len(times)!=1:
+        raise ValueError('公式発走予定時刻を一意に確認できません')
+    return f'{int(times[0][0]):02d}:{times[0][1]}'
+
+
 def mori_start_times(s,item,previous=None,selected=None):
     """Enrich Mori's verified race numbers with separately verified start times."""
     if not isinstance(item,dict) or item.get('type')!='today':return item
@@ -541,7 +572,23 @@ def mori_start_times(s,item,previous=None,selected=None):
         uri=MORI_RACE_START.format(day=day.strftime('%Y%m%d'),venue=venue,race=number)
         try:
             found[str(number)]=parse_mori_race_start(fetch(s,uri),day,item['name'],number)
-        except Exception as e:log.warning('森選手の発走時刻を確認できません %s %sR: %s',item['name'],number,e)
+            continue
+        except Exception as exc:
+            log.info('東スポ出走表が取得できません %s %sR: %s',item['name'],number,exc)
+        # Preserve the race date/venue/no. The official Program and Result
+        # pages remain available even when an archived third-party URL is gone.
+        for section in ('Program','RaceResult'):
+            official=MORI_OFFICIAL_START.format(
+                section=section,venue=AUTO_NAMES[item['name']],
+                date=day.isoformat(),race=number)
+            try:
+                found[str(number)]=parse_mori_official_start(
+                    fetch(s,official),day,item['name'],number)
+                break
+            except Exception as exc:
+                log.info('公式%s出走表 %s %sR: %s',section,item['name'],number,exc)
+        if str(number) not in found:
+            log.warning('森選手の発走時刻を確認できません %s %sR',item['name'],number)
     # Safe cache: only a matching selected date, rider, venue and race number.
     if isinstance(previous,dict) and previous.get('date')==day.isoformat():
         saved=previous.get('sections',{}).get('mori',{}).get('item',{})
