@@ -492,7 +492,19 @@ def auto(s,selected,previous,u):
         try:
             html=u.fetch(s,url)
             return name,parse_autorace_official_card(html,selected,name,u),None
-        except Exception as exc:return name,None,str(exc)
+        except Exception as exc:
+            # Public page diagnostics (never include scripts, cookies or full
+            # HTML) help distinguish an access restriction from JS-only markup.
+            try:
+                soup=BeautifulSoup(html,'html.parser')
+                title=normalize('NFKC',soup.title.get_text(' ',strip=True)) if soup.title else '-'
+                for node in soup(['script','style','noscript']):node.decompose()
+                visible=normalize('NFKC',soup.get_text(' ',strip=True))
+                detail=(f" | HTML={len(html)} title={title[:85]!r} "
+                        f"period={'開催期間' in visible} body={visible[:125]!r}")
+            except (NameError,ValueError,TypeError,AttributeError):
+                detail=''
+            return name,None,str(exc)+detail
 
     official=[];missed_official=[]
     with ThreadPoolExecutor(max_workers=5) as pool:
