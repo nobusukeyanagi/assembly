@@ -60,11 +60,11 @@ https://nobusukeyanagi.github.io/assembly/
 
 | 競技 | グレード・日目 | 時間帯 | ガールズ・女子開催の検出 |
 |---|---|---|---|
-| 競輪 | KEIRIN.JP → 楽天Kドリームス → KEIRIN HEX → WINTICKET月別決勝日程 | KEIRIN.JP → KEIRIN HEX → WINTICKET月別決勝日程 → 楽天Kドリームス | KEIRIN.JP → KEIRIN HEX → WINTICKET月別決勝日程（肯定情報を重視） |
+| 競輪 | KEIRIN.JP → 楽天Kドリームス → KEIRIN HEX → WINTICKET月別決勝日程 | KEIRIN.JP → KEIRIN.JP公式モーニング日程 → CTC開催日程 → KEIRIN HEX → WINTICKET月別決勝日程 | KEIRIN.JP → CTC開催日程 → KEIRIN HEX → WINTICKET月別決勝日程（肯定情報を重視） |
 | オートレース | AUTORACE.JP公式出走表 → WINTICKET指定月日程 → オッズパーク日別 | AUTORACE.JP公式出走表 → オッズパーク日別 → WINTICKET指定月日程 | 掲載がある場合だけ採用 |
 | SODA | **G3はBOAT RACE公式年間G3日程** → BOAT RACE公式日別 → きょうの競艇 | BOAT RACE公式日別 → きょうの競艇 | 公式年間G3日程 → BOAT RACE公式日別 → きょうの競艇（レディース開催の肯定情報を重視） |
 
-- 競輪の過去日は楽天Kドリームスの日付別記録を土台にします。日付別レース一覧に時間帯情報がない場合は、**公開URLと対象年月が確認できた**WINTICKETの決勝一覧を補助的に利用します。現在登録しているものは**2026年10月・11月**だけです。その他の月を推測で補いません。
+- 競輪の過去日は楽天Kドリームスの日付別記録を土台にします。日付別レース一覧に時間帯情報がない場合は、**KEIRIN.JP公式モーニング開催日程**や、対象年月を検証したWINTICKET決勝一覧（2026年10月・11月）から補完します。CTCの開催日程は開催期間・場・グレードを照合し、ページが年を明記しないため**当日から前後65日以内に限って**参照します。CTCの明記したガールズやナイターも検証後に採用します。未確認の月・日付には類推して適用しません。
 - どの情報源でも**グレードが異なる開催の時間帯やガールズ情報を混在**させません。ただしSODAでは公式年間G3日程が同日・同場のG3を確認した場合、日別表の「一般」という暫定表記を補正し、日目・時間帯の情報を継続利用します。
 - **「ガールズ／女子開催が確認できない」ことは「開催しない」と同義ではありません**。該当レース・開催名から明示的に検出できた場合だけアイコンを表示し、未検出分を憶測で追加しません。
 - BOAT RACEの年間G3日程は、対象年に属する表・日付範囲・開催場を照合し、別の年の情報を混入させません。森選手の発走時刻も出走日・場・Rが一致する出走表だけから取り、締切時刻から逆算しません。
@@ -82,7 +82,7 @@ https://nobusukeyanagi.github.io/assembly/
 
 | 表示項目 | 取得元 |
 |---|---|
-| 競輪 | 当日・未来：[KEIRIN.JP公式開催日程](https://keirin.jp/sp/raceschedule)。過去：[楽天Kドリームスの日別開催情報](https://keirin.kdreams.jp/kaisai/2026/11/01/)と[KEIRIN HEXのレース一覧](https://keirinhex.jp/races/20261101/)を照合 |
+| 競輪 | [KEIRIN.JP公式開催日程](https://keirin.jp/sp/raceschedule)、[KEIRIN.JP公式モーニング開催日程](https://keirin.jp/pc/dfw/portal/guest/campaign/morning/index.html)、[競輪公式投票CTC開催情報](https://ctc.gr.jp/schedule/)、過去日の[楽天Kドリームス開催記録](https://keirin.kdreams.jp/kaisai/2026/11/01/)、[KEIRIN HEXの日別レース一覧](https://keirinhex.jp/races/)（提供期間限定）。日付・開催場・グレードの一致を確認して統合 |
 | オートレース | [WINTICKETの年月別開催日程](https://www.winticket.jp/autorace/schedules/202610)、[オッズパークの場別レース情報](https://sp.oddspark.com/autorace/SpRaceList.do?joCd=05&kaisaiBi=20261012)、[AUTORACE.JP](https://autorace.jp/) |
 | SODA対象場 | SODA対応場を[BOAT RACE公式開催日程](https://www.boatrace.jp/owpc/pc/race/index?hd=20261012)と[きょうの競艇の日別開催記録](https://www.ikachi.org/kyotei/2026-10-12)から検証 |
 | 森且行選手 | 当日・未来：[WINTICKET選手プロフィール](https://www.winticket.jp/autorace/autoracer/2529/)・公式あっせん。過去日：[Handicapper.jpの出走履歴](https://handicapper.jp/riders/118)。当日レース時刻：[東スポオートレースの指定日・場・R別出走表](https://autorace.tokyo-sports.co.jp/list/race/20261101045) |
