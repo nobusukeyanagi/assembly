@@ -23,6 +23,7 @@ on:
     paths:
       - index.html
       - app.js
+      - holidays.js
       - styles.css
       - scripts/update.py
       - scripts/verified_sources.py

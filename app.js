@@ -41,6 +41,11 @@ function displayGrade(grade,id){
   const roman={'1':'Ⅰ','2':'Ⅱ','3':'Ⅲ'};
   return value.replace(/([GF])([123])/g,(_,letter,number)=>letter+roman[number]);
 }
+function gradeBadge(grade,sport){
+  const badge=node('span','grade',displayGrade(grade,sport));
+  badge.dataset.tier=isMajorGrade(grade)?'major':'regular';
+  return badge;
+}
 const timeIcons={'モーニング':'☀','ミッドナイト':'★'};
 function filledMoon(){
   const ns='http://www.w3.org/2000/svg';
@@ -73,18 +78,14 @@ function card(item,id){
   const el=node('article','entry');
   const title=node('div','venue',item.name||'—');
   const meta=node('div','meta');
-  const grade=node('span','grade',displayGrade(item.grade,id));
-  grade.dataset.tier=isMajorGrade(item.grade)?'major':'regular';
-  meta.append(grade);
+  meta.append(gradeBadge(item.grade,id));
   meta.append(node('span','day',String(item.day||'—').normalize('NFKC')));
-  if(id==='keirin'||id==='auto'||id==='soda'){
-    const icon=timeBadge(item.timeType);
-    if(icon)meta.append(icon);
-    if(item.girls) {
-      const heart=node('span','girls','♥');
-      heart.setAttribute('aria-label','ガールズ');
-      meta.append(heart);
-    }
+  const icon=timeBadge(item.timeType);
+  if(icon)meta.append(icon);
+  if(item.girls){
+    const heart=node('span','girls','♥');
+    heart.setAttribute('aria-label','ガールズ');
+    meta.append(heart);
   }
   el.append(title,meta);
   return el;
@@ -119,7 +120,6 @@ function entries(id,section,stale){
 function mori(section,stale,targetDate){
   const root=get('mori-body');
   const status=get('mori-status');
-  root.classList.remove('mori-today');
   status.textContent='';
   root.replaceChildren();
   if(stale||!section||section.status==='error'||!section.item)return;
@@ -134,9 +134,7 @@ function mori(section,stale,targetDate){
   const venue=node('div','venue mori-primary',(x.name||'—')+(hasRace?' '+races.map(n=>n+'R').join('・'):''));
   const meta=node('div','meta');
   if(x.grade){
-    const gr=node('span','grade',displayGrade(x.grade,'auto'));
-    gr.dataset.tier=isMajorGrade(x.grade)?'major':'regular';
-    meta.append(gr);
+    meta.append(gradeBadge(x.grade,'auto'));
   }
   if(hasRace){
     const times=x.startTimes&&typeof x.startTimes==='object'?x.startTimes:{};
@@ -149,7 +147,6 @@ function mori(section,stale,targetDate){
   const timeIcon=timeBadge(x.timeType);
   if(timeIcon)meta.append(timeIcon);
   root.replaceChildren(venue,meta);
-  if(isToday)root.classList.add('mori-today');
 }
 function layoutRows(sections,stale){
   const hasVerifiedItems=section=>!stale&&section&&
@@ -248,9 +245,8 @@ function paintFinal(){
   const headingLabel=node('span','final-title-text',finalEventLabel(data.event));
   heading.append(headingLabel);
   const race=node('div','final-race');
-  const grade=node('span','grade',displayGrade(data.grade||'—',data.sport));
-  grade.dataset.tier=isMajorGrade(data.grade)?'major':'regular';
-  race.append(grade,node('span','final-race-detail',finalRaceText(data)));
+  race.append(gradeBadge(data.grade||'—',data.sport),
+              node('span','final-race-detail',finalRaceText(data)));
   const grid=node('div','final-riders');
   for(const riders of splitFinalRiders(data.riders)){
     const column=node('div','final-rider-column');
@@ -355,7 +351,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,finalRaceText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,finalRaceText,displayGrade,isMajorGrade,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);

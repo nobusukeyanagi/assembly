@@ -220,10 +220,8 @@ h1 {
   font-size: 30px;
   line-height: 1;
   font-weight: 900;
+  color: #e4a529;
 }
-.entry .time-type[data-type="モーニング"] .time-icon,
-.entry .time-type[data-type="ナイター"] .time-icon,
-.entry .time-type[data-type="ミッドナイト"] .time-icon { color: #e4a529; }
 .moon-symbol {
   display: block;
   width: 30px;
@@ -265,14 +263,6 @@ h1 {
   min-width: 0;
 }
 .entry .mori-primary { font-size: 60px; height: 66px; line-height: 66px; }
-.message, .detail {
-  color: var(--ink);
-  font-size: 30px;
-  text-align: center;
-  grid-column: 1/-1;
-  margin: 0;
-}
-
 /* Finals reuse the same date header and show the racecard instead of venue tiles. */
 .stage.is-final .dashboard { display: none; }
 .final-screen {

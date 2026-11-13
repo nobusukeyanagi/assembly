@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalRaceText,finalEventLabel,finalRiderName,finalSort}=require('../app.js');
+const {verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalRaceText,finalEventLabel,finalRiderName,finalSort,displayGrade,isMajorGrade}=require('../app.js');
 const day='2026-11-03';
 const card=(sport,venue,race,time)=>({
   sport,venue,race,startTime:time,event:'SG日本選手権オートレース',
@@ -36,6 +36,12 @@ assert.equal(finalRaceText({venue:'戸田',race:12,raceName:'優勝戦',startTim
 assert.equal(finalRaceText({venue:'浜松',race:11,raceName:'準優勝戦',startTime:'15:24',feature:'mori'}),'浜松 11R　準優勝戦　15:24発走');
 assert.equal(finalEventLabel('SG日本選手権オートレース'),'日本選手権オートレース');
 assert.equal(finalEventLabel('GⅢ 周防国府杯争奪戦'),'周防国府杯争奪戦');
+assert.equal(displayGrade('G3','keirin'),'GⅢ');
+assert.equal(displayGrade('G1','auto'),'GⅠ');
+assert.equal(displayGrade('G2','soda'),'G2');
+assert.equal(displayGrade('一般','auto'),'普通');
+assert.equal(isMajorGrade('GⅢ'),true);
+assert.equal(isMajorGrade('普通'),false);
 assert.equal(finalRiderName('郡司浩平 選手','keirin'),'郡司 浩平');
 assert.equal(finalRiderName('清水 裕友選手','keirin'),'清水 裕友');
 assert.equal(finalRiderName('郡司浩平','keirin'),'郡司 浩平');
@@ -67,6 +73,9 @@ const sizes=[...css.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px\b/g)].map(m=>Number
 assert.ok(sizes.length>15);
 assert.ok(sizes.every(n=>n%10===0),'all font sizes must be multiples of 10px: '+sizes);
 assert.doesNotMatch(css,/--muted\s*:/,'unused secondary-text variable must be removed');
+assert.doesNotMatch(css,/\.message,\s*\.detail\s*\{/,'unused message styles removed');
+assert.doesNotMatch(css,/\.entry \.time-type\[data-type=/,'time icon color directly declared');
+assert.match(css,/\.entry \.time-icon\s*\{[^}]*color:\s*#e4a529;/s);
 assert.match(css,/\.entry \.grade,\s*\.final-race \.grade\s*\{[^}]*height:\s*35px;/s,
              'shared venue grade badge height must be 35px');
 assert.match(css,/\.final-race \.grade\s*\{[^}]*height:\s*80px;/s,
@@ -95,6 +104,10 @@ assert.match(css,/\.final-riders\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s)
 assert.match(css,/\.final-rider-column\s*\{[^}]*grid-template-rows:\s*repeat\(5,/s);
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const appSource=fs.readFileSync(path.join(__dirname,'..','app.js'),'utf8');
+assert.doesNotMatch(html,/class="entries auto-tiles"/,'unused class removed');
+assert.doesNotMatch(appSource,/mori-today/,'unused Mori class removed');
+assert.equal((appSource.match(/gradeBadge\(/g)||[]).length,4,
+             'one badge factory, used by all three renderers');
 assert.doesNotMatch(html,/読み込み中|確認中/,'initial HTML must be blank until verified data arrives');
 assert.doesNotMatch(appSource,/['"`][^'"`]*(?:情報確認中|出走予定確認中|出走R確認中|発走時刻確認中)[^'"`]*['"`]/,
                     'do not render pending-verification text');
