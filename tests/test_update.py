@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from verified_sources import KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
+from verified_sources import restore_same_date_fields,KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_chariloto_starts,MORI_CHARILOTO_START,parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
@@ -401,6 +401,59 @@ class ParserTests(unittest.TestCase):
         self.assertIsNone(result['timeType'])
         self.assertFalse(result['girls'])
         self.assertNotIn('girls',result['fieldSources'])
+
+    def test_same_day_historic_field_recovery_requires_matching_meeting_evidence(self):
+        target=date(2026,10,2)
+        prior={'date':target.isoformat(),'sections':{'keirin':{'status':'ok','items':[{
+            'name':'佐世保','grade':'F2','day':'最終日','timeType':'モーニング',
+            'girls':True,
+            'fieldSources':{'grade':'楽天Kドリームス','day':'楽天Kドリームス',
+                            'timeType':'WINTICKET 2026年10月決勝日程',
+                            'girls':'WINTICKET 2026年10月決勝日程'},
+            'girlsConfirmedBy':['WINTICKET 2026年10月決勝日程']}]}}}
+        current=[('楽天Kドリームス',[{
+            'name':'佐世保','grade':'F2','day':'最終日','timeType':None,
+            'girls':False}])]
+        def result():
+            return reconcile('keirin',current,['佐世保'],sort_by_time)
+        merged=restore_same_date_fields(result(),prior,target,'keirin')
+        self.assertEqual(merged['items'][0]['timeType'],'モーニング')
+        self.assertTrue(merged['items'][0]['girls'])
+        self.assertEqual(merged['items'][0]['sameDateRestored'],['timeType','girls'])
+        self.assertEqual(merged['verification']['fieldCoverage']['timeType'],1)
+        self.assertEqual(len(merged['verification']['sameDateRestored']),2)
+        different_day=restore_same_date_fields(result(),dict(prior,date='2026-10-01'),
+                                                target,'keirin')
+        self.assertIsNone(different_day['items'][0]['timeType'])
+        unproven=restore_same_date_fields(result(),{
+            'date':target.isoformat(),'sections':{'keirin':{'status':'ok','items':[{
+                'name':'佐世保','grade':'F2','day':'最終日',
+                'timeType':'モーニング','girls':True}]}}},
+            target,'keirin')
+        self.assertIsNone(unproven['items'][0]['timeType'])
+        self.assertFalse(unproven['items'][0]['girls'])
+        mismatched=restore_same_date_fields(result(),{
+            'date':target.isoformat(),'sections':{'keirin':{'status':'ok','items':[{
+                **prior['sections']['keirin']['items'][0],'grade':'F1'}]}}},
+            target,'keirin')
+        self.assertIsNone(mismatched['items'][0]['timeType'])
+        self.assertFalse(mismatched['items'][0]['girls'])
+        different_day_label=restore_same_date_fields(result(),{
+            'date':target.isoformat(),'sections':{'keirin':{'status':'ok','items':[{
+                **prior['sections']['keirin']['items'][0],'day':'初日'}]}}},
+            target,'keirin')
+        self.assertIsNone(different_day_label['items'][0]['timeType'])
+
+    def test_reconcile_rejects_slot_from_conflicting_meeting_day(self):
+        known=[{'name':'松戸','grade':'F2','day':'初日','timeType':None,'girls':False}]
+        mismatch=[{'name':'松戸','grade':'F2','day':'2日目',
+                   'timeType':'ミッドナイト','girls':True}]
+        out=reconcile('keirin',[('楽天Kドリームス',known),('KEIRIN HEX',mismatch)],
+                      ['松戸'],sort_by_time)
+        self.assertIsNone(out['items'][0]['timeType'])
+        self.assertFalse(out['items'][0]['girls'])
+        self.assertEqual(len(out['verification']['ignoredFields']),2)
+        self.assertEqual(out['items'][0]['day'],'初日')
 
     def test_same_date_verified_cache_only(self):
         old={'date':'2026-10-12','updatedAt':'2026-10-12T01:10+09:00',
