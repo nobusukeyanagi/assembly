@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from unicodedata import normalize
 
 from bs4 import BeautifulSoup
@@ -17,6 +17,9 @@ AUTO_MONTH='https://www.winticket.jp/autorace/schedules/{year}{month:02d}'
 AUTO_ODDSPARK='https://sp.oddspark.com/autorace/SpRaceList.do'
 AUTO_CODES={'川口':'02','伊勢崎':'03','浜松':'04','飯塚':'05','山陽':'06'}
 BOAT_DAILY='https://www.ikachi.org/kyotei/{day}'
+# Verified completed-finals calendar for the October 2026 period only.
+# Never extrapolate its entries to another month.
+KEIRIN_2026_OCT_FINALS='https://www.winticket.jp/keirin/campaign/onYZ47mxGGoqRuAo3AzxdX'
 BOAT_ALL='桐生 戸田 江戸川 平和島 多摩川 浜名湖 蒲郡 常滑 津 三国 びわこ 住之江 尼崎 鳴門 丸亀 児島 宮島 徳山 下関 若松 芦屋 福岡 唐津 大村'.split()
 
 def parse_ikachi_boat(html,selected,venue_names,night_names):
@@ -116,6 +119,75 @@ def reconcile(category,lists,venue_order,sort_by_time):
     if differences:LOG.warning('%s 取得元の不一致: %s',category,differences)
     return result
 
+def parse_keirin_oct_2026_finals(html,selected,archive,u):
+    """Recover explicitly named time slots and girls races from a dated final calendar.
+
+    Rows are accepted only when event date, venue, grade, and meeting-day
+    progression match the independently validated K Dreams daily archive.
+    This campaign source is scoped to October 2026.
+    """
+    if (selected.year,selected.month)!=(2026,10) or not archive:
+        return []
+    soup=BeautifulSoup(html,'html.parser')
+    heading=next((h for h in soup.find_all(['h1','h2'])
+                  if 'すべての決勝レースで5%還元' in h.get_text(' ',strip=True)),None)
+    text=normalize('NFKC',soup.get_text(' ',strip=True))
+    if heading is None or '2026年10月1日' not in text:
+        raise ValueError('2026年10月の決勝開催一覧を検証できません')
+    table=next((t for t in soup.find_all('table')
+                if all(x in normalize('NFKC',t.get_text(' ',strip=True))
+                       for x in ('日程','開催場','対象レース'))),None)
+    if table is None:
+        raise ValueError('日別の決勝開催表がありません')
+    names='|'.join(re.escape(n) for n in sorted(u.KEIRIN_NAMES,key=len,reverse=True))
+    # Each row can omit repeated dates or venue names because of rowspan.
+    place_pattern=re.compile(r'('+names+r')\s*[(（]\s*(F[12]|GIII|GII|GI|G[123]|GP)\s*[)）]\s*'
+                             r'(モーニング|デイ|ナイター|ミッドナイト)',re.I)
+    entries={}
+    current_date=None
+    current_key=None
+    for tr in table.find_all('tr'):
+        row=normalize('NFKC',tr.get_text(' ',strip=True))
+        found_date=re.search(r'(?<!\d)10\s*/\s*(\d{1,2})(?!\d)',row)
+        if found_date:
+            day=int(found_date.group(1))
+            current_date=date(2026,10,day) if 1<=day<=31 else None
+            current_key=None
+        found_place=place_pattern.search(row)
+        if found_place and current_date:
+            name,grade,slot=found_place.groups()
+            current_key=(current_date.isoformat(),name)
+            item=entries.setdefault(current_key,{'grade':u.grade(grade),'timeType':slot,'girls':False})
+            if item['grade']!=u.grade(grade) or item['timeType']!=slot:
+                raise ValueError('同一開催に複数の競技区分があります')
+        if current_key and re.search(r'L級\s*ガールズ',row):
+            entries[current_key]['girls']=True
+
+    result=[]
+    for event in archive:
+        day_label=event.get('day','')
+        if day_label=='最終日':
+            days_remaining=0
+        elif day_label=='初日':
+            days_remaining=2 if event.get('grade') in ('F1','F2') else 3 if event.get('grade')=='G3' else None
+        else:
+            dm=re.fullmatch(r'(\d+)日目',day_label)
+            current_day=int(dm.group(1)) if dm else 0
+            total=3 if event.get('grade') in ('F1','F2') else 4 if event.get('grade')=='G3' else 0
+            days_remaining=total-current_day if 1<=current_day<=total else None
+        if days_remaining is None or not 0<=days_remaining<=3:
+            continue
+        final_date=selected+timedelta(days=days_remaining)
+        info=entries.get((final_date.isoformat(),event['name']))
+        if not info or info['grade']!=event.get('grade'):
+            continue
+        result.append({'name':event['name'],'grade':event['grade'],'day':day_label,
+                       'timeType':info['timeType'],'girls':info['girls']})
+    if not result:
+        raise ValueError('指定日の開催と一致する決勝日程がありません')
+    return result
+
+
 def keirin(s,selected,previous,u):
     lists=[];errors=[]
     url=u.KEIRIN_ARCHIVE.format(year=selected.year,month=selected.month,day=selected.day)
@@ -131,6 +203,15 @@ def keirin(s,selected,previous,u):
               for name,val in info.items()]
         if rows:lists.append(('KEIRIN HEX',rows))
     except Exception as exc:errors.append(('KEIRIN HEX',str(exc)))
+    if (selected.year,selected.month)==(2026,10):
+        archive=next((rows for source,rows in lists if source=='楽天Kドリームス'),[])
+        if archive:
+            try:
+                rows=parse_keirin_oct_2026_finals(
+                    u.fetch(s,KEIRIN_2026_OCT_FINALS),selected,archive,u)
+                if rows:lists.append(('WINTICKET 2026年10月決勝日程',rows))
+            except Exception as exc:
+                errors.append(('WINTICKET 2026年10月決勝日程',str(exc)))
     if selected>=datetime.now(u.TZ).date():
         try:
             rows=u.parse_keirin(u.fetch(s,u.KEIRIN),selected)
