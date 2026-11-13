@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from schedule_enrichment import official_morning,ctc_listing
-from verified_sources import restore_same_date_fields,KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
+from verified_sources import is_boat_women_event,restore_same_date_fields,KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_chariloto_starts,MORI_CHARILOTO_START,parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
@@ -737,6 +737,20 @@ class ParserTests(unittest.TestCase):
     def test_boat_ladies(self):
         h='<table><tr><td><img alt="蒲郡"></td><td>11/9-11/14 3日目 ヴィーナスシリーズ</td></tr></table>'
         self.assertTrue(parse_boat(h,D)[0]['girls'])
+        for kind in ('ヴィーナスシリーズ','オールレディース',
+                     'レディースチャンピオン','レディースオールスター',
+                     'レディースチャレンジカップ','クイーンズクライマックス',
+                     '女子戦'):
+            with self.subTest(kind=kind):
+                self.assertTrue(is_boat_women_event('令和8年度 '+kind+' レース'))
+        self.assertFalse(is_boat_women_event('通常開催　一般戦'))
+        official=('<table><tr><td><img alt="蒲郡"></td>'
+                  '<td>11/9-11/14 3日目　レディースチャレンジカップ</td>'
+                  '</tr></table>')
+        self.assertTrue(parse_boat(official,D)[0]['girls'])
+        secondary=('<h1>2026年11月11日のボートレース全1場・12レース</h1>'
+                   '<h2>蒲郡一般・3日目・レディースオールスター</h2>')
+        self.assertTrue(parse_ikachi_boat(secondary,D,['蒲郡'],{'蒲郡'})[0]['girls'])
     def test_assen_official(self):
         h='<html><body>森 且行 出場情報 11月 07日(土)～10日(火) 川口/普通開催 '
         h+='11月 22日(日)～25日(水) 川口/ナイト 11月 30日(月)～12月03日(木) 川口/ナイト</body></html>'
