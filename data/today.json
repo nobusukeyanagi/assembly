@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-13",
-  "updatedAt": "2026-11-13T17:27+09:00",
+  "date": "2026-11-14",
+  "updatedAt": "2026-11-14T05:58+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -28,14 +28,16 @@
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "WINTICKET 2026年11月決勝日程",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
           ],
           "grade": "F2",
-          "day": "初日",
+          "day": "2日目",
           "timeType": "モーニング",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "WINTICKET 2026年11月決勝日程",
             "KEIRIN.JP"
           ],
@@ -44,6 +46,25 @@
             "day": "KEIRIN.JP",
             "timeType": "KEIRIN.JP",
             "girls": "KEIRIN.JP"
+          }
+        },
+        {
+          "name": "武雄",
+          "girls": false,
+          "confirmedBy": [
+            "楽天Kドリームス",
+            "KEIRIN HEX",
+            "WINTICKET 2026年11月決勝日程",
+            "KEIRIN.JP",
+            "KEIRIN.JPモーニング日程"
+          ],
+          "grade": "F2",
+          "day": "初日",
+          "timeType": "モーニング",
+          "fieldSources": {
+            "grade": "KEIRIN.JP",
+            "day": "KEIRIN.JP",
+            "timeType": "KEIRIN.JP"
           }
         },
         {
@@ -56,7 +77,7 @@
             "KEIRIN.JP"
           ],
           "grade": "G3",
-          "day": "2日目",
+          "day": "3日目",
           "timeType": "デイ",
           "fieldSources": {
             "grade": "KEIRIN.JP",
@@ -65,7 +86,7 @@
           }
         },
         {
-          "name": "福井",
+          "name": "川崎",
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
@@ -74,36 +95,12 @@
             "KEIRIN.JP"
           ],
           "grade": "F1",
-          "day": "最終日",
-          "timeType": "デイ",
+          "day": "初日",
+          "timeType": "ナイター",
           "fieldSources": {
             "grade": "KEIRIN.JP",
             "day": "KEIRIN.JP",
             "timeType": "KEIRIN.JP"
-          }
-        },
-        {
-          "name": "四日市",
-          "girls": true,
-          "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX",
-            "WINTICKET 2026年11月決勝日程",
-            "KEIRIN.JP"
-          ],
-          "grade": "F1",
-          "day": "最終日",
-          "timeType": "ナイター",
-          "girlsConfirmedBy": [
-            "KEIRIN HEX",
-            "WINTICKET 2026年11月決勝日程",
-            "KEIRIN.JP"
-          ],
-          "fieldSources": {
-            "grade": "KEIRIN.JP",
-            "day": "KEIRIN.JP",
-            "timeType": "KEIRIN.JP",
-            "girls": "KEIRIN.JP"
           }
         },
         {
@@ -116,7 +113,7 @@
             "KEIRIN.JP"
           ],
           "grade": "F2",
-          "day": "2日目",
+          "day": "最終日",
           "timeType": "ナイター",
           "fieldSources": {
             "grade": "KEIRIN.JP",
@@ -125,17 +122,19 @@
           }
         },
         {
-          "name": "松阪",
+          "name": "名古屋",
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "WINTICKET 2026年11月決勝日程",
             "KEIRIN.JP"
           ],
           "grade": "F2",
-          "day": "最終日",
+          "day": "初日",
           "timeType": "ミッドナイト",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "WINTICKET 2026年11月決勝日程",
             "KEIRIN.JP"
           ],
@@ -147,15 +146,16 @@
           }
         },
         {
-          "name": "佐世保",
+          "name": "奈良",
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "WINTICKET 2026年11月決勝日程",
             "KEIRIN.JP"
           ],
           "grade": "F2",
-          "day": "最終日",
+          "day": "初日",
           "timeType": "ミッドナイト",
           "fieldSources": {
             "grade": "KEIRIN.JP",
@@ -167,10 +167,10 @@
       "verification": {
         "providers": {
           "楽天Kドリームス": 7,
-          "KEIRIN HEX": 4,
+          "KEIRIN HEX": 7,
           "WINTICKET 2026年11月決勝日程": 7,
           "KEIRIN.JP": 7,
-          "KEIRIN.JPモーニング日程": 1
+          "KEIRIN.JPモーニング日程": 2
         },
         "crossConfirmed": 7,
         "singleSource": 0,
@@ -179,7 +179,7 @@
           "grade": 7,
           "day": 7,
           "timeType": 7,
-          "girlsDetected": 3
+          "girlsDetected": 2
         },
         "priorityPolicy": {
           "grade": [
@@ -212,16 +212,7 @@
         },
         "conflicts": [
           {
-            "name": "福井",
-            "field": "day",
-            "primary": "最終日",
-            "selectedSource": "KEIRIN.JP",
-            "alternative": "3日目",
-            "source": "KEIRIN HEX",
-            "alternativeSource": "KEIRIN HEX"
-          },
-          {
-            "name": "四日市",
+            "name": "玉野",
             "field": "day",
             "primary": "最終日",
             "selectedSource": "KEIRIN.JP",
@@ -246,39 +237,43 @@
           "name": "山陽",
           "girls": false,
           "confirmedBy": [
-            "WINTICKET指定月"
+            "WINTICKET指定月",
+            "AUTORACE.JP年間グレード日程"
           ],
           "grade": "G2",
-          "day": "3日目",
+          "day": "4日目",
           "timeType": null,
           "fieldSources": {
-            "grade": "WINTICKET指定月",
-            "day": "WINTICKET指定月"
+            "grade": "AUTORACE.JP年間グレード日程",
+            "day": "AUTORACE.JP年間グレード日程"
           }
         },
         {
           "name": "川口",
           "girls": false,
           "confirmedBy": [
-            "WINTICKET指定月"
+            "WINTICKET指定月",
+            "川口オート公式日程"
           ],
           "grade": "普通",
-          "day": "初日",
+          "day": "2日目",
           "timeType": "ナイター",
           "fieldSources": {
-            "grade": "WINTICKET指定月",
-            "day": "WINTICKET指定月",
-            "timeType": "WINTICKET指定月"
+            "grade": "川口オート公式日程",
+            "day": "川口オート公式日程",
+            "timeType": "川口オート公式日程"
           }
         }
       ],
       "verification": {
         "providers": {
-          "WINTICKET指定月": 2
+          "WINTICKET指定月": 2,
+          "AUTORACE.JP年間グレード日程": 1,
+          "川口オート公式日程": 1
         },
-        "crossConfirmed": 0,
-        "singleSource": 2,
-        "gradeCrossConfirmed": 0,
+        "crossConfirmed": 2,
+        "singleSource": 0,
+        "gradeCrossConfirmed": 2,
         "fieldCoverage": {
           "grade": 2,
           "day": 2,
@@ -287,19 +282,25 @@
         },
         "priorityPolicy": {
           "grade": [
+            "AUTORACE.JP年間グレード日程",
             "AUTORACE.JP出走表",
+            "川口オート公式日程",
             "WINTICKET指定月",
             "オッズパーク日別"
           ],
           "day": [
+            "AUTORACE.JP年間グレード日程",
             "AUTORACE.JP出走表",
+            "川口オート公式日程",
             "WINTICKET指定月",
             "オッズパーク日別"
           ],
           "timeType": [
+            "AUTORACE.JP年間グレード日程",
             "AUTORACE.JP出走表",
-            "オッズパーク日別",
-            "WINTICKET指定月"
+            "川口オート公式日程",
+            "WINTICKET指定月",
+            "オッズパーク日別"
           ],
           "girls": [
             "AUTORACE.JP出走表",
@@ -310,48 +311,50 @@
         "conflicts": [],
         "ignoredFields": [],
         "errors": [],
+        "officialConfirmed": [],
+        "officialConfirmedCount": 0,
+        "organizerConfirmed": {
+          "AUTORACE.JP年間グレード日程": [
+            "山陽"
+          ],
+          "川口オート公式日程": [
+            "川口"
+          ]
+        },
+        "officialVerifiedVenues": [
+          "山陽",
+          "川口"
+        ],
         "unconfirmedOfficial": [
           {
             "name": "川口",
-            "reason": "AUTORACE.JPの指定日・開催場を照合できません"
-          },
-          {
-            "name": "伊勢崎",
-            "reason": "AUTORACE.JPの指定日・開催場を照合できません"
-          },
-          {
-            "name": "浜松",
-            "reason": "AUTORACE.JPの指定日・開催場を照合できません"
-          },
-          {
-            "name": "飯塚",
-            "reason": "AUTORACE.JPの指定日・開催場を照合できません"
+            "reason": "AUTORACE.JPの指定日・開催場を照合できません（公式出走表の詳細がHTMLになく、動的表示のため照合不可）"
           },
           {
             "name": "山陽",
-            "reason": "AUTORACE.JPの指定日・開催場を照合できません"
+            "reason": "AUTORACE.JPの指定日・開催場を照合できません（公式出走表の詳細がHTMLになく、動的表示のため照合不可）"
           }
         ],
         "unconfirmedRacecards": [
           {
             "name": "川口",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=02&kaisaiBi=20261113"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=02&kaisaiBi=20261114"
           },
           {
             "name": "伊勢崎",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=03&kaisaiBi=20261113"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=03&kaisaiBi=20261114"
           },
           {
             "name": "浜松",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=04&kaisaiBi=20261113"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=04&kaisaiBi=20261114"
           },
           {
             "name": "飯塚",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=05&kaisaiBi=20261113"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=05&kaisaiBi=20261114"
           },
           {
             "name": "山陽",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=06&kaisaiBi=20261113"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=06&kaisaiBi=20261114"
           }
         ]
       }
@@ -367,7 +370,7 @@
             "きょうの競艇"
           ],
           "grade": "一般",
-          "day": "2日目",
+          "day": "3日目",
           "timeType": null,
           "fieldSources": {
             "grade": "BOAT RACE公式",
@@ -382,7 +385,22 @@
             "きょうの競艇"
           ],
           "grade": "一般",
-          "day": "4日目",
+          "day": "最終日",
+          "timeType": null,
+          "fieldSources": {
+            "grade": "BOAT RACE公式",
+            "day": "BOAT RACE公式"
+          }
+        },
+        {
+          "name": "びわこ",
+          "girls": false,
+          "confirmedBy": [
+            "BOAT RACE公式",
+            "きょうの競艇"
+          ],
+          "grade": "一般",
+          "day": "初日",
           "timeType": null,
           "fieldSources": {
             "grade": "BOAT RACE公式",
@@ -397,7 +415,7 @@
             "きょうの競艇"
           ],
           "grade": "一般",
-          "day": "5日目",
+          "day": "最終日",
           "timeType": "ナイター",
           "fieldSources": {
             "grade": "BOAT RACE公式",
@@ -413,7 +431,7 @@
             "きょうの競艇"
           ],
           "grade": "一般",
-          "day": "初日",
+          "day": "2日目",
           "timeType": "ナイター",
           "fieldSources": {
             "grade": "BOAT RACE公式",
@@ -424,15 +442,15 @@
       ],
       "verification": {
         "providers": {
-          "BOAT RACE公式": 4,
-          "きょうの競艇": 4
+          "BOAT RACE公式": 5,
+          "きょうの競艇": 5
         },
-        "crossConfirmed": 4,
+        "crossConfirmed": 5,
         "singleSource": 0,
         "gradeCrossConfirmed": 4,
         "fieldCoverage": {
-          "grade": 4,
-          "day": 4,
+          "grade": 5,
+          "day": 5,
           "timeType": 2,
           "girlsDetected": 0
         },
@@ -458,8 +476,25 @@
             "きょうの競艇"
           ]
         },
-        "conflicts": [],
-        "ignoredFields": [],
+        "conflicts": [
+          {
+            "name": "びわこ",
+            "field": "grade",
+            "primary": "一般",
+            "selectedSource": "BOAT RACE公式",
+            "alternative": "G1",
+            "source": "きょうの競艇",
+            "alternativeSource": "きょうの競艇"
+          }
+        ],
+        "ignoredFields": [
+          {
+            "name": "びわこ",
+            "field": "day",
+            "source": "きょうの競艇",
+            "reason": "採用グレードとの不一致"
+          }
+        ],
         "errors": []
       },
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
@@ -481,7 +516,7 @@
     "status": "ok",
     "items": [],
     "verification": {
-      "targetDate": "2026-11-13",
+      "targetDate": "2026-11-14",
       "eligibleMeetings": 0,
       "confirmedRaces": 0,
       "moriRaces": 0,
