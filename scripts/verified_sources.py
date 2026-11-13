@@ -201,9 +201,7 @@ def reconcile(category,lists,venue_order,sort_by_time):
         'crossConfirmed':sum(len(x['confirmedBy'])>1 for x in merged),
         'singleSource':sum(len(x['confirmedBy'])==1 for x in merged),
         'gradeCrossConfirmed':sum(
-            sum(valid_field('grade',row.get('grade')) and
-                compatible_grade(category,item['grade'],row.get('grade'),
-                                 item['fieldSources'].get('grade'))
+            sum(row.get('grade')==item['grade']
                 for _,row in records[item['name']])>1 for item in merged),
         'fieldCoverage':{f:sum(valid_field(f,item.get(f)) for item in merged) for f in fields}
                         | {'girlsDetected':sum(item['girls'] for item in merged)},
@@ -412,9 +410,21 @@ def parse_boat_g3_schedule(html,selected,venue_names):
                                        normalize('NFKC',h.get_text(' ',strip=True)))),None)
     if h2 is None or current_year is None:
         raise ValueError('公式G3日程のグレード・対象年が一致しません')
+    # Scope table rows to the selected year heading. A page may also contain
+    # previous/following years, which must never be mistaken for this date.
+    table=None
+    for element in current_year.next_elements:
+        if getattr(element,'name',None) in ('h2','h3') and re.fullmatch(
+                r'\s*20\d{2}\s*年\s*',
+                normalize('NFKC',element.get_text(' ',strip=True))):
+            break
+        if getattr(element,'name',None)=='table':
+            table=element
+            break
+    if table is None:
+        raise ValueError('公式G3日程の対象年に一覧表がありません')
     found={}
-    for tr in soup.find_all('tr'):
-        cells=tr.find_all(['td','th'],recursive=False)
+    for tr in table.find_all('tr'):
         row=normalize('NFKC',tr.get_text(' ',strip=True))
         bounds=re.search(r'(?<!\d)(\d{1,2})\s*/\s*(\d{1,2})\s*[-～〜~]\s*'
                          r'(\d{1,2})\s*/\s*(\d{1,2})(?!\d)',row)
@@ -455,16 +465,12 @@ def soda(s,selected,previous,u):
     # date and track, and correct only that verified grade.
     try:
         official_g3=parse_boat_g3_schedule(u.fetch(s,BOAT_G3),selected,u.SODA_NAMES)
-        for source,items in lists:
-            for row in items:
-                matching=official_g3.get(row['name'])
-                if matching and row.get('grade') in ('一般','普通','G3'):
-                    row['grade']='G3'
-                    if matching['girls']:row['girls']=True
         matched=[dict(row) for row in official_g3.values()
                  if any(row['name']==item['name'] for _,items in lists for item in items)]
         if matched:
-            # Used solely as a third corroborating grade record.
+            # Keep providers' original grade claims intact and auditable.
+            # The field-level policy gives the matching official G3 calendar
+            # precedence, while retaining day/night details from daily tables.
             lists.append(('BOAT RACE公式G3日程',matched))
     except Exception as exc:
         errors.append(('BOAT RACE公式G3日程',str(exc)))
