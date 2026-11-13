@@ -93,9 +93,10 @@ def official_midnight(html, selected, records, u):
         classes=' '.join(cell.get('class',[])).lower()
         if any(m in classes for m in ('prev','next','other','outside','offmonth')):
             continue
-        found={name for name in all_venues if re.search(
-            r'(?<![一-龥])'+re.escape(name)+r'(?![一-龥])',value)}
-        matches.update(found)
+        # The calendar can concatenate venue labels without whitespace.
+        # Only known venue names are accepted, and an independently dated
+        # record below must still exist for the same selected calendar day.
+        matches.update(name for name in all_venues if name in value)
     return [{'name':row['name'],'timeType':'ミッドナイト'}
             for row in records if row.get('name') in matches]
 
