@@ -69,9 +69,18 @@ for(const [size,left,right] of [[6,3,3],[7,4,3],[8,4,4],[9,5,4]]){
 }
 
 const css=fs.readFileSync(path.join(__dirname,'..','styles.css'),'utf8');
-const sizes=[...css.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px\b/g)].map(m=>Number(m[1]));
-assert.ok(sizes.length>15);
-assert.ok(sizes.every(n=>n%10===0),'all font sizes must be multiples of 10px: '+sizes);
+const fontTokens={30:7,60:6,80:5};
+for(const [size,expectedCount] of Object.entries(fontTokens)){
+  const token='--font-'+size;
+  const definition=new RegExp('\\\\s'+token+':\\\\s*'+size+'px;');
+  assert.match(css,definition,'font token must directly specify its px size: '+token);
+  const usages=[...css.matchAll(new RegExp('font-size:\\\\s*var\\\\('+token+'\\\\);','g'))];
+  assert.equal(usages.length,expectedCount,'all existing '+size+'px styles must directly use '+token);
+}
+assert.doesNotMatch(css,/font-size:\s*\d+(?:\.\d+)?px\b/,
+                    'font-size must use the shared CSS tokens directly');
+assert.doesNotMatch(css,/--font-(?:30|60|80):\s*var\(/,
+                    'font variables must never alias other variables');
 assert.doesNotMatch(css,/--muted\s*:/,'unused secondary-text variable must be removed');
 assert.doesNotMatch(css,/\.message,\s*\.detail\s*\{/,'unused message styles removed');
 assert.doesNotMatch(css,/\.entry \.time-type\[data-type=/,'time icon color directly declared');
@@ -97,11 +106,11 @@ assert.match(css,/\.final-title\[data-sport="soda"\]\s*\{[^}]*background:\s*var\
 assert.match(css,/\.final-title-text\s*\{[^}]*transform-origin:/s);
 assert.match(css,/\.final-rider\.is-mori\s*\{[^}]*var\(--grade-major\)/s);
 for(const className of ['final-title','final-rider','final-number']){
-  const re=new RegExp('\\.'+className+'\\s*\\{[^}]*font-size:\\s*80px;','s');
+  const re=new RegExp('\\.'+className+'\\s*\\{[^}]*font-size:\\s*var\\(--font-80\\);','s');
   assert.match(css,re,className+' should use 80px');
 }
-assert.match(css,/\.final-race\s*\{[^}]*font-size:\s*60px;/s);
-assert.match(css,/\.final-race \.grade\s*\{[^}]*font-size:\s*60px;/s);
+assert.match(css,/\.final-race\s*\{[^}]*font-size:\s*var\(--font-60\);/s);
+assert.match(css,/\.final-race \.grade\s*\{[^}]*font-size:\s*var\(--font-60\);/s);
 assert.match(css,/\.final-card\s*\{[^}]*width:\s*1600px;/s);
 assert.match(css,/\.final-rider\.is-scratched::after\s*\{[^}]*var\(--grade-major\)/s);
 assert.match(css,/\.fullscreen-hint-line\s*\{/s);

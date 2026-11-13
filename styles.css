@@ -2,6 +2,9 @@
 :root {
   --ink: #25323a;
   --white: #fff;
+  --font-30: 30px;
+  --font-60: 60px;
+  --font-80: 80px;
   --line: #e1e8e6;
   --keirin: #477A94;
   --auto: #AC605A;
@@ -48,7 +51,7 @@ body {
   margin-bottom: 8px;
 }
 h1 {
-  font-size: 80px;
+  font-size: var(--font-80);
   font-weight: 900;
   line-height: 1;
   margin: 0;
@@ -57,7 +60,7 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 #weekday {
-  font-size: 60px;
+  font-size: var(--font-60);
   vertical-align: 4px;
   margin-left: 15px;
   letter-spacing: 0;
@@ -103,7 +106,7 @@ h1 {
 }
 /* Sport bands supply the heading background and text color directly. */
 .panel-head h2 {
-  font-size: 60px;
+  font-size: var(--font-60);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -.04em;
@@ -141,7 +144,7 @@ h1 {
 .band-notice {
   margin: 0;
   color: var(--white);
-  font-size: 60px;
+  font-size: var(--font-60);
   font-weight: 900;
   line-height: 1.2;
   text-align: center;
@@ -163,7 +166,7 @@ h1 {
   overflow: hidden;
 }
 .entry .venue {
-  font-size: 80px;
+  font-size: var(--font-80);
   font-weight: 900;
   line-height: 92px;
   height: 92px;
@@ -192,7 +195,7 @@ h1 {
   height: 35px;
   padding: 0 5px;
   border-radius: 5px;
-  font-size: 30px;
+  font-size: var(--font-30);
   line-height: 1;
   font-weight: 900;
   color: var(--white);
@@ -203,7 +206,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   flex: none;
-  font-size: 30px;
+  font-size: var(--font-30);
   line-height: 1.1;
   font-weight: 700;
   white-space: nowrap;
@@ -216,7 +219,7 @@ h1 {
   flex: none;
   width: 30px;
   height: 30px;
-  font-size: 30px;
+  font-size: var(--font-30);
   line-height: 1;
   font-weight: 900;
   color: #e4a529;
@@ -247,7 +250,7 @@ h1 {
 }
 .mori-tile h3,
 .mori-status {
-  font-size: 30px;
+  font-size: var(--font-30);
   color: var(--auto);
   font-weight: 900;
   line-height: 1;
@@ -261,7 +264,7 @@ h1 {
   gap: 3px;
   min-width: 0;
 }
-.entry .mori-primary { font-size: 60px; height: 66px; line-height: 66px; }
+.entry .mori-primary { font-size: var(--font-60); height: 66px; line-height: 66px; }
 /* Finals reuse the same date header and show the racecard instead of venue tiles. */
 .stage.is-final .dashboard { display: none; }
 .final-screen {
@@ -303,7 +306,7 @@ h1 {
   padding: 0 20px;
   background: var(--keirin);
   color: var(--white);
-  font-size: 80px;
+  font-size: var(--font-80);
 }
 .final-title[data-sport="auto"] { background: var(--auto); }
 .final-title[data-sport="soda"] { background: var(--soda); }
@@ -315,7 +318,7 @@ h1 {
 }
 .final-race {
   padding: 0 20px;
-  font-size: 60px;
+  font-size: var(--font-60);
   gap: 20px;
 }
 /* Override only the finals label; venue-list grade labels remain 30px. */
@@ -323,7 +326,7 @@ h1 {
   min-width: 120px;
   height: 80px;
   padding: 0 10px;
-  font-size: 60px;
+  font-size: var(--font-60);
 }
 .final-race-detail {
   min-width: 0;
@@ -364,7 +367,7 @@ h1 {
   justify-content: center;
   border-radius: 6px;
   border: 2px solid rgba(0,0,0,.15);
-  font-size: 80px;
+  font-size: var(--font-80);
   font-weight: 900;
   line-height: 1;
 }
@@ -374,7 +377,7 @@ h1 {
   width: max-content;
   max-width: 100%;
   min-width: 0;
-  font-size: 80px;
+  font-size: var(--font-80);
   font-weight: 900;
   line-height: 1.1;
   white-space: nowrap;
@@ -421,7 +424,7 @@ h1 {
   background: rgba(30, 41, 48, .94);
   box-shadow: 0 12px 36px rgba(0, 0, 0, .2);
   color: var(--white);
-  font-size: 30px;
+  font-size: var(--font-30);
   font-weight: 800;
   line-height: 1.2;
   white-space: nowrap;
@@ -445,7 +448,7 @@ h1 {
   background: var(--white);
   color: var(--ink);
   font-family: inherit;
-  font-size: 30px;
+  font-size: var(--font-30);
   font-weight: 900;
   line-height: 1.1;
   box-shadow: inset 0 1px 0 var(--white), 0 2px 0 rgba(0, 0, 0, .2);
@@ -466,7 +469,7 @@ h1 {
   background: var(--grade-major);
   color: var(--white);
   border-radius: 6px;
-  font-size: 30px;
+  font-size: var(--font-30);
   font-weight: 700;
   white-space: nowrap;
 }
