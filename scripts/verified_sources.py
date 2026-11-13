@@ -528,7 +528,7 @@ def auto(s,selected,previous,u):
                 row['name'] for row in grade_rows]
     except Exception as exc:
         errors.append(('AUTORACE.JP年間グレード日程',str(exc)))
-    if abs((selected-datetime.now(u.TZ).date()).days)<=120:
+    if abs((selected-datetime.now(ZoneInfo('Asia/Tokyo')).date()).days)<=120:
         try:
             local_rows=autorace_official.kawaguchi_meetings(
                 u.fetch(s,autorace_official.KAWAGUCHI_CALENDAR),selected,u)
