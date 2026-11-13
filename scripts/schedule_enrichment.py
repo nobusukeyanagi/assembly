@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 
 JKA_MORNING='https://keirin.jp/pc/dfw/portal/guest/campaign/morning/index.html'
-CTC_SCHEDULE='https://keirin.ctc.gr.jp/schedule/'
+CTC_SCHEDULE='https://ctc.gr.jp/schedule/'
 
 
 def official_morning(html, selected, records, u):
