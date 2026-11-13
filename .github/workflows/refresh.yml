@@ -66,6 +66,10 @@ jobs:
           node tests/test_holidays.cjs
           node tests/test_layout.cjs
           node tests/test_final_board.cjs
+      - name: Prefer today's display on the daily schedule
+        if: ${{ github.event_name == 'schedule' }}
+        run: python scripts/display_mode.py set --mode 当日
+
       - name: Select the public display mode
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
