@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort}=require('../app.js');
+const {verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalRaceText,finalEventLabel,finalRiderName,finalSort}=require('../app.js');
 const day='2026-11-03';
 const card=(sport,venue,race,time)=>({
   sport,venue,race,startTime:time,event:'SG日本選手権オートレース',
@@ -31,6 +31,9 @@ assert.deepEqual(finalSort(sample).map(x=>x.sport+(x.feature||'')),
 assert.equal(finalRaceLabel('優勝戦(枠番選択)'),'優勝戦');
 assert.equal(finalRaceLabel('S級 決勝'),'決勝');
 assert.equal(finalRaceLabel('決勝戦'),'決勝');
+assert.equal(finalRaceText({venue:'戸田',race:12,raceName:'優勝戦',startTime:null}),'戸田 12R　優勝戦');
+assert.equal(finalRaceText({venue:'戸田',race:12,raceName:'優勝戦',startTime:'16:15'}),'戸田 12R　優勝戦　16:15発走');
+assert.equal(finalRaceText({venue:'浜松',race:11,raceName:'準優勝戦',startTime:'15:24',feature:'mori'}),'浜松 11R　準優勝戦　15:24発走');
 assert.equal(finalEventLabel('SG日本選手権オートレース'),'日本選手権オートレース');
 assert.equal(finalEventLabel('GⅢ 周防国府杯争奪戦'),'周防国府杯争奪戦');
 assert.equal(finalRiderName('郡司浩平 選手','keirin'),'郡司 浩平');
@@ -91,6 +94,10 @@ assert.match(css,/\.fullscreen-hint-line\s*\{/s);
 assert.match(css,/\.final-riders\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
 assert.match(css,/\.final-rider-column\s*\{[^}]*grid-template-rows:\s*repeat\(5,/s);
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const appSource=fs.readFileSync(path.join(__dirname,'..','app.js'),'utf8');
+assert.doesNotMatch(html,/読み込み中|確認中/,'initial HTML must be blank until verified data arrives');
+assert.doesNotMatch(appSource,/['"`][^'"`]*(?:情報確認中|出走予定確認中|出走R確認中|発走時刻確認中)[^'"`]*['"`]/,
+                    'do not render pending-verification text');
 assert.match(html,/id="final-screen"[^>]*hidden/);
 assert.match(html,/<kbd>Space Key<\/kbd><span>で出走表表示<\/span>/);
 console.log('Final board tests passed: race info+grade label 60px, keirin suffix removal, 2-column riders and other text 80px');

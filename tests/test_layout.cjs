@@ -42,9 +42,11 @@ assert.equal(isEmptyVenueSection(null,false),false);
 // The same white 60px band notice is used by empty and error states.
 assert.equal(venueStatusText({status:'ok',items:[]},false,'today'),'開催情報がありません');
 assert.equal(venueStatusText({status:'cached',items:[]},false,'selected'),'開催情報がありません');
-assert.equal(venueStatusText({status:'error',items:[]},false,'today'),'開催情報を確認できません');
-assert.equal(venueStatusText(null,false,'today'),'開催情報を確認できません');
-assert.equal(venueStatusText({status:'partial',items:[]},false,'today'),'情報を確認中');
-assert.equal(venueStatusText({status:'ok',items:[]},true,'selected'),'指定日の情報を確認中');
+assert.equal(venueStatusText({status:'error',items:[]},false,'today'),'');
+assert.equal(venueStatusText(null,false,'today'),'');
+assert.equal(venueStatusText({status:'partial',items:[]},false,'today'),'');
+assert.equal(venueStatusText({status:'ok',items:[]},true,'selected'),'');
+assert.equal(venueStatusText({status:'cached',items:[]},true,'today'),'');
+assert.equal(venueStatusText({status:'partial',items:[{name:'川口'}]},false),null);
 assert.equal(venueStatusText({status:'ok',items:[{name:'浜松'}]},false,'today'),null);
 console.log('Layout tests passed: dynamic rows, unified band notices, errors, cache, stale data');

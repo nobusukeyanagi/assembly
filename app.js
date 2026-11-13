@@ -30,10 +30,6 @@ function dateDisplay(d){
   label.classList.toggle('is-sunday',dayOfWeek===0&&!holiday);
   label.classList.toggle('is-saturday',dayOfWeek===6&&!holiday);
 }
-function error(root,message,detail){
-  root.replaceChildren(node('p','message',message));
-  if(detail)root.append(node('p','detail',detail));
-}
 function isMajorGrade(grade){
   return /^(?:GP|SG|G[123]|特G1)$/.test(String(grade||'').replaceAll('Ⅰ','1').replaceAll('Ⅱ','2').replaceAll('Ⅲ','3'));
 }
@@ -98,20 +94,21 @@ function isEmptyVenueSection(section,stale){
     (section.status==='ok'||section.status==='cached')&&
     Array.isArray(section.items)&&section.items.length===0;
 }
-function venueStatusText(section,stale,mode){
-  if(stale)return mode==='selected'?'指定日の情報を確認中':'本日の情報を確認中';
-  if(!section||section.status==='error')return '開催情報を確認できません';
+function venueStatusText(section,stale){
+  // Empty string: unresolved information must be visually blank.
+  // Only a verified absence of meetings gets a visible message.
+  if(stale||!section||section.status==='error')return '';
   if(isEmptyVenueSection(section,false))return '開催情報がありません';
-  if(!Array.isArray(section.items)||section.items.length===0)return '情報を確認中';
+  if(!Array.isArray(section.items)||section.items.length===0)return '';
   return null;
 }
-function entries(id,section,stale,mode){
+function entries(id,section,stale){
   const root=get(id+'-entries');
   root.classList.remove('is-notice');
-  const message=venueStatusText(section,stale,mode);
-  if(message){
+  const message=venueStatusText(section,stale);
+  if(message!==null){
     root.classList.add('is-notice');
-    root.replaceChildren(node('p','band-notice',message));
+    root.replaceChildren(...(message?[node('p','band-notice',message)]:[]));
     return;
   }
   const records=section.items;
@@ -123,11 +120,9 @@ function mori(section,stale,targetDate){
   const root=get('mori-body');
   const status=get('mori-status');
   root.classList.remove('mori-today');
-  status.textContent='確認中';
-  if(stale){error(root,'情報確認中');return}
-  if(!section||section.status==='error'||!section.item){
-    error(root,'出走予定確認中');return;
-  }
+  status.textContent='';
+  root.replaceChildren();
+  if(stale||!section||section.status==='error'||!section.item)return;
   const x=section.item;
   const isToday=x.type==='today'&&x.date===targetDate;
   const numbers=Array.isArray(x.races)?x.races:[x.race];
@@ -135,7 +130,7 @@ function mori(section,stale,targetDate){
   const hasRace=isToday&&races.length>0;
   const d=/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')?
     Number(x.date.slice(5,7))+'月'+Number(x.date.slice(8,10))+'日':'未定';
-  status.textContent=hasRace?'本日出走':isToday?'出走R確認中':'次回予定';
+  status.textContent=hasRace?'本日出走':isToday?'':'次回予定';
   const venue=node('div','venue mori-primary',(x.name||'—')+(hasRace?' '+races.map(n=>n+'R').join('・'):''));
   const meta=node('div','meta');
   if(x.grade){
@@ -147,7 +142,7 @@ function mori(section,stale,targetDate){
     const times=x.startTimes&&typeof x.startTimes==='object'?x.startTimes:{};
     const starts=races.map(n=>times[String(n)]);
     const verified=starts.length>0&&starts.every(t=>typeof t==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(t));
-    meta.append(node('span','day',verified?starts.join('/'):'発走時刻確認中'));
+    if(verified)meta.append(node('span','day',starts.join('/')));
   } else {
     meta.append(node('span','day',d));
   }
@@ -210,6 +205,11 @@ function finalRaceLabel(name){
   if(String(name).includes('決勝'))return '決勝';
   return '—';
 }
+function finalRaceText(data){
+  const raceName=data.feature==='mori'?data.raceName:finalRaceLabel(data.raceName);
+  return data.venue+' '+data.race+'R　'+raceName+
+    (data.startTime?'　'+data.startTime+'発走':'');
+}
 function finalEventLabel(event){
   return String(event||'').replace(/^(?:特G[ⅠⅡⅢ123]|G[ⅠⅡⅢ123]|F[ⅠⅡ12]|SG|GP)[\s　]*/i,'').trim();
 }
@@ -250,10 +250,7 @@ function paintFinal(){
   const race=node('div','final-race');
   const grade=node('span','grade',displayGrade(data.grade||'—',data.sport));
   grade.dataset.tier=isMajorGrade(data.grade)?'major':'regular';
-  race.append(grade,node('span','final-race-detail',
-    data.venue+' '+data.race+'R　'+
-    (data.feature==='mori'?data.raceName:finalRaceLabel(data.raceName))+
-    '　'+(data.startTime?data.startTime+'発走':'発走時刻確認中')));
+  race.append(grade,node('span','final-race-detail',finalRaceText(data)));
   const grid=node('div','final-riders');
   for(const riders of splitFinalRiders(data.riders)){
     const column=node('div','final-rider-column');
@@ -321,9 +318,9 @@ function render(data,targetDate,mode){
   stage.dataset.totalRows=String(layout.totalRows);
   get('display-mode-indicator').hidden=mode!=='selected';
   dateDisplay(targetDate);
-  entries('keirin',s.keirin,stale,mode);
-  entries('auto',s.auto,stale,mode);
-  entries('soda',s.soda,stale,mode);
+  entries('keirin',s.keirin,stale);
+  entries('auto',s.auto,stale);
+  entries('soda',s.soda,stale);
   mori(s.mori,stale,targetDate);
   const selected=activeFinalKey;
   finalCards=finalSort(verifiedFinals(data,targetDate));
@@ -358,7 +355,7 @@ async function refresh(){
   }
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
+if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,finalRaceText,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
