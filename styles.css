@@ -57,7 +57,7 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 #weekday {
-  font-size: 50px;
+  font-size: 60px;
   vertical-align: 4px;
   margin-left: 15px;
   letter-spacing: 0;
@@ -152,7 +152,7 @@ h1 {
 .band-notice {
   margin: 0;
   color: #fff;
-  font-size: 50px;
+  font-size: 60px;
   font-weight: 900;
   line-height: 1.2;
   text-align: center;
