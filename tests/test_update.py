@@ -3,6 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+from schedule_enrichment import official_morning,ctc_listing
 from verified_sources import restore_same_date_fields,KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_chariloto_starts,MORI_CHARILOTO_START,parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
@@ -185,6 +186,62 @@ class ParserTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_keirin_oct_2026_finals(html.replace('2026年10月1日','2025年10月1日'),
                                           selected,archive,upstream)
+
+    def test_jka_official_morning_monthly_dates_are_isolated(self):
+        from types import SimpleNamespace
+        from zoneinfo import ZoneInfo
+        upstream=SimpleNamespace(KEIRIN_NAMES=['佐世保','松戸','福井','熊本'])
+        html=('<h1>モーニング競輪</h1>'
+              '<h2>〖2026年10月〗</h2>'
+              '<div>9月30日(水) ~ 10月2日(金) <a>佐世保競輪場</a></div>'
+              '<div>3日(土) ~ 5日(月) <a>松戸競輪場</a></div>'
+              '<h2>〖2026年11月〗</h2>'
+              '<div>10月31日(土) ~ 11月2日(月) <a>熊本競輪場</a></div>'
+              '<div>13日(金) ~ 15日(日) <a>松戸競輪場</a></div>')
+        # The page uses month-less dates for most rows. The parser may accept
+        # explicit month labels only: absence must not cause guessed data.
+        archive=[{'name':'佐世保','grade':'F2','day':'最終日'},
+                 {'name':'松戸','grade':'F2','day':'初日'}]
+        result=official_morning(html,date(2026,10,2),archive,upstream)
+        self.assertEqual(result,[{'name':'佐世保','timeType':'モーニング'}])
+        self.assertEqual(official_morning(html,date(2026,10,3),archive,upstream),
+                         [{'name':'松戸','timeType':'モーニング'}])
+        self.assertEqual(official_morning(html,date(2026,11,13),archive,upstream),[])
+        self.assertEqual(official_morning(html,date(2026,9,2),archive,upstream),[])
+        with self.assertRaises(ValueError):
+            official_morning(html.replace('2026年10月','2025年10月'),
+                             date(2026,10,2),archive,upstream)
+
+    def test_ctc_calendar_uses_explicit_categories_and_girls_only(self):
+        from types import SimpleNamespace
+        from zoneinfo import ZoneInfo
+        upstream=SimpleNamespace(KEIRIN_NAMES=['松戸','四日市','福井','佐世保'],
+                                 grade=grade,TZ=ZoneInfo('Asia/Tokyo'))
+        rows=[{'name':'松戸','grade':'F2','day':'初日'},
+              {'name':'四日市','grade':'F1','day':'最終日'},
+              {'name':'福井','grade':'F1','day':'最終日'}]
+        html=('<h1>開催情報</h1><div>'
+              '松戸31# ロトプレイス杯FⅡ11/13(金)～11/15(日) モーニングガールズ '
+              '四日市48# スポーツ報知杯FⅠ11/11(水)～11/13(金) ナイターガールズ '
+              '福井51# 中日スポーツ杯FⅠ11/11(水)～11/13(金) '
+              '佐世保85# 別のレースFⅡ11/14(土)～11/16(月) ミッドナイト'
+              '</div>')
+        with patch('schedule_enrichment.datetime') as clock:
+            clock.now.return_value=datetime(2026,11,13,10,0,tzinfo=upstream.TZ)
+            matched=ctc_listing(html,date(2026,11,13),rows,upstream)
+            self.assertEqual({x['name'] for x in matched},
+                             {'松戸','四日市','福井'})
+            self.assertEqual(next(x for x in matched if x['name']=='松戸')['timeType'],
+                             'モーニング')
+            self.assertEqual(next(x for x in matched if x['name']=='四日市')['timeType'],
+                             'ナイター')
+            self.assertTrue(next(x for x in matched if x['name']=='松戸')['girls'])
+            self.assertIsNone(next(x for x in matched if x['name']=='福井')['timeType'])
+            # No historical extrapolation from a yearless live listing.
+            self.assertEqual(ctc_listing(html,date(2026,8,1),rows,upstream),[])
+            # A grade mismatch cannot pollute the output.
+            mismatch=[dict(rows[0],grade='G3')]
+            self.assertEqual(ctc_listing(html,date(2026,11,13),mismatch,upstream),[])
 
     def test_nov2026_final_calendar_month_scope_and_field_recovery(self):
         from types import SimpleNamespace
