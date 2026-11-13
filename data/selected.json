@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-01",
-  "updatedAt": "2026-11-13T10:50+09:00",
+  "date": "2026-10-02",
+  "updatedAt": "2026-11-13T15:13+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -22,114 +22,99 @@
       "status": "ok",
       "items": [
         {
-          "name": "小田原",
+          "name": "青森",
           "grade": "F2",
-          "timeType": "モーニング",
-          "girls": true,
-          "day": "初日",
-          "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
-          ]
-        },
-        {
-          "name": "熊本",
-          "grade": "F2",
-          "timeType": "モーニング",
+          "timeType": "確認中",
           "girls": false,
-          "day": "2日目",
+          "day": "最終日",
           "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
+            "楽天Kドリームス"
           ]
         },
         {
-          "name": "弥彦",
+          "name": "前橋",
+          "grade": "F2",
+          "timeType": "確認中",
+          "girls": false,
+          "day": "最終日",
+          "confirmedBy": [
+            "楽天Kドリームス"
+          ]
+        },
+        {
+          "name": "大宮",
           "grade": "F1",
-          "timeType": "デイ",
-          "girls": false,
-          "day": "最終日",
-          "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
-          ]
-        },
-        {
-          "name": "防府",
-          "grade": "G3",
-          "timeType": "デイ",
+          "timeType": "確認中",
           "girls": false,
           "day": "2日目",
           "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
+            "楽天Kドリームス"
           ]
         },
         {
-          "name": "宇都宮",
+          "name": "川崎",
+          "grade": "F1",
+          "timeType": "確認中",
+          "girls": false,
+          "day": "2日目",
+          "confirmedBy": [
+            "楽天Kドリームス"
+          ]
+        },
+        {
+          "name": "松阪",
+          "grade": "G3",
+          "timeType": "確認中",
+          "girls": false,
+          "day": "2日目",
+          "confirmedBy": [
+            "楽天Kドリームス"
+          ]
+        },
+        {
+          "name": "奈良",
           "grade": "F2",
-          "timeType": "ナイター",
+          "timeType": "確認中",
           "girls": false,
           "day": "最終日",
           "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
+            "楽天Kドリームス"
           ]
         },
         {
           "name": "久留米",
-          "grade": "F1",
-          "timeType": "ナイター",
+          "grade": "F2",
+          "timeType": "確認中",
           "girls": false,
-          "day": "初日",
+          "day": "2日目",
           "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
+            "楽天Kドリームス"
           ]
         },
         {
-          "name": "西武園",
+          "name": "佐世保",
           "grade": "F2",
-          "timeType": "ミッドナイト",
-          "girls": true,
-          "day": "最終日",
-          "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
-          ]
-        },
-        {
-          "name": "松戸",
-          "grade": "F2",
-          "timeType": "ミッドナイト",
+          "timeType": "確認中",
           "girls": false,
           "day": "最終日",
           "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
-          ]
-        },
-        {
-          "name": "名古屋",
-          "grade": "F2",
-          "timeType": "ミッドナイト",
-          "girls": false,
-          "day": "最終日",
-          "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX"
+            "楽天Kドリームス"
           ]
         }
       ],
       "verification": {
         "providers": {
-          "楽天Kドリームス": 9,
-          "KEIRIN HEX": 9
+          "楽天Kドリームス": 8
         },
-        "crossConfirmed": 9,
-        "singleSource": 0,
+        "crossConfirmed": 0,
+        "singleSource": 8,
         "conflicts": [],
-        "errors": []
+        "errors": [
+          [
+            "KEIRIN HEX",
+            "404 Client Error: Not Found for url: https://keirinhex.jp/races/20261002/"
+          ]
+        ]
       }
     },
     "auto": {
@@ -137,16 +122,16 @@
       "items": [
         {
           "name": "浜松",
-          "grade": "SG",
+          "grade": "普通",
           "timeType": null,
-          "day": "4日目",
+          "day": "2日目",
           "confirmedBy": [
             "WINTICKET指定月"
           ]
         },
         {
-          "name": "川口",
-          "grade": "普通",
+          "name": "飯塚",
+          "grade": "G2",
           "timeType": "ナイター",
           "day": "初日",
           "confirmedBy": [
@@ -157,7 +142,7 @@
           "name": "山陽",
           "grade": "普通",
           "timeType": "ミッドナイト",
-          "day": "最終日",
+          "day": "2日目",
           "confirmedBy": [
             "WINTICKET指定月"
           ]
@@ -196,23 +181,23 @@
         "unconfirmedRacecards": [
           {
             "name": "川口",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=02&kaisaiBi=20261101"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=02&kaisaiBi=20261002"
           },
           {
             "name": "伊勢崎",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=03&kaisaiBi=20261101"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=03&kaisaiBi=20261002"
           },
           {
             "name": "浜松",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=04&kaisaiBi=20261101"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=04&kaisaiBi=20261002"
           },
           {
             "name": "飯塚",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=05&kaisaiBi=20261101"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=05&kaisaiBi=20261002"
           },
           {
             "name": "山陽",
-            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=06&kaisaiBi=20261101"
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=06&kaisaiBi=20261002"
           }
         ]
       }
@@ -220,17 +205,6 @@
     "soda": {
       "status": "ok",
       "items": [
-        {
-          "name": "戸田",
-          "grade": "一般",
-          "day": "2日目",
-          "timeType": null,
-          "girls": false,
-          "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
-          ]
-        },
         {
           "name": "浜名湖",
           "grade": "一般",
@@ -243,31 +217,9 @@
           ]
         },
         {
-          "name": "宮島",
-          "grade": "一般",
-          "day": "初日",
-          "timeType": null,
-          "girls": false,
-          "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
-          ]
-        },
-        {
-          "name": "芦屋",
-          "grade": "一般",
-          "day": "初日",
-          "timeType": null,
-          "girls": false,
-          "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
-          ]
-        },
-        {
           "name": "蒲郡",
           "grade": "一般",
-          "day": "最終日",
+          "day": "4日目",
           "timeType": "ナイター",
           "girls": false,
           "confirmedBy": [
@@ -278,12 +230,20 @@
       ],
       "verification": {
         "providers": {
-          "BOAT RACE公式": 5,
-          "きょうの競艇": 5
+          "BOAT RACE公式": 2,
+          "きょうの競艇": 2
         },
-        "crossConfirmed": 5,
+        "crossConfirmed": 2,
         "singleSource": 0,
-        "conflicts": [],
+        "conflicts": [
+          {
+            "name": "蒲郡",
+            "field": "grade",
+            "primary": "一般",
+            "alternative": "G3",
+            "source": "きょうの競艇"
+          }
+        ],
         "errors": []
       },
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
@@ -292,77 +252,33 @@
       "status": "ok",
       "items": [],
       "item": {
-        "date": "2026-11-01",
-        "name": "浜松",
+        "date": "2026-10-02",
+        "name": "飯塚",
         "type": "today",
-        "race": 5,
+        "race": 2,
         "races": [
-          5
+          2,
+          8
         ],
         "source": "historical-results",
-        "grade": "SG",
-        "startTimes": {
-          "5": "12:22"
-        }
+        "grade": "G2",
+        "timeType": "ナイター"
       }
     }
   },
   "finals": {
-    "status": "ok",
-    "items": [
-      {
-        "sport": "auto",
-        "venue": "浜松",
-        "grade": "SG",
-        "event": "SG日本選手権オートレース",
-        "raceName": "予選",
-        "race": 5,
-        "startTime": "12:22",
-        "riders": [
-          {
-            "number": 1,
-            "name": "山田 達也"
-          },
-          {
-            "number": 2,
-            "name": "森 且行"
-          },
-          {
-            "number": 3,
-            "name": "小椋 華恋"
-          },
-          {
-            "number": 4,
-            "name": "谷津 圭治"
-          },
-          {
-            "number": 5,
-            "name": "佐藤 裕二"
-          },
-          {
-            "number": 6,
-            "name": "福岡 鷹"
-          },
-          {
-            "number": 7,
-            "name": "渡辺 篤"
-          },
-          {
-            "number": 8,
-            "name": "金子 大輔"
-          }
-        ],
-        "sourceUrl": "https://autorace.tokyo-sports.co.jp/list/race/20261101045",
-        "feature": "mori"
-      }
-    ],
+    "status": "partial",
+    "items": [],
     "verification": {
-      "targetDate": "2026-11-01",
+      "targetDate": "2026-10-02",
       "eligibleMeetings": 0,
-      "confirmedRaces": 1,
-      "moriRaces": 1,
+      "confirmedRaces": 0,
+      "moriRaces": 0,
       "sodaRaces": 0,
-      "errors": []
+      "errors": [
+        "森且行 飯塚 2R: 404 Client Error: Not Found for url: https://autorace.tokyo-sports.co.jp/list/race/20261002052",
+        "森且行 飯塚 8R: 404 Client Error: Not Found for url: https://autorace.tokyo-sports.co.jp/list/race/20261002058"
+      ]
     }
   }
 }
