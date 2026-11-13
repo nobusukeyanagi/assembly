@@ -268,6 +268,28 @@ def parse_auto_calendar(html,today):
     if not h or (int(h.group(1)),int(h.group(2)))!=(today.year,today.month):
         raise ValueError('開催日程の対象年月が不一致')
     text=text[h.end():].split('全国のオートレース場一覧')[0]
+    # Isolate each published meeting link first. A flattened track block may
+    # accidentally mix the following meeting's G2 name into a regular meet.
+    anchored=[];anchor_venues=set();anchor_count=0
+    date_pattern=re.compile(r'(\d{1,2})月(\d{1,2})日\s*[〜～~\-]+\s*(\d{1,2})月(\d{1,2})日')
+    for link in soup.find_all('a'):
+        label=normalize('NFKC',link.get_text(' ',strip=True))
+        period_match=date_pattern.search(label)
+        if not period_match:continue
+        heading=link.find_previous(['h2','h3','h4'])
+        heading_text=normalize('NFKC',heading.get_text(' ',strip=True)) if heading else ''
+        venue_match=re.match(r'(川口|伊勢崎|浜松|飯塚|山陽)\s*オートレース',heading_text)
+        if not venue_match:continue
+        name=venue_match.group(1)
+        anchor_venues.add(name);anchor_count+=1
+        bounds=period(today,*map(int,period_match.groups()))
+        if not bounds or not bounds[0]<=today<=bounds[1]:continue
+        title=label[period_match.end():]
+        gm=re.search(r'(特G(?:III|II|I|[123])|SG|G(?:III|II|I|[123]))',title[:120],re.I)
+        anchored.append({'name':name,'grade':autorace_grade(gm.group(1)) if gm else '普通',
+                         'timeType':race_time_type(title),'day':day_label(today,*bounds)})
+    if len(anchor_venues)==5 and anchor_count>=8:
+        return anchored
     parts=list(re.finditer(r'(川口|伊勢崎|浜松|飯塚|山陽)\s*オートレース',text))
     items=[];verified=set();count=0
     for n,heading in enumerate(parts):
