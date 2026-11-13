@@ -545,12 +545,12 @@ def parse_mori_official_start(html,selected,venue,race):
     if date_index<0:
         raise ValueError('対象日のレース詳細がありません')
     header=text[date_index:date_index+240]
-    if not re.search(rf'(?<!\\d){race}R\\b',header):
+    if not re.search(rf'(?<!\d){race}R\b',header):
         raise ValueError('オート公式出走表のレース番号が不一致')
-    if '森且行' not in re.sub(r'\\s+','',text):
+    if '森且行' not in re.sub(r'\s+','',text):
         raise ValueError('対象レースに森且行選手が見つかりません')
     # Do not use closing times, race navigation times, or past performances.
-    times=re.findall(r'発走予定\\s*[：:]?\\s*([01]?\\d|2[0-3]):([0-5]\\d)',text)
+    times=re.findall(r'発走予定\s*[：:]?\s*([01]?\d|2[0-3]):([0-5]\d)',text)
     if len(times)!=1:
         raise ValueError('公式発走予定時刻を一意に確認できません')
     return f'{int(times[0][0]):02d}:{times[0][1]}'
