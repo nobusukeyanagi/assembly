@@ -323,6 +323,25 @@ class ParserTests(unittest.TestCase):
 
 
 
+    def test_autorace_monthly_rejects_overlapping_meetings_for_one_track(self):
+        day=date(2026,10,2)
+        html='<h2>2026年10月 開催日程</h2>'
+        for n in ('川口','伊勢崎','浜松','飯塚','山陽'):
+            html+=f'<h3>{n} オートレース</h3>'
+            html+='<a>10月1日 〜 10月3日普通開催</a>'
+            html+='<a>10月10日 〜 10月12日普通開催</a>'
+        html=html.replace('<h3>飯塚 オートレース</h3>',
+                          '<h3>飯塚 オートレース</h3>'
+                          '<a>10月2日 〜 10月4日GⅡ別開催</a>')
+        with self.assertRaisesRegex(ValueError,'重複'):
+            parse_auto_calendar(html,day)
+        # A neighboring event with no overlapping date is not a duplicate.
+        valid=html.replace('<a>10月2日 〜 10月4日GⅡ別開催</a>',
+                           '<a>10月20日 〜 10月22日GⅡ別開催</a>')
+        rows=parse_auto_calendar(valid,day)
+        self.assertEqual(len(rows),5)
+        self.assertTrue(all(row['grade']=='普通' for row in rows))
+
     def test_autorace_official_independent_record(self):
         from verified_sources import parse_autorace_official_card
         from types import SimpleNamespace
