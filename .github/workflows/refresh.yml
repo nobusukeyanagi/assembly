@@ -3,6 +3,10 @@ on:
   schedule:
     # 16:10 UTC = 01:10 JST on the following day
     - cron: '10 16 * * *'
+    # 13:10 JST and 23:40 JST: enrich today's historical evidence.
+    # Only the 01:10 run resets a manually selected display date.
+    - cron: '10 4 * * *'
+    - cron: '40 14 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -28,6 +32,7 @@ on:
       - scripts/update.py
       - scripts/verified_sources.py
       - scripts/schedule_enrichment.py
+      - scripts/history_cache.py
       - scripts/finals.py
       - scripts/display_mode.py
       - requirements.txt
@@ -61,7 +66,7 @@ jobs:
         run: |
           node --check app.js
           node --check holidays.js
-          python -m py_compile scripts/update.py scripts/verified_sources.py scripts/schedule_enrichment.py scripts/finals.py
+          python -m py_compile scripts/update.py scripts/verified_sources.py scripts/schedule_enrichment.py scripts/history_cache.py scripts/finals.py
       - name: Unit tests
         run: |
           python -m unittest discover -s tests -v
@@ -69,7 +74,7 @@ jobs:
           node tests/test_layout.cjs
           node tests/test_final_board.cjs
       - name: Prefer today's display on the daily schedule
-        if: ${{ github.event_name == 'schedule' }}
+        if: ${{ github.event_name == 'schedule' && github.event.schedule == '10 16 * * *' }}
         run: python scripts/display_mode.py set --mode 当日
 
       - name: Select the public display mode
@@ -88,6 +93,10 @@ jobs:
 
       - name: Gather today's information
         run: python scripts/update.py
+
+      - name: Retain verified daily history for future historical dates
+        if: ${{ github.event_name != 'push' }}
+        run: python scripts/history_cache.py --input data/today.json
 
       - name: Validate the configured public display
         run: python scripts/display_mode.py check
