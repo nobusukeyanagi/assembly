@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from verified_sources import parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
+from verified_sources import KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_chariloto_starts,MORI_CHARILOTO_START,parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
 class ParserTests(unittest.TestCase):
@@ -185,6 +185,32 @@ class ParserTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_keirin_oct_2026_finals(html.replace('2026年10月1日','2025年10月1日'),
                                           selected,archive,upstream)
+
+    def test_nov2026_final_calendar_month_scope_and_field_recovery(self):
+        from types import SimpleNamespace
+        date_selected=date(2026,11,1)
+        html=('<h1>〖11月〗すべての決勝レースで5%還元！</h1>'
+              '<p>2026年11月1日（日）〜11月30日（月）</p>'
+              '<table><tr><th>日程</th><th>開催場</th><th>対象レース</th></tr>'
+              '<tr><td>11/1（日）</td><td>弥彦（F1）デイ</td>'
+              '<td>12R S級決勝</td></tr>'
+              '<tr><td>11/3（火）</td><td>松戸（F2）モーニング</td>'
+              '<td>7R L級ガールズ決勝</td></tr></table>')
+        archive=[{'name':'弥彦','grade':'F1','day':'最終日'},
+                 {'name':'松戸','grade':'F2','day':'初日'}]
+        upstream=SimpleNamespace(KEIRIN_NAMES=['松戸','弥彦'],grade=grade)
+        records=parse_keirin_month_finals(html,date_selected,archive,upstream)
+        self.assertEqual([x['name'] for x in records],['弥彦','松戸'])
+        self.assertEqual(records[0]['timeType'],'デイ')
+        self.assertEqual(records[1]['timeType'],'モーニング')
+        self.assertTrue(records[1]['girls'])
+        self.assertIn((2026,11),KEIRIN_MONTH_FINALS)
+        self.assertNotIn((2026,12),KEIRIN_MONTH_FINALS)
+        with self.assertRaises(ValueError):
+            parse_keirin_month_finals(html.replace('2026年11月1日','2025年11月1日'),
+                                      date_selected,archive,upstream)
+        self.assertEqual(parse_keirin_month_finals(html,date(2026,12,1),
+                                                    archive,upstream),[])
 
     def test_autorace_monthly_links_do_not_leak_next_meeting_grade(self):
         selected=date(2026,10,2)
