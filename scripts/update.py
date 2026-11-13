@@ -254,8 +254,21 @@ def check_auto_official(html,name,today):
     soup=BeautifulSoup(html,'html.parser')
     for tag in soup(['script','style','noscript']):tag.decompose()
     text=normalize('NFKC',soup.get_text(' ',strip=True))
+    # A track name in global navigation is not evidence that a racecard
+    # belongs to that venue. Match the page title (or an explicit heading).
+    page_title=normalize('NFKC',soup.title.get_text(' ',strip=True)) if soup.title else ''
+    if page_title:
+        if not re.search(re.escape(name)+r'\s*オート',page_title):
+            return None
+    else:
+        headings=[normalize('NFKC',h.get_text(' ',strip=True))
+                  for h in soup.find_all(['h1','h2','h3'])[:10]]
+        if not any(name in h[:65] and
+                   not any(other in h[:65] for other in AUTO_NAMES if other!=name)
+                   for h in headings):
+            return None
     m=re.search(r'開催期間[：:]\s*(20\d{2})年(\d{1,2})月(\d{1,2})日',text)
-    if not m or name not in text[:650]:return None
+    if not m:return None
     st=date(*map(int,m.groups()))
     d=re.search(r'開催\s*第\s*(\d{1,2})\s*日目',text[m.end():m.end()+130])
     if not d or (today-st).days!=int(d.group(1))-1:return None
