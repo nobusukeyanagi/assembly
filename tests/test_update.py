@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from schedule_enrichment import official_morning,official_midnight,ctc_listing
+from schedule_enrichment import official_morning,ctc_listing
 from verified_sources import restore_same_date_fields,KEIRIN_MONTH_FINALS,parse_keirin_month_finals,parse_boat_g3_schedule,parse_keirin_oct_2026_finals,parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_chariloto_starts,MORI_CHARILOTO_START,parse_mori_race_start,parse_mori_official_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
 D=date(2026,11,11)
@@ -213,36 +213,6 @@ class ParserTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             official_morning(html.replace('2026年10月','2025年10月'),
                              date(2026,10,2),archive,upstream)
-
-    def test_jka_official_midnight_cannot_leak_adjacent_days_or_months(self):
-        from types import SimpleNamespace
-        upstream=SimpleNamespace(KEIRIN_NAMES=['佐世保','松阪','松戸','青森','熊本'])
-        html=('<h1>ミッドナイト競輪</h1>'
-              '<h2>2026年11月</h2><table>'
-              '<tr><th>月</th><th>火</th><th>水</th></tr>'
-              '<tr><td>12日青森</td><td>13日佐世保松阪</td>'
-              '<td class="other-month">13日熊本</td></tr>'
-              '<tr><td>14日松戸</td></tr></table>'
-              '<h2>2026年12月</h2><table>'
-              '<tr><td>13日熊本</td></tr></table>')
-        records=[{'name':name,'grade':'F2','day':'最終日'} for name in
-                 ('佐世保','松阪','松戸','青森','熊本')]
-        self.assertEqual(official_midnight(html,date(2026,11,13),records,upstream),
-                         [{'name':'佐世保','timeType':'ミッドナイト'},
-                          {'name':'松阪','timeType':'ミッドナイト'}])
-        self.assertEqual(official_midnight(html,date(2026,11,12),records,upstream),
-                         [{'name':'青森','timeType':'ミッドナイト'}])
-        self.assertEqual(official_midnight(html,date(2026,11,14),records,upstream),
-                         [{'name':'松戸','timeType':'ミッドナイト'}])
-        self.assertEqual(official_midnight(html,date(2026,11,15),records,upstream),[])
-        with self.assertRaises(ValueError):
-            official_midnight(html,date(2025,11,13),records,upstream)
-        with self.assertRaises(ValueError):
-            official_midnight('<h2>2026年11月</h2><p>13日佐世保</p>',
-                              date(2026,11,13),records,upstream)
-        # A cell that merges several calendar days is ambiguous.
-        ambiguous=html.replace('13日佐世保松阪','13日佐世保 14日松阪')
-        self.assertEqual(official_midnight(ambiguous,date(2026,11,13),records,upstream),[])
 
     def test_ctc_calendar_uses_explicit_categories_and_girls_only(self):
         from types import SimpleNamespace

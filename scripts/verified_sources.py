@@ -94,7 +94,7 @@ FIELD_SOURCE_PRIORITY={
     'keirin':{
         'grade':('KEIRIN.JP','楽天Kドリームス','KEIRIN HEX','WINTICKET '),
         'day':('KEIRIN.JP','楽天Kドリームス','KEIRIN HEX','WINTICKET '),
-        'timeType':('KEIRIN.JP','KEIRIN.JPモーニング日程','KEIRIN.JPミッドナイト日程','CTC開催日程','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
+        'timeType':('KEIRIN.JP','KEIRIN.JPモーニング日程','CTC開催日程','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
         'girls':('KEIRIN.JP','CTC開催日程','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
     },
     'auto':{
@@ -422,11 +422,6 @@ def keirin(s,selected,previous,u):
                 u.fetch(s,schedule_enrichment.JKA_MORNING),selected,base,u)
             if rows:lists.append(('KEIRIN.JPモーニング日程',rows))
         except Exception as exc:errors.append(('KEIRIN.JPモーニング日程',str(exc)))
-        try:
-            rows=schedule_enrichment.official_midnight(
-                u.fetch(s,schedule_enrichment.JKA_MIDNIGHT),selected,base,u)
-            if rows:lists.append(('KEIRIN.JPミッドナイト日程',rows))
-        except Exception as exc:errors.append(('KEIRIN.JPミッドナイト日程',str(exc)))
         if abs((selected-datetime.now(u.TZ).date()).days)<=65:
             try:
                 rows=schedule_enrichment.ctc_listing(
