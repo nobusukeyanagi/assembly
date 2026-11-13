@@ -123,10 +123,28 @@ jobs:
                   print(line)
                   lines.append(line)
                   if key in ('keirin','auto','soda'):
+                      coverage=checked.get('fieldCoverage',{})
+                      if coverage:
+                          note=(f"  {title}: グレード {coverage.get('grade',0)}/{count}、"
+                                f"開催日目 {coverage.get('day',0)}/{count}、"
+                                f"時間帯 {coverage.get('timeType',0)}/{count}、"
+                                f"ガールズ等検出 {coverage.get('girlsDetected',0)}場、"
+                                f"グレード2元照合 {checked.get('gradeCrossConfirmed',0)}場")
+                          print(note)
+                          lines.append(note)
+                          if count and any(coverage.get(field,0)<count
+                                           for field in ('grade','day','timeType')):
+                              print(f"::warning::{fname} {title}: 未取得項目があります。照合結果を確認してください")
                       for meeting in section.get('items',[]):
-                          print(f"  {title} {meeting.get('name','-')} {meeting.get('grade','-')} "
-                                f"{meeting.get('day','-')} 時間帯={meeting.get('timeType') or '-'} "
-                                f"ガールズ等={meeting.get('girls',False)}")
+                          evidence=meeting.get('fieldSources',{})
+                          detail=(f"  {title} {meeting.get('name','-')} "
+                                  f"{meeting.get('grade') or '-'} "
+                                  f"{meeting.get('day') or '-'} "
+                                  f"時間帯={meeting.get('timeType') or '-'} "
+                                  f"ガールズ等={meeting.get('girls',False)} "
+                                  f"採用元={evidence}")
+                          print(detail)
+                          lines.append(detail)
                   if section.get('status')=='error':
                       print(f"::warning::{fname} {title}: 全取得元を確認できませんでした")
                   if key=='mori' and isinstance(section.get('item'),dict):
@@ -141,6 +159,9 @@ jobs:
                       lines.append(note)
                   for conflict in checked.get('conflicts',[]):
                       print(f"::warning::{fname} {title}: 情報源の不一致 {conflict}")
+                      lines.append(f"  相違: {conflict}")
+                  for ignored in checked.get('ignoredFields',[]):
+                      lines.append(f"  除外: {ignored}")
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as out:
               out.write('\n'.join(lines)+'\n')
           PY
