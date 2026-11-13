@@ -158,6 +158,8 @@ jobs:
                       print(note)
                       lines.append('')
                       lines.append(note)
+                  for provider,error in checked.get('errors',[]):
+                      print(f"::warning::{fname} {title}: {provider} 取得失敗・解析失敗: {error}")
                   for conflict in checked.get('conflicts',[]):
                       print(f"::warning::{fname} {title}: 情報源の不一致 {conflict}")
                       lines.append(f"  相違: {conflict}")
