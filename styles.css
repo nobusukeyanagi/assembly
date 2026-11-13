@@ -160,7 +160,7 @@ h1 {
 }
 .entry {
   display: grid;
-  grid-template-rows: 92px 36px;
+  grid-template-rows: 92px 40px;
   align-content: center;
   justify-items: center;
   row-gap: 10px;
@@ -191,7 +191,7 @@ h1 {
   gap: 8px;
   min-width: 0;
   max-width: 100%;
-  height: 36px;
+  height: 40px;
   white-space: nowrap;
 }
 .entry .grade,
@@ -201,10 +201,10 @@ h1 {
   align-items: center;
   flex: none;
   min-width: 60px;
-  height: 34px;
+  height: 40px;
   padding: 0 5px;
   border-radius: 5px;
-  font-size: 30px;
+  font-size: 40px;
   line-height: 1;
   font-weight: 900;
   color: #fff;
@@ -216,7 +216,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   flex: none;
-  font-size: 30px;
+  font-size: 40px;
   line-height: 1.1;
   font-weight: 700;
   white-space: nowrap;
@@ -227,9 +227,9 @@ h1 {
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 30px;
-  height: 30px;
-  font-size: 30px;
+  width: 40px;
+  height: 40px;
+  font-size: 40px;
   line-height: 1;
   font-weight: 900;
 }
@@ -248,7 +248,7 @@ h1 {
 .entry .girls { color: #cf4a7a; font-weight: 900; }
 .mori-tile {
   grid-column: 4;
-  grid-template-rows: 30px auto;
+  grid-template-rows: 40px auto;
   align-content: center;
   row-gap: 4px;
 }
@@ -262,7 +262,7 @@ h1 {
 }
 .mori-tile h3,
 .mori-status {
-  font-size: 30px;
+  font-size: 40px;
   color: var(--auto);
   font-weight: 900;
   line-height: 1;
@@ -270,17 +270,17 @@ h1 {
 .mori-tile h3 { margin: 0; }
 .mori-body {
   display: grid;
-  grid-template-rows: 66px 36px;
+  grid-template-rows: 60px 36px;
   justify-items: center;
   align-content: center;
   gap: 3px;
   min-width: 0;
 }
-.entry .mori-primary { font-size: 60px; height: 66px; line-height: 66px; }
+.entry .mori-primary { font-size: 60px; height: 60px; line-height: 60px; }
 .mori-detail { justify-content: center; }
 .message, .detail {
   color: var(--ink);
-  font-size: 30px;
+  font-size: 40px;
   text-align: center;
   grid-column: 1/-1;
   margin: 0;
@@ -441,8 +441,8 @@ h1 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 560px;
-  height: 315px;
+  width: 720px;
+  height: 405px;
   aspect-ratio: 16 / 9; /* 縦:横 = 9:16 */
   display: flex;
   flex-direction: column;
@@ -454,7 +454,7 @@ h1 {
   background: rgba(30, 41, 48, .94);
   box-shadow: 0 12px 36px rgba(0, 0, 0, .2);
   color: #fff;
-  font-size: 30px;
+  font-size: 40px;
   font-weight: 800;
   line-height: 1.2;
   white-space: nowrap;
@@ -478,7 +478,7 @@ h1 {
   background: #fff;
   color: #25323a;
   font-family: inherit;
-  font-size: 30px;
+  font-size: 40px;
   font-weight: 900;
   line-height: 1.1;
   box-shadow: inset 0 1px 0 #fff, 0 2px 0 rgba(0, 0, 0, .2);
@@ -500,7 +500,7 @@ h1 {
   color: #fff;
   border: 0;
   border-radius: 6px;
-  font-size: 30px;
+  font-size: 40px;
   font-weight: 700;
   white-space: nowrap;
 }
