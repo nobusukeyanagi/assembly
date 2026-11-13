@@ -28,6 +28,16 @@ KEIRIN_MONTH_FINALS={
 }
 KEIRIN_2026_OCT_FINALS=KEIRIN_MONTH_FINALS[(2026,10)]
 BOAT_ALL='桐生 戸田 江戸川 平和島 多摩川 浜名湖 蒲郡 常滑 津 三国 びわこ 住之江 尼崎 鳴門 丸亀 児島 宮島 徳山 下関 若松 芦屋 福岡 唐津 大村'.split()
+BOAT_WOMEN_EVENTS=('オールレディース','ヴィーナスシリーズ','レディースチャンピオン',
+                   'レディースオールスター','レディースチャレンジカップ',
+                   'クイーンズクライマックス','女子戦')
+
+
+def is_boat_women_event(text):
+    """Only recognize an expressly identified women's race meeting."""
+    value=normalize('NFKC',str(text or '')).replace(' ','').replace('　','')
+    return any(event in value for event in BOAT_WOMEN_EVENTS)
+
 
 def parse_ikachi_boat(html,selected,venue_names,night_names):
     soup=BeautifulSoup(html,'html.parser')
@@ -50,7 +60,7 @@ def parse_ikachi_boat(html,selected,venue_names,night_names):
         name,grade,day=matched.groups()
         items.append({'name':name,'grade':'一般' if grade=='普通' else grade,
                       'day':day,'timeType':'ナイター' if name in night_names else None,
-                      'girls':bool(re.search('オールレディース|ヴィーナスシリーズ|レディースチャンピオン|クイーンズクライマックス|女子戦',value))})
+                      'girls':is_boat_women_event(value)})
     if size and total!=int(size.group(1)):
         raise ValueError(f'日別ボート一覧の全場数が不一致: {total}/{size.group(1)}')
     if not items:raise ValueError('日別ボートレース一覧で対象場を特定できません')
@@ -554,7 +564,7 @@ def parse_boat_g3_schedule(html,selected,venue_names):
         name=matches[0]
         if name in found:raise ValueError('同じ日のG3開催が重複しています')
         found[name]={'name':name,'grade':'G3',
-                     'girls':bool(re.search('オールレディース|女子戦',row))}
+                     'girls':is_boat_women_event(row)}
     return found
 
 

@@ -406,7 +406,7 @@ def parse_boat(html,today):
             icons={normalize('NFKC',a) for a in imgs}
             is_night='ナイター' in icons or (name in NIGHT_BOAT and 'モーニング' not in icons)
             morning='モーニング' in icons and not is_night
-            ladies=bool(re.search(r'オールレディース|ヴィーナスシリーズ|レディースチャンピオン|レディースオールスター|クイーンズクライマックス|女子戦',normalize('NFKC',text))) or '女子戦' in icons
+            ladies=verified_sources.is_boat_women_event(text+' '+' '.join(icons))
             result[name]={'name':name,'grade':grades[0] if grades else '一般',
                           'day':normalize('NFKC',dm.group(1)),
                           'timeType':'ナイター' if is_night else 'モーニング' if morning else None,
