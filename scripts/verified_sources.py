@@ -18,9 +18,13 @@ AUTO_ODDSPARK='https://sp.oddspark.com/autorace/SpRaceList.do'
 AUTO_CODES={'川口':'02','伊勢崎':'03','浜松':'04','飯塚':'05','山陽':'06'}
 BOAT_DAILY='https://www.ikachi.org/kyotei/{day}'
 BOAT_G3='https://www.boatrace.jp/owpc/pc/race/gradesch?hcd=03'
-# Verified completed-finals calendar for the October 2026 period only.
-# Never extrapolate its entries to another month.
-KEIRIN_2026_OCT_FINALS='https://www.winticket.jp/keirin/campaign/onYZ47mxGGoqRuAo3AzxdX'
+# Published, dated final-race tables. Never guess a campaign URL for months
+# that have not been independently identified and verified.
+KEIRIN_MONTH_FINALS={
+    (2026,10):'https://www.winticket.jp/keirin/campaign/onYZ47mxGGoqRuAo3AzxdX',
+    (2026,11):'https://www.winticket.jp/keirin/campaign/pK2vUymUNoU1cwWwXXQm14',
+}
+KEIRIN_2026_OCT_FINALS=KEIRIN_MONTH_FINALS[(2026,10)]
 BOAT_ALL='桐生 戸田 江戸川 平和島 多摩川 浜名湖 蒲郡 常滑 津 三国 びわこ 住之江 尼崎 鳴門 丸亀 児島 宮島 徳山 下関 若松 芦屋 福岡 唐津 大村'.split()
 
 def parse_ikachi_boat(html,selected,venue_names,night_names):
@@ -220,21 +224,20 @@ def enumerate_entries(entries):
         yield index,(source,row)
 
 
-def parse_keirin_oct_2026_finals(html,selected,archive,u):
-    """Recover explicitly named time slots and girls races from a dated final calendar.
+def parse_keirin_month_finals(html,selected,archive,u):
+    """Recover slots and girls race evidence from a published monthly final list.
 
-    Rows are accepted only when event date, venue, grade, and meeting-day
-    progression match the independently validated K Dreams daily archive.
-    This campaign source is scoped to October 2026.
+    Only use a known URL for the target year/month. Never apply the schedule
+    to an unrelated date, track or grade.
     """
-    if (selected.year,selected.month)!=(2026,10) or not archive:
+    if (selected.year,selected.month) not in KEIRIN_MONTH_FINALS or not archive:
         return []
     soup=BeautifulSoup(html,'html.parser')
     heading=next((h for h in soup.find_all(['h1','h2'])
                   if 'すべての決勝レースで5%還元' in h.get_text(' ',strip=True)),None)
     text=normalize('NFKC',soup.get_text(' ',strip=True))
-    if heading is None or '2026年10月1日' not in text:
-        raise ValueError('2026年10月の決勝開催一覧を検証できません')
+    if heading is None or f'{selected.year}年{selected.month}月1日' not in text:
+        raise ValueError('指定年月の決勝開催一覧を検証できません')
     table=next((t for t in soup.find_all('table')
                 if all(x in normalize('NFKC',t.get_text(' ',strip=True))
                        for x in ('日程','開催場','対象レース'))),None)
@@ -249,10 +252,11 @@ def parse_keirin_oct_2026_finals(html,selected,archive,u):
     current_key=None
     for tr in table.find_all('tr'):
         row=normalize('NFKC',tr.get_text(' ',strip=True))
-        found_date=re.search(r'(?<!\d)10\s*/\s*(\d{1,2})(?!\d)',row)
+        found_date=re.search(rf'(?<!\d){selected.month}\s*/\s*(\d{{1,2}})(?!\d)',row)
         if found_date:
             day=int(found_date.group(1))
-            current_date=date(2026,10,day) if 1<=day<=31 else None
+            try:current_date=date(selected.year,selected.month,day)
+            except ValueError:current_date=None
             current_key=None
         found_place=place_pattern.search(row)
         if found_place and current_date:
@@ -289,6 +293,12 @@ def parse_keirin_oct_2026_finals(html,selected,archive,u):
     return result
 
 
+def parse_keirin_oct_2026_finals(html,selected,archive,u):
+    """Backwards-compatible entry point for the October-specific fixture."""
+    if (selected.year,selected.month)!=(2026,10):return []
+    return parse_keirin_month_finals(html,selected,archive,u)
+
+
 def keirin(s,selected,previous,u):
     lists=[];errors=[]
     url=u.KEIRIN_ARCHIVE.format(year=selected.year,month=selected.month,day=selected.day)
@@ -304,15 +314,17 @@ def keirin(s,selected,previous,u):
               for name,val in info.items()]
         if rows:lists.append(('KEIRIN HEX',rows))
     except Exception as exc:errors.append(('KEIRIN HEX',str(exc)))
-    if (selected.year,selected.month)==(2026,10):
+    monthly_url=KEIRIN_MONTH_FINALS.get((selected.year,selected.month))
+    if monthly_url:
         archive=next((rows for source,rows in lists if source=='楽天Kドリームス'),[])
         if archive:
+            name=f'WINTICKET {selected.year}年{selected.month}月決勝日程'
             try:
-                rows=parse_keirin_oct_2026_finals(
-                    u.fetch(s,KEIRIN_2026_OCT_FINALS),selected,archive,u)
-                if rows:lists.append(('WINTICKET 2026年10月決勝日程',rows))
+                rows=parse_keirin_month_finals(
+                    u.fetch(s,monthly_url),selected,archive,u)
+                if rows:lists.append((name,rows))
             except Exception as exc:
-                errors.append(('WINTICKET 2026年10月決勝日程',str(exc)))
+                errors.append((name,str(exc)))
     if selected>=datetime.now(u.TZ).date():
         try:
             rows=u.parse_keirin(u.fetch(s,u.KEIRIN),selected)
