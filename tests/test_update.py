@@ -1,7 +1,7 @@
 import unittest,sys
 from unittest.mock import patch
 from pathlib import Path
-from datetime import date
+from datetime import date,datetime
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from verified_sources import parse_ikachi_boat,parse_oddspark_auto,cached_section,reconcile,auto as verified_auto,soda as verified_soda
 from update import parse_mori_race_start,mori_start_times,MORI_RACE_START,parse_mori_history,collect_past_mori,MORI_HISTORY,parse_keirin,parse_auto,parse_boat,parse_mori,parse_auto_calendar,parse_kawaguchi_official_meeting,mori_meeting_metadata,parse_mori_calendar,parse_assen,mori_previous_item,check_auto_official,race_time_type,collect,ASSEN,day_label,grade,autorace_grade,mori_race_numbers,sort_by_time,parse_keirin_archive,parse_keirin_race_times,collect_past_keirin,KEIRIN_ARCHIVE,KEIRIN_RACES
@@ -348,9 +348,15 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(mori_previous_item(old,date(2026,11,12))['name'],'川口')
         self.assertIsNone(mori_previous_item(old,date(2026,11,23)))
     def test_mori_official_fallback(self):
+        # Freeze the runtime clock for this 2026-11-12 fixture. Otherwise, on
+        # 2026-11-13 the collector correctly chooses the historical branch,
+        # which is not what this future-schedule fallback test is testing.
         h='<html><body>森且行 出場情報 11月 22日(日)～25日(水) 川口/普通開催</body></html>'
-        with patch('update.fetch',side_effect=lambda s,url,params=None:
+        with patch('update.datetime') as clock, patch(
+                'update.fetch',side_effect=lambda s,url,params=None:
                 h if url==ASSEN else (_ for _ in ()).throw(RuntimeError('unavailable'))):
+            clock.now.return_value=datetime(2026,11,12,12,0,
+                                             tzinfo=__import__('update').TZ)
             out=collect(date(2026,11,12),object())
         self.assertEqual(out['sections']['mori']['item']['date'],'2026-11-22')
     def test_mori_kawaguchi_venue_calendar(self):
