@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from unicodedata import normalize
 
 from bs4 import BeautifulSoup
+import schedule_enrichment
 
 LOG=logging.getLogger('assembly')
 AUTO_MONTH='https://www.winticket.jp/autorace/schedules/{year}{month:02d}'
@@ -93,8 +94,8 @@ FIELD_SOURCE_PRIORITY={
     'keirin':{
         'grade':('KEIRIN.JP','楽天Kドリームス','KEIRIN HEX','WINTICKET '),
         'day':('KEIRIN.JP','楽天Kドリームス','KEIRIN HEX','WINTICKET '),
-        'timeType':('KEIRIN.JP','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
-        'girls':('KEIRIN.JP','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
+        'timeType':('KEIRIN.JP','KEIRIN.JPモーニング日程','CTC開催日程','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
+        'girls':('KEIRIN.JP','CTC開催日程','KEIRIN HEX','WINTICKET ','楽天Kドリームス'),
     },
     'auto':{
         'grade':('AUTORACE.JP出走表','WINTICKET指定月','オッズパーク日別'),
@@ -410,6 +411,23 @@ def keirin(s,selected,previous,u):
             rows=u.parse_keirin(u.fetch(s,u.KEIRIN),selected)
             if rows:lists.append(('KEIRIN.JP',rows))
         except Exception as exc:errors.append(('KEIRIN.JP',str(exc)))
+    # Use official and independent schedule catalogs to fill missing time
+    # slots / girls flags without inventing a new venue or meeting.
+    base=next((rows for source,rows in lists if source=='楽天Kドリームス'),[])
+    if not base:
+        base=next((rows for source,rows in lists if source=='KEIRIN.JP'),[])
+    if base:
+        try:
+            rows=schedule_enrichment.official_morning(
+                u.fetch(s,schedule_enrichment.JKA_MORNING),selected,base,u)
+            if rows:lists.append(('KEIRIN.JPモーニング日程',rows))
+        except Exception as exc:errors.append(('KEIRIN.JPモーニング日程',str(exc)))
+        if abs((selected-datetime.now(u.TZ).date()).days)<=65:
+            try:
+                rows=schedule_enrichment.ctc_listing(
+                    u.fetch(s,schedule_enrichment.CTC_SCHEDULE),selected,base,u)
+                if rows:lists.append(('CTC開催日程',rows))
+            except Exception as exc:errors.append(('CTC開催日程',str(exc)))
     if not lists:
         saved=cached_section(previous,selected,'keirin')
         return saved if saved else u.bad('すべての競輪開催日程が取得できません')
