@@ -1,7 +1,7 @@
 /* Shared tokens are referenced directly; one-off values stay in component rules. */
 :root {
   --ink: #25323a;
-  --white: var(--white);
+  --white: #fff;
   --line: #e1e8e6;
   --keirin: #477A94;
   --auto: #AC605A;
