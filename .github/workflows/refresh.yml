@@ -101,7 +101,6 @@ jobs:
         run: python scripts/forecast.py
 
       - name: Retain verified daily history for future historical dates
-        if: ${{ github.event_name != 'push' }}
         run: python scripts/history_cache.py --input data/today.json
 
       - name: Validate the configured public display
@@ -207,8 +206,9 @@ jobs:
               out.write('\n'.join(lines)+'\n')
           PY
 
+      # A source-code push also refreshes live data; persist its verified
+      # results so the next run can reuse the same-date snapshot.
       - name: Save snapshots and mode in repository
-        if: ${{ github.event_name != 'push' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
