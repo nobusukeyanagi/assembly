@@ -589,6 +589,63 @@ class ParserTests(unittest.TestCase):
         self.assertIsNone(cached_section({'date':'2026-10-12','sections':{'soda':{'status':'error','items':[]}}},
                                           date(2026,10,12),'soda'))
 
+    def test_nov16_autorace_organizers_recover_both_when_winticket_is_403(self):
+        from types import SimpleNamespace
+        from zoneinfo import ZoneInfo
+        from autorace_official import ISESAKI_CALENDAR,IIZUKA_RACECARDS
+        when=date(2026,11,16)
+        isesaki=('<html><head><title>レース情報 | 伊勢崎オートレース</title></head>'
+                 '<body><h1>開催情報</h1>2026年 11月'
+                 '<div>場外 GII 山陽　若獅子杯争奪戦 11/11～11/15</div>'
+                 '<div>場外 普通レース 飯塚 オッズパーク杯 11/16～11/18</div>'
+                 '<div>本場 普通レース 伊勢崎 '
+                 'オッズPARKでチケチャレ杯伊勢崎オートアフター5ナイター'
+                 ' 11/16～11/18 17:35～21:10</div></body></html>')
+        iizuka=('<html><head><title>飯塚オートレース場</title></head>'
+                '<body><h1>出走表サービス</h1>'
+                '2026年11月16日～11月18日'
+                ' オッズパーク杯（飯塚本場開催） '
+                '1日目出走表（表面・裏面）</body></html>')
+        called=[]
+        def fetch(sess,url,params=None):
+            called.append(url)
+            if 'winticket.jp' in url:
+                raise RuntimeError('403 Forbidden')
+            if url==ISESAKI_CALENDAR:return isesaki
+            if url==IIZUKA_RACECARDS:return iizuka
+            raise RuntimeError('source down')
+        u=SimpleNamespace(
+            fetch=fetch,parse_auto_calendar=parse_auto_calendar,
+            AUTO_OFFICIAL='https://autorace.jp/race_info/Program/',
+            AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu',
+                        '飯塚':'iizuka','山陽':'sanyou'},
+            parse_auto=parse_auto,check_auto_official=check_auto_official,
+            autorace_grade=autorace_grade,race_time_type=race_time_type,
+            day_label=day_label,period=__import__('update').period,
+            sort_by_time=sort_by_time,TZ=ZoneInfo('Asia/Tokyo'),
+            bad=lambda message:{'status':'error','items':[],'message':message})
+        with patch('verified_sources.datetime') as clock:
+            clock.now.return_value=datetime(2026,11,16,9,0,tzinfo=u.TZ)
+            result=verified_auto(object(),when,None,u)
+        self.assertEqual(result['status'],'ok')
+        self.assertIn(ISESAKI_CALENDAR,called)
+        self.assertIn(IIZUKA_RACECARDS,called)
+        by_name={row['name']:row for row in result['items']}
+        self.assertEqual(set(by_name),{'伊勢崎','飯塚'})
+        self.assertEqual((by_name['伊勢崎']['grade'],by_name['伊勢崎']['day'],
+                          by_name['伊勢崎']['timeType']),
+                         ('普通','初日','ナイター'))
+        self.assertEqual((by_name['飯塚']['grade'],by_name['飯塚']['day'],
+                          by_name['飯塚']['timeType']),
+                         ('普通','初日',None))
+        self.assertEqual(result['verification']['organizerConfirmed'],
+                         {'伊勢崎オート公式日程':['伊勢崎'],
+                          '飯塚オート公式出走表':['飯塚']})
+        self.assertTrue(any('WINTICKET指定月'==label for label,error
+                            in result['verification']['errors']))
+        self.assertEqual(result['verification']['fieldCoverage']['grade'],2)
+        self.assertEqual(result['verification']['fieldCoverage']['day'],2)
+
     def test_auto_secondary_works_when_monthly_site_fails(self):
         from types import SimpleNamespace
         d=date(2026,10,12)
