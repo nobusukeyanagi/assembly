@@ -23,7 +23,7 @@ def split_kawaguchi(items):
         nights=[x for x in same if x.get('timeType') in NIGHT]
         days=[x for x in same if x.get('timeType') not in NIGHT]
         if len(nights)!=1 or len(days)!=1:
-            raise ValueError('川口の昼・夜2開催を区別できません')
+            raise ValueError('川口の重複開催について昼・夜2開催を区別できません')
         # A true one-day-two-meetings format can use identical start/end
         # dates and day labels for its daytime and nighttime sessions.
         a,b=days[0],nights[0]
