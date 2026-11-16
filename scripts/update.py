@@ -830,8 +830,10 @@ def main():
                   if isinstance(previous,dict) and previous.get('date')==today.isoformat()
                   else archived)
     out=collect(today,session(),previous)
-    if archived:
-        out=history_cache.merge(archived,out)
+    # Same-date previously verified records survive an incomplete refresh,
+    # whether they came from the day's earlier run or the history folder.
+    if isinstance(previous,dict) and previous.get('date')==today.isoformat():
+        out=history_cache.merge(previous,out)
     override=ROOT/'overrides'/(today.isoformat()+'.json')
     if override.exists():
         patch=json.loads(override.read_text(encoding='utf-8'))

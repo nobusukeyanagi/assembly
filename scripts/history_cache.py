@@ -40,12 +40,12 @@ def merge(prior, current):
         before=previous_sections.get(sport,{})
         after=sections.get(sport,{})
         if not isinstance(after,dict) or not isinstance(before,dict):continue
-        if after.get('status')=='error' and before.get('status') in ('ok','cached'):
+        if after.get('status')=='error' and before.get('status') in ('ok','cached','partial'):
             sections[sport]=copy.deepcopy(before)
             sections[sport]['status']='cached'
             sections[sport]['recoveredFromArchive']=True
             continue
-        if after.get('status') not in ('ok','cached') or before.get('status') not in ('ok','cached'):
+        if after.get('status') not in ('ok','cached','partial') or before.get('status') not in ('ok','cached','partial'):
             continue
         old={r.get('name'):r for r in before.get('items',[])
              if isinstance(r,dict) and r.get('name')}

@@ -95,7 +95,7 @@ def cached_section(previous,selected,category):
     """Only reuse previously verified data for the SAME calendar date."""
     if not isinstance(previous,dict) or previous.get('date')!=selected.isoformat():return None
     result=previous.get('sections',{}).get(category)
-    if not isinstance(result,dict) or result.get('status') not in ('ok','cached'):return None
+    if not isinstance(result,dict) or result.get('status') not in ('ok','cached','partial'):return None
     items=result.get('items')
     if not isinstance(items,list) or not items:return None
     return dict(result,status='cached',note='取得元の障害により同じ日付の前回確認済みデータを再表示',
@@ -278,7 +278,7 @@ def restore_same_date_fields(result,previous,selected,category):
     if not isinstance(previous,dict) or previous.get('date')!=selected.isoformat():
         return result
     section=previous.get('sections',{}).get(category,{})
-    if not isinstance(section,dict) or section.get('status') not in ('ok','cached'):
+    if not isinstance(section,dict) or section.get('status') not in ('ok','cached','partial'):
         return result
     records={row.get('name'):row for row in section.get('items',[])
              if isinstance(row,dict) and isinstance(row.get('name'),str)}
