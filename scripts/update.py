@@ -805,30 +805,40 @@ def collect(today,s,previous=None):
     out['finals']=finals.collect(s,today,sections,active,previous)
     return out
 
+def load_same_date_evidence(target,snapshot,root=ROOT):
+    """Merge tomorrow's reserve, archived records and the last saved day.
+
+    Old data are accepted only when the target *date is identical*. The
+    newly fetched schedule still wins on confirmed values and can suppress
+    a previously listed venue when a comprehensive source is available.
+    """
+    paths=(Path(root)/'data'/'forecast'/(target.isoformat()+'.json'),
+           Path(root)/'data'/'history'/(target.isoformat()+'.json'),
+           Path(snapshot))
+    accumulated=None
+    for path in paths:
+        try:
+            if not path.is_file():continue
+            candidate=json.loads(path.read_text(encoding='utf-8'))
+            if (not isinstance(candidate,dict) or
+                candidate.get('date')!=target.isoformat() or
+                not isinstance(candidate.get('sections'),dict)):
+                continue
+            accumulated=(history_cache.merge(accumulated,candidate)
+                         if accumulated is not None else candidate)
+        except (OSError,ValueError,TypeError):
+            continue
+    return accumulated
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--date')
     parser.add_argument('--output',default=str(ROOT/'data'/'today.json'))
     args=parser.parse_args()
     today=date.fromisoformat(args.date) if args.date else datetime.now(TZ).date()
-    previous=None
     snapshot=Path(args.output)
-    if snapshot.exists():
-        try:previous=json.loads(snapshot.read_text(encoding='utf-8'))
-        except (OSError,ValueError):pass
-    archive_path=ROOT/'data'/'history'/(today.isoformat()+'.json')
-    archived=None
-    if archive_path.exists():
-        try:
-            candidate=json.loads(archive_path.read_text(encoding='utf-8'))
-            if isinstance(candidate,dict) and candidate.get('date')==today.isoformat():
-                archived=candidate
-        except (OSError,ValueError):pass
-    if archived:
-        # Prefer current verified values, restoring only absent same-day facts.
-        previous=(history_cache.merge(archived,previous)
-                  if isinstance(previous,dict) and previous.get('date')==today.isoformat()
-                  else archived)
+    previous=load_same_date_evidence(today,snapshot)
     out=collect(today,session(),previous)
     # Same-date previously verified records survive an incomplete refresh,
     # whether they came from the day's earlier run or the history folder.
