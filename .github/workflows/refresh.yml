@@ -3,10 +3,10 @@ on:
   schedule:
     # 16:10 UTC = 01:10 JST on the following day
     - cron: '10 16 * * *'
-    # 13:10 JST and 23:40 JST: enrich today's historical evidence.
-    # Only the 01:10 run resets a manually selected display date.
-    - cron: '10 4 * * *'
-    - cron: '40 14 * * *'
+    # 09:10 JST = 00:10 UTC, 17:10 JST = 08:10 UTC.
+    # Only 01:10 resets a manually selected display date.
+    - cron: '10 0 * * *'
+    - cron: '10 8 * * *'
   workflow_dispatch:
     inputs:
       mode:

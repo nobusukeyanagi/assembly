@@ -18,7 +18,7 @@ https://nobusukeyanagi.github.io/assembly/
 
 ## 自動更新
 
-- 毎日 **01:10 JST** に当日情報を更新し、日付指定表示から当日表示へ戻します。さらに **13:10・23:40 JST** に当日の情報を再取得し、過去日照合用の記録を蓄積します（両時刻では表示日付を変更しません）。GitHub Actions の実行開始には遅延があり得ます。
+- 毎日 **01:10・09:10・17:10 JST** に当日情報を再取得し、公開ページと履歴情報を更新します。**01:10** のみ日付指定表示から当日表示へ戻し、**09:10・17:10** は指定表示日付を変更しません。GitHub Actions の実行開始には遅延があり得ます。
 - `main` ブランチの HTML / CSS / JS / 収集スクリプトの変更時も自動実行し、公開サイトを更新します。
 - 手動更新: **Actions → 本番公開・日次更新 → Run workflow**。
 - 生成データ: `data/today.json`。画面は10分ごと、再表示時にも公開済みの当日データを読み直します。自動取得・更新はGitHub Actionsで行います。
@@ -104,6 +104,6 @@ https://nobusukeyanagi.github.io/assembly/
 - `app.js` JSON読込、日付チェック、画面描画と自動更新
 - `scripts/update.py` 日程取得・検証・JSON保存
 - `tests/test_update.py` 基本単体テスト
-- `.github/workflows/refresh.yml` 01:10 JST自動収集と Pages 本番公開
+- `.github/workflows/refresh.yml` 01:10・09:10・17:10 JST自動収集と Pages 本番公開
 
 ローカルで試す場合: `pip install -r requirements.txt` → `python -m unittest discover -s tests` → `python scripts/update.py` → `python -m http.server 8000`。
