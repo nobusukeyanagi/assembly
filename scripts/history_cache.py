@@ -60,8 +60,11 @@ def merge(prior, current):
         checked=after.setdefault('verification',{})
         providers=checked.get('providers',{})
         current_items=after.get('items',[])
-        if (isinstance(providers,dict) and comprehensive not in providers
-            and isinstance(current_items,list)):
+        # Only auto has a known partial-coverage risk when WINTICKET fails.
+        # Keirin and BOAT RACE have independent comprehensive calendars, so
+        # don't resurrect absent venues on those sports from old snapshots.
+        if (sport=='auto' and isinstance(providers,dict)
+            and comprehensive not in providers and isinstance(current_items,list)):
             present={r.get('name') for r in current_items if isinstance(r,dict)}
             keep=[]
             for name,original in old.items():
