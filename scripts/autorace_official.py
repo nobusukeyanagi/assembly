@@ -8,6 +8,7 @@ from datetime import date, datetime
 import re
 from unicodedata import normalize
 from bs4 import BeautifulSoup
+from autorace_sessions import split_kawaguchi
 
 JKA_GRADE_CALENDAR='https://autorace.jp/calendar/graderace/'
 KAWAGUCHI_CALENDAR='https://www.kawaguchiauto.jp/race-calender/'
@@ -102,7 +103,9 @@ def kawaguchi_meetings(html,selected,u):
             'day':u.day_label(selected,start,end),
             'timeType':u.race_time_type(event)})
     if len(result)>1:
-        raise ValueError('川口オート公式日程で同日開催が重複')
+        # A daytime event and a separate night event are both valid. The
+        # suffix is assigned only when the official page confirms the pair.
+        return split_kawaguchi(result)
     return result
 
 

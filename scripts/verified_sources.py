@@ -13,6 +13,7 @@ from unicodedata import normalize
 
 from bs4 import BeautifulSoup
 import schedule_enrichment
+import autorace_sessions
 import autorace_official
 
 LOG=logging.getLogger('assembly')
@@ -601,13 +602,18 @@ def auto(s,selected,previous,u):
                                'unconfirmedOfficial':missed_official,
                                'unconfirmedRacecards':missed_oddspark}
         return error
-    result=reconcile('auto',lists,list(AUTO_CODES),u.sort_by_time)
+    # Align separate day/night meeting identities across providers before
+    # the generic per-venue field reconciliation. Otherwise 川口２ disappears
+    # into the original 川口 row.
+    lists,unclear_sessions=autorace_sessions.normalize_sources(lists)
+    result=reconcile('auto',lists,['川口','川口２',*list(AUTO_CODES)[1:]],u.sort_by_time)
     result=restore_same_date_fields(result,previous,selected,'auto')
     result['verification'].update(
         errors=errors,
         officialConfirmed=[row['name'] for row in official],
         officialConfirmedCount=len(official),
         organizerConfirmed=organizer_sources,
+        ambiguousTwoMeetings=unclear_sessions,
         officialVerifiedVenues=list(dict.fromkeys(
             [row['name'] for row in official]+
             [venue for names in organizer_sources.values() for venue in names])),

@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse, json, logging, re, sys
 import verified_sources
+import autorace_sessions
 import finals
 import history_cache
 from unicodedata import normalize
@@ -277,8 +278,9 @@ def check_auto_official(html,name,today):
 def parse_auto_calendar(html,today):
     """Read all five track blocks and dates, not a misleading racecard default."""
     def require_unique_meeting(items):
-        # A schedule cannot contribute two unrelated meeting descriptions
-        # for the same track/date. Reject rather than silently choose one.
+        # A confirmed day/night pair at 川口 is a legitimate two-meeting
+        # schedule, not a duplicate record for the same event.
+        items=autorace_sessions.split_kawaguchi(items)
         seen=set()
         for item in items:
             if item['name'] in seen:
@@ -310,8 +312,12 @@ def parse_auto_calendar(html,today):
         if not bounds or not bounds[0]<=today<=bounds[1]:continue
         title=label[period_match.end():]
         gm=re.search(r'(特G(?:III|II|I|[123])|SG|G(?:III|II|I|[123]))',title[:120],re.I)
-        anchored.append({'name':name,'grade':autorace_grade(gm.group(1)) if gm else '普通',
-                         'timeType':race_time_type(title),'day':day_label(today,*bounds)})
+        item={'name':name,'grade':autorace_grade(gm.group(1)) if gm else '普通',
+              'timeType':race_time_type(title),'day':day_label(today,*bounds)}
+        if name=='川口':
+            item['meetingStart']=bounds[0].isoformat()
+            item['meetingEnd']=bounds[1].isoformat()
+        anchored.append(item)
     if len(anchor_venues)==5 and anchor_count>=8:
         return require_unique_meeting(anchored)
     parts=list(re.finditer(r'(川口|伊勢崎|浜松|飯塚|山陽)\s*オートレース',text))
@@ -328,7 +334,12 @@ def parse_auto_calendar(html,today):
             if not dates or not dates[0]<=today<=dates[1]:continue
             name_event=block[p.end():periods[i+1].start() if i+1<len(periods) else len(block)]
             gm=re.search(r'(特G(?:III|II|I|[123])|SG|G(?:III|II|I|[123]))',name_event[:120],re.I)
-            items.append({'name':name,'grade':autorace_grade(gm.group(1)) if gm else '普通','timeType':race_time_type(name_event),'day':day_label(today,*dates)})
+            item={'name':name,'grade':autorace_grade(gm.group(1)) if gm else '普通',
+                  'timeType':race_time_type(name_event),'day':day_label(today,*dates)}
+            if name=='川口':
+                item['meetingStart']=dates[0].isoformat()
+                item['meetingEnd']=dates[1].isoformat()
+            items.append(item)
     if len(verified)!=5 or count<8:raise ValueError('全5場の開催日程を確認できません')
     return require_unique_meeting(items)
 
