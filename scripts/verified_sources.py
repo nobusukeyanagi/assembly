@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 import schedule_enrichment
 import autorace_sessions
 import autorace_official
+import autorace_local
 
 LOG=logging.getLogger('assembly')
 AUTO_MONTH='https://www.winticket.jp/autorace/schedules/{year}{month:02d}'
@@ -115,9 +116,9 @@ FIELD_SOURCE_PRIORITY={
     'auto':{
         # WINTICKET supplies the comprehensive schedule; when its date
         # disagrees with a verified official racecard, the official facts win.
-        'grade':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','WINTICKET指定月','オッズパーク日別'),
-        'day':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','WINTICKET指定月','オッズパーク日別'),
-        'timeType':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','WINTICKET指定月','オッズパーク日別'),
+        'grade':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
+        'day':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
+        'timeType':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
         'girls':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
     },
     'soda':{
@@ -574,6 +575,35 @@ def auto(s,selected,previous,u):
                         row['name'] for row in home_rows]
             except Exception as exc:
                 errors.append(('飯塚オート公式トップ',str(exc)))
+
+    # Official host-venue calendars are independent of WINTICKET and cover
+    # ordinary races as well as grade races. Use 本場開催 only; never mistake
+    # 場外発売 at a track for an actual meeting at that track.
+    # These rolling calendars cannot certify an arbitrary historical year.
+    if abs((selected-datetime.now(ZoneInfo('Asia/Tokyo')).date()).days)<=120:
+        for venue,calendar_url,home_url in (
+                ('浜松',autorace_local.HAMAMATSU_CALENDAR,autorace_local.HAMAMATSU_HOME),
+                ('山陽',autorace_local.SANYO_CALENDAR,autorace_local.SANYO_HOME)):
+            source=venue+'オート公式日程'
+            local_rows=[]
+            try:
+                local_rows=autorace_local.month_grid_meetings(
+                    u.fetch(s,calendar_url),selected,venue,u)
+                if local_rows:
+                    lists.append((source,local_rows))
+                    organizer_sources[source]=[r['name'] for r in local_rows]
+            except Exception as exc:
+                errors.append((source,str(exc)))
+            if not local_rows and abs((selected-datetime.now(ZoneInfo('Asia/Tokyo')).date()).days)<=1:
+                home_source=venue+'オート公式当日案内'
+                try:
+                    home_rows=autorace_local.homepage_meetings(
+                        u.fetch(s,home_url),selected,venue,u)
+                    if home_rows:
+                        lists.append((home_source,home_rows))
+                        organizer_sources[home_source]=[r['name'] for r in home_rows]
+                except Exception as exc:
+                    errors.append((home_source,str(exc)))
 
     # Oddspark is an additional fallback. Its site may reject cloud runners,
     # so do not make any venue depend on its successful response.
