@@ -43,7 +43,7 @@ class OfficialHostCalendarTests(unittest.TestCase):
         html=grid(2026,11,'浜松','GⅡウィナーズカップ デイ')
         self.assertEqual(autorace_local.month_grid_meetings(
             html,date(2026,11,20),'浜松',update),
-            [{'name':'浜松','grade':'G2','day':'2日目','timeType':'ミッドナイト'}])
+            [{'name':'浜松','grade':'G2','day':'2日目','timeType':'デイ'}])
 
     def test_homepage_date_matched_not_today_label(self):
         today=datetime.now(update.TZ).date()
