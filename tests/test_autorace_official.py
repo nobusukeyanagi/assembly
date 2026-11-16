@@ -7,7 +7,7 @@ from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from autorace_official import grade_meetings,kawaguchi_meetings
+from autorace_official import grade_meetings,kawaguchi_meetings,isesaki_meetings,iizuka_racecards,iizuka_home_meetings
 from update import AUTO_NAMES,autorace_grade,day_label,period,race_time_type
 
 UPSTREAM=SimpleNamespace(AUTO_NAMES=AUTO_NAMES,autorace_grade=autorace_grade,
@@ -96,6 +96,64 @@ class OfficialAutoraceCalendars(unittest.TestCase):
             clock.now.return_value=datetime(2026,11,13,16,0,tzinfo=UPSTREAM.TZ)
             with self.assertRaisesRegex(ValueError,'重複'):
                 kawaguchi_meetings(duplicated,date(2026,11,13),UPSTREAM)
+
+
+    def test_isesaki_true_home_race_not_other_tracks_broadcast(self):
+        page=('<html><head><title>レース情報 | 伊勢崎オートレース</title></head>'
+              '<body><h1>開催情報</h1><div>2026年 11月</div>'
+              '<p>場外 普通レース 飯塚 オッズパーク杯 11/16～11/18 10:25～16:55</p>'
+              '<p>本場 普通レース（無観客開催） 伊勢崎 '
+              'オッズPARKでチケチャレ杯伊勢崎オートアフター５ナイター '
+              '11/16～11/18 17:35～21:10</p>'
+              '<p>場外 GII 浜松 ウィナーズカップ 11/19～11/23</p>'
+              '</body></html>')
+        expected={'name':'伊勢崎','grade':'普通','day':'初日',
+                  'timeType':'ナイター'}
+        self.assertEqual(isesaki_meetings(page,date(2026,11,16),UPSTREAM),[expected])
+        self.assertEqual(isesaki_meetings(page,date(2026,11,17),UPSTREAM),
+                         [dict(expected,day='2日目')])
+        self.assertEqual(isesaki_meetings(page,date(2026,11,18),UPSTREAM),
+                         [dict(expected,day='最終日')])
+        self.assertEqual(isesaki_meetings(page,date(2026,11,15),UPSTREAM),[])
+        self.assertEqual(isesaki_meetings(page,date(2026,11,19),UPSTREAM),[])
+        self.assertEqual(isesaki_meetings(page,date(2025,11,16),UPSTREAM),[])
+        self.assertEqual(isesaki_meetings(page.replace('本場 普通','場外 普通'),
+                                          date(2026,11,16),UPSTREAM),[])
+        self.assertEqual(isesaki_meetings(page.replace('伊勢崎オートアフター５ナイター',
+                         '伊勢崎オート普通開催').replace('オッズPARKでチケチャレ杯伊勢崎',
+                         'オッズPARKでチケチャレ杯伊勢崎'),date(2026,11,16),UPSTREAM),
+                         [dict(expected,timeType=None)])
+
+    def test_iizuka_organizer_dated_download_not_offsite_schedule(self):
+        page=('<html><head><title>飯塚オートレース場</title></head><body>'
+              '<h1>出走表サービス</h1>'
+              '<h2>出走表のダウンロードサービスについて</h2>'
+              '<div>2026年11月16日～11月18日 '
+              'オッズパーク杯（飯塚本場開催）</div>'
+              '<div>1日目出走表（表面・裏面）</div></body></html>')
+        expected={'name':'飯塚','grade':'普通','day':'初日','timeType':None}
+        self.assertEqual(iizuka_racecards(page,date(2026,11,16),UPSTREAM),[expected])
+        self.assertEqual(iizuka_racecards(page,date(2026,11,18),UPSTREAM),
+                         [dict(expected,day='最終日')])
+        self.assertEqual(iizuka_racecards(page,date(2026,11,15),UPSTREAM),[])
+        self.assertEqual(iizuka_racecards(page,date(2027,11,16),UPSTREAM),[])
+        self.assertEqual(iizuka_racecards(
+            page.replace('飯塚本場開催','飯塚場外開催'),date(2026,11,16),UPSTREAM),[])
+
+    def test_iizuka_home_only_verifies_the_current_calendar_date(self):
+        page=('<html><head><title>飯塚オートレース場</title></head>'
+              '<body>RACE INFORMATION 本日の開催 '
+              '飯塚本場開催 オッズパーク杯 '
+              '26/11/16(月) - 26/11/18(水) SCHEDULE</body></html>')
+        with patch('autorace_official.datetime') as clock:
+            clock.now.return_value=datetime(2026,11,16,9,0,tzinfo=UPSTREAM.TZ)
+            self.assertEqual(iizuka_home_meetings(page,date(2026,11,16),UPSTREAM),
+                             [{'name':'飯塚','grade':'普通',
+                               'day':'初日','timeType':None}])
+            self.assertEqual(iizuka_home_meetings(page,date(2026,11,17),UPSTREAM),[])
+            self.assertEqual(iizuka_home_meetings(
+                page.replace('飯塚本場開催','飯塚場外開催'),
+                date(2026,11,16),UPSTREAM),[])
 
 
 if __name__=='__main__':unittest.main()
