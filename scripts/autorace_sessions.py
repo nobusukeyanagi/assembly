@@ -24,14 +24,9 @@ def split_kawaguchi(items):
         days=[x for x in same if x.get('timeType') not in NIGHT]
         if len(nights)!=1 or len(days)!=1:
             raise ValueError('川口の昼・夜2開催を区別できません')
-        # Both rows must represent distinct meeting periods or day labels.
-        # Repeated markup for a single identical meeting must not create 川口２.
+        # A true one-day-two-meetings format can use identical start/end
+        # dates and day labels for its daytime and nighttime sessions.
         a,b=days[0],nights[0]
-        if (a.get('meetingStart') and b.get('meetingStart') and
-            a.get('meetingStart')==b.get('meetingStart') and
-            a.get('meetingEnd')==b.get('meetingEnd') and
-            a.get('day')==b.get('day')):
-            raise ValueError('川口の重複レコードは同一開催節です')
         a['name']='川口'
         b['name']=SECOND
     return rows
