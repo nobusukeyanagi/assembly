@@ -49,6 +49,49 @@ def merge(prior, current):
             continue
         old={r.get('name'):r for r in before.get('items',[])
              if isinstance(r,dict) and r.get('name')}
+        # If a normally comprehensive provider is unavailable, a secondary
+        # source may return only part of the day's venues. Retain other venues
+        # verified *earlier that exact same date*, without adding yesterday's
+        # or inferred future race meetings. Never override a comprehensive
+        # fresh listing, which may know of cancellations.
+        comprehensive={'keirin':'KEIRIN.JP',
+                       'auto':'WINTICKET指定月',
+                       'soda':'BOAT RACE公式'}[sport]
+        checked=after.setdefault('verification',{})
+        providers=checked.get('providers',{})
+        current_items=after.get('items',[])
+        if (isinstance(providers,dict) and comprehensive not in providers
+            and isinstance(current_items,list)):
+            present={r.get('name') for r in current_items if isinstance(r,dict)}
+            keep=[]
+            for name,original in old.items():
+                if name in present:continue
+                evidence=original.get('fieldSources')
+                if not isinstance(evidence,dict):continue
+                if not (evidence.get('grade') and evidence.get('day')
+                        and isinstance(original.get('grade'),str)
+                        and re.fullmatch(r'(?:GP|SG|PG1|特G1|G[123]|F[12]|普通|一般)',
+                                         original['grade'])
+                        and isinstance(original.get('day'),str)
+                        and re.fullmatch(r'初日|最終日|[1-9]\d*日目',original['day'])):
+                    continue
+                row=copy.deepcopy(original)
+                row['restoredFromEarlierFetch']=True
+                current_items.append(row)
+                keep.append(name)
+            if keep:
+                time_rank={'モーニング':0,'デイ':1,None:1,'ナイター':2,
+                           'ミッドナイト':3}
+                current_items.sort(key=lambda row:time_rank.get(row.get('timeType'),4))
+                checked['retainedVerifiedVenues']=keep
+                after['status']='partial'
+                checked.setdefault('fieldCoverage',{}).update({
+                    'grade':sum(bool(r.get('grade')) for r in current_items),
+                    'day':sum(bool(r.get('day')) for r in current_items),
+                    'timeType':sum(r.get('timeType') in time_rank and
+                                    r.get('timeType') is not None
+                                    for r in current_items),
+                    'girlsDetected':sum(r.get('girls') is True for r in current_items)})
         restored=[]
         for row in after.get('items',[]):
             if not isinstance(row,dict):continue
