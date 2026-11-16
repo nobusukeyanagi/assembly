@@ -1,6 +1,6 @@
 {
   "date": "2026-11-16",
-  "updatedAt": "2026-11-16T05:59+09:00",
+  "updatedAt": "2026-11-16T09:39+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -27,6 +27,7 @@
           "name": "武雄",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
@@ -44,6 +45,7 @@
           "name": "富山",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -60,6 +62,7 @@
           "name": "小松島",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -76,6 +79,7 @@
           "name": "川崎",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -92,6 +96,7 @@
           "name": "別府",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -113,6 +118,7 @@
           "name": "名古屋",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP"
           ],
           "grade": "F2",
@@ -132,6 +138,7 @@
           "name": "奈良",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -147,13 +154,14 @@
       ],
       "verification": {
         "providers": {
+          "楽天Kドリームス": 7,
           "KEIRIN HEX": 6,
           "KEIRIN.JP": 7,
           "KEIRIN.JPモーニング日程": 1
         },
-        "crossConfirmed": 6,
-        "singleSource": 1,
-        "gradeCrossConfirmed": 6,
+        "crossConfirmed": 7,
+        "singleSource": 0,
+        "gradeCrossConfirmed": 7,
         "fieldCoverage": {
           "grade": 7,
           "day": 7,
@@ -191,7 +199,7 @@
         },
         "conflicts": [
           {
-            "name": "武雄",
+            "name": "川崎",
             "field": "day",
             "primary": "最終日",
             "selectedSource": "KEIRIN.JP",
@@ -200,7 +208,7 @@
             "alternativeSource": "KEIRIN HEX"
           },
           {
-            "name": "川崎",
+            "name": "武雄",
             "field": "day",
             "primary": "最終日",
             "selectedSource": "KEIRIN.JP",
@@ -221,8 +229,8 @@
         "ignoredFields": [],
         "errors": [
           [
-            "楽天Kドリームス",
-            "指定日の開催一覧がありません: 2026年11月16日 開催一覧"
+            "WINTICKET 2026年11月決勝日程",
+            "403 Client Error:  for url: https://www.winticket.jp/keirin/campaign/pK2vUymUNoU1cwWwXXQm14"
           ],
           [
             "CTC開催日程",
@@ -232,9 +240,156 @@
       }
     },
     "auto": {
-      "status": "error",
-      "items": [],
-      "message": "すべてのオートレース開催日程が取得できません"
+      "status": "ok",
+      "items": [
+        {
+          "name": "飯塚",
+          "girls": false,
+          "confirmedBy": [
+            "飯塚オート公式トップ"
+          ],
+          "grade": "普通",
+          "day": "初日",
+          "timeType": null,
+          "fieldSources": {
+            "grade": "飯塚オート公式トップ",
+            "day": "飯塚オート公式トップ"
+          }
+        },
+        {
+          "name": "伊勢崎",
+          "girls": false,
+          "confirmedBy": [
+            "伊勢崎オート公式日程"
+          ],
+          "grade": "普通",
+          "day": "初日",
+          "timeType": "ナイター",
+          "fieldSources": {
+            "grade": "伊勢崎オート公式日程",
+            "day": "伊勢崎オート公式日程",
+            "timeType": "伊勢崎オート公式日程"
+          }
+        }
+      ],
+      "verification": {
+        "providers": {
+          "伊勢崎オート公式日程": 1,
+          "飯塚オート公式トップ": 1
+        },
+        "crossConfirmed": 0,
+        "singleSource": 2,
+        "gradeCrossConfirmed": 0,
+        "fieldCoverage": {
+          "grade": 2,
+          "day": 2,
+          "timeType": 1,
+          "girlsDetected": 0
+        },
+        "priorityPolicy": {
+          "grade": [
+            "AUTORACE.JP年間グレード日程",
+            "AUTORACE.JP出走表",
+            "川口オート公式日程",
+            "伊勢崎オート公式日程",
+            "飯塚オート公式出走表",
+            "飯塚オート公式トップ",
+            "WINTICKET指定月",
+            "オッズパーク日別"
+          ],
+          "day": [
+            "AUTORACE.JP年間グレード日程",
+            "AUTORACE.JP出走表",
+            "川口オート公式日程",
+            "伊勢崎オート公式日程",
+            "飯塚オート公式出走表",
+            "飯塚オート公式トップ",
+            "WINTICKET指定月",
+            "オッズパーク日別"
+          ],
+          "timeType": [
+            "AUTORACE.JP年間グレード日程",
+            "AUTORACE.JP出走表",
+            "川口オート公式日程",
+            "伊勢崎オート公式日程",
+            "飯塚オート公式出走表",
+            "飯塚オート公式トップ",
+            "WINTICKET指定月",
+            "オッズパーク日別"
+          ],
+          "girls": [
+            "AUTORACE.JP出走表",
+            "オッズパーク日別",
+            "WINTICKET指定月"
+          ]
+        },
+        "conflicts": [],
+        "ignoredFields": [],
+        "errors": [
+          [
+            "WINTICKET指定月",
+            "403 Client Error:  for url: https://www.winticket.jp/autorace/schedules/202611"
+          ]
+        ],
+        "officialConfirmed": [],
+        "officialConfirmedCount": 0,
+        "organizerConfirmed": {
+          "伊勢崎オート公式日程": [
+            "伊勢崎"
+          ],
+          "飯塚オート公式トップ": [
+            "飯塚"
+          ]
+        },
+        "officialVerifiedVenues": [
+          "伊勢崎",
+          "飯塚"
+        ],
+        "unconfirmedOfficial": [
+          {
+            "name": "川口",
+            "reason": "AUTORACE.JPの指定日・開催場を照合できません（公式出走表の詳細がHTMLになく、動的表示のため照合不可）"
+          },
+          {
+            "name": "伊勢崎",
+            "reason": "AUTORACE.JPの指定日・開催場を照合できません（公式出走表の詳細がHTMLになく、動的表示のため照合不可）"
+          },
+          {
+            "name": "浜松",
+            "reason": "AUTORACE.JPの指定日・開催場を照合できません（公式出走表の詳細がHTMLになく、動的表示のため照合不可）"
+          },
+          {
+            "name": "飯塚",
+            "reason": "AUTORACE.JPの指定日・開催場を照合できません（公式出走表の詳細がHTMLになく、動的表示のため照合不可）"
+          },
+          {
+            "name": "山陽",
+            "reason": "AUTORACE.JPの指定日・開催場を照合できません（公式出走表の詳細がHTMLになく、動的表示のため照合不可）"
+          }
+        ],
+        "unconfirmedRacecards": [
+          {
+            "name": "川口",
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=02&kaisaiBi=20261116"
+          },
+          {
+            "name": "伊勢崎",
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=03&kaisaiBi=20261116"
+          },
+          {
+            "name": "浜松",
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=04&kaisaiBi=20261116"
+          },
+          {
+            "name": "飯塚",
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=05&kaisaiBi=20261116"
+          },
+          {
+            "name": "山陽",
+            "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=06&kaisaiBi=20261116"
+          }
+        ]
+      }
     },
     "soda": {
       "status": "ok",
