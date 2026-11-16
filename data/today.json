@@ -1,12 +1,14 @@
 {
   "date": "2026-11-16",
-  "updatedAt": "2026-11-16T12:02+09:00",
+  "updatedAt": "2026-11-16T12:04+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
     "keirin_races": "https://keirinhex.jp/races/{day}/",
     "auto": "https://www.winticket.jp/autorace/schedules/",
     "auto_official": "https://autorace.jp/",
+    "auto_hamamatsu_official": "https://www.hamamatsuauto.jp/calendar/",
+    "auto_sanyo_official": "https://sanyoauto.jp/calendar/",
     "soda": "https://so-da.jp/aud/top",
     "soda_schedule": "https://www.boatrace.jp/owpc/pc/race/index",
     "mori": "https://www.winticket.jp/autorace/autoracer/2529/",
