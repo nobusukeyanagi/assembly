@@ -1,12 +1,13 @@
 """Regression tests for verified historical 川口／川口２ meetings."""
 import sys
 import unittest
-from datetime import date
+from datetime import date,datetime
 from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import autorace_verified_calendar
+import autorace_official
 import update
 from verified_sources import auto as collect_auto, reconcile
 from autorace_sessions import normalize_sources
@@ -43,6 +44,28 @@ class VerifiedKawaguchiHistory(unittest.TestCase):
         self.assertEqual(result['verification']['officialVerifiedVenues'],
                          ['川口','川口２'])
         self.assertTrue(result['verification']['errors'])
+
+    def test_live_official_double_meetings_survive_winticket_403(self):
+        # A dynamic current-date fixture also protects the normal (non-archive)
+        # path after the test date used in 2026 has moved out of the window.
+        selected=datetime.now(update.TZ).date()
+        d=f'{selected.month:02}/{selected.day:02}'
+        html=('<html><head><title>開催日程 | 川口オートレース</title>'
+              '</head><body><h1>開催日程</h1>'
+              '<h4>普通開催 川口自場</h4><p>'+d+'(月) ～ '+d+'(月)</p>'
+              '<h4>川口ナイトレース</h4><p>'+d+'(月) ～ '+d+'(月)</p>'
+              '</body></html>')
+        def fetch(_session,url,params=None):
+            if url==autorace_official.KAWAGUCHI_CALENDAR:
+                return html
+            raise RuntimeError('403 unavailable: '+url)
+        with patch.object(update,'fetch',side_effect=fetch):
+            result=collect_auto(object(),selected,None,update)
+        self.assertEqual(result['status'],'ok')
+        self.assertEqual([r['name'] for r in result['items']],['川口','川口２'])
+        self.assertEqual(result['items'][1]['timeType'],'ナイター')
+        self.assertEqual(result['verification']['organizerConfirmed']
+                         ['川口オート公式日程'],['川口','川口２'])
 
     def test_single_generic_provider_cannot_erase_the_second_meeting(self):
         verified=autorace_verified_calendar.kawaguchi_meetings(
