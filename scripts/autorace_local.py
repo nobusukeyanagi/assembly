@@ -144,7 +144,7 @@ def homepage_meetings(html, selected, venue, u):
             continue
         until_next = head.search(text, m.end())
         section = text[m.end():until_next.start() if until_next else m.end()+800]
-        local = re.search(r'本場開催\s*(.*?)(?:場外開催|開催日程|出走表)', section)
+        local = re.search(r'(?:本場開催|本場)\s*(.*?)(?:場外開催|場外|開催日程|出走表)', section)
         if not local:
             continue
         label = clean(local.group(1))[:220]
