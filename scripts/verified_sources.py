@@ -114,9 +114,9 @@ FIELD_SOURCE_PRIORITY={
     'auto':{
         # WINTICKET supplies the comprehensive schedule; when its date
         # disagrees with a verified official racecard, the official facts win.
-        'grade':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','WINTICKET指定月','オッズパーク日別'),
-        'day':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','WINTICKET指定月','オッズパーク日別'),
-        'timeType':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','WINTICKET指定月','オッズパーク日別'),
+        'grade':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','WINTICKET指定月','オッズパーク日別'),
+        'day':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','WINTICKET指定月','オッズパーク日別'),
+        'timeType':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','WINTICKET指定月','オッズパーク日別'),
         'girls':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
     },
     'soda':{
@@ -541,6 +541,39 @@ def auto(s,selected,previous,u):
         except Exception as exc:
             errors.append(('川口オート公式日程',str(exc)))
 
+    # Two more organizers publish readable schedules for ordinary race days.
+    # These are independent of the WINTICKET month page (which can return 403).
+    if abs((selected-datetime.now(ZoneInfo('Asia/Tokyo')).date()).days)<=120:
+        try:
+            local_rows=autorace_official.isesaki_meetings(
+                u.fetch(s,autorace_official.ISESAKI_CALENDAR),selected,u)
+            if local_rows:
+                lists.append(('伊勢崎オート公式日程',local_rows))
+                organizer_sources['伊勢崎オート公式日程']=[
+                    row['name'] for row in local_rows]
+        except Exception as exc:
+            errors.append(('伊勢崎オート公式日程',str(exc)))
+        iizuka_rows=[]
+        try:
+            iizuka_rows=autorace_official.iizuka_racecards(
+                u.fetch(s,autorace_official.IIZUKA_RACECARDS),selected,u)
+            if iizuka_rows:
+                lists.append(('飯塚オート公式出走表',iizuka_rows))
+                organizer_sources['飯塚オート公式出走表']=[
+                    row['name'] for row in iizuka_rows]
+        except Exception as exc:
+            errors.append(('飯塚オート公式出走表',str(exc)))
+        if not iizuka_rows and selected==datetime.now(ZoneInfo('Asia/Tokyo')).date():
+            try:
+                home_rows=autorace_official.iizuka_home_meetings(
+                    u.fetch(s,autorace_official.IIZUKA_HOME),selected,u)
+                if home_rows:
+                    lists.append(('飯塚オート公式トップ',home_rows))
+                    organizer_sources['飯塚オート公式トップ']=[
+                        row['name'] for row in home_rows]
+            except Exception as exc:
+                errors.append(('飯塚オート公式トップ',str(exc)))
+
     # Oddspark is an additional fallback. Its site may reject cloud runners,
     # so do not make any venue depend on its successful response.
     racecard=[];missed_oddspark=[]
@@ -562,7 +595,12 @@ def auto(s,selected,previous,u):
 
     if not lists:
         saved=cached_section(previous,selected,'auto')
-        return saved if saved else u.bad('すべてのオートレース開催日程が取得できません')
+        if saved:return saved
+        error=u.bad('すべてのオートレース開催日程が取得できません')
+        error['verification']={'errors':errors,
+                               'unconfirmedOfficial':missed_official,
+                               'unconfirmedRacecards':missed_oddspark}
+        return error
     result=reconcile('auto',lists,list(AUTO_CODES),u.sort_by_time)
     result=restore_same_date_fields(result,previous,selected,'auto')
     result['verification'].update(
