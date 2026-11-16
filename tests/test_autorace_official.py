@@ -89,8 +89,22 @@ class OfficialAutoraceCalendars(unittest.TestCase):
             self.assertEqual(kawaguchi_meetings(KAWAGUCHI_PAGE,
                              date(2026,6,1),UPSTREAM),[])
 
+    def test_double_kawaguchi_official_day_and_night(self):
+        # Two distinct legitimate meetings can share the same calendar days.
+        doubled=KAWAGUCHI_PAGE.replace('</body>','<h4>SG日本選手権</h4>'
+            '<p>11/13(金) ～ 11/15(日)</p></body>')
+        with patch('autorace_official.datetime') as clock:
+            clock.now.return_value=datetime(2026,11,13,16,0,tzinfo=UPSTREAM.TZ)
+            out=kawaguchi_meetings(doubled,date(2026,11,13),UPSTREAM)
+        self.assertEqual({r['name'] for r in out},{'川口','川口２'})
+        self.assertEqual(next(x for x in out if x['name']=='川口')['grade'],'SG')
+        self.assertEqual(next(x for x in out if x['name']=='川口２')['timeType'],
+                         'ナイター')
+
     def test_conflicting_organizer_meeting_is_not_silently_selected(self):
-        duplicated=KAWAGUCHI_PAGE.replace('</body>','<h4>SG他開催</h4>'
+        # Two *night* entries are not a day/night pair. Reject as ambiguous.
+        duplicated=KAWAGUCHI_PAGE.replace('</body>',
+            '<h4>川口ナイトレース 別開催</h4>'
             '<p>11/13(金) ～ 11/15(日)</p></body>')
         with patch('autorace_official.datetime') as clock:
             clock.now.return_value=datetime(2026,11,13,16,0,tzinfo=UPSTREAM.TZ)
