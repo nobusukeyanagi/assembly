@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 import schedule_enrichment
 import autorace_sessions
 import autorace_official
+import autorace_verified_calendar
 import autorace_local
 
 LOG=logging.getLogger('assembly')
@@ -116,9 +117,9 @@ FIELD_SOURCE_PRIORITY={
     'auto':{
         # WINTICKET supplies the comprehensive schedule; when its date
         # disagrees with a verified official racecard, the official facts win.
-        'grade':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
-        'day':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
-        'timeType':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
+        'grade':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口市公式広報2026年2月','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
+        'day':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口市公式広報2026年2月','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
+        'timeType':('AUTORACE.JP年間グレード日程','AUTORACE.JP出走表','川口市公式広報2026年2月','川口オート公式日程','伊勢崎オート公式日程','飯塚オート公式出走表','飯塚オート公式トップ','浜松オート公式日程','山陽オート公式日程','浜松オート公式当日案内','山陽オート公式当日案内','WINTICKET指定月','オッズパーク日別'),
         'girls':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
     },
     'soda':{
@@ -623,6 +624,15 @@ def auto(s,selected,previous,u):
                 if item:racecard.append(item)
                 else:missed_oddspark.append({'name':name,'reason':issue})
         if racecard:lists.append(('オッズパーク日別',racecard))
+
+    # Historic primary-source calendar evidence.  The live rolling organizer
+    # calendars cannot validate dates many months ago.  Preserve two truly
+    # simultaneous Kawaguchi meetings as separate identities, even when
+    # WINTICKET and every live official HTML source fail.
+    archived=autorace_verified_calendar.kawaguchi_meetings(selected,u)
+    if archived:
+        lists.append((autorace_verified_calendar.SOURCE,archived))
+        organizer_sources[autorace_verified_calendar.SOURCE]=[r['name'] for r in archived]
 
     if not lists:
         saved=cached_section(previous,selected,'auto')
