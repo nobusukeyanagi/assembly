@@ -365,10 +365,13 @@ def mori_meeting_metadata(schedule_html,scheduled,name,official_html=None):
     """Add grades/slots only for the meeting matching Mori's venue and start date."""
     if schedule_html is None:return {}
     try:
-        meeting=next((x for x in parse_auto_calendar(schedule_html,scheduled)
-                      if x['name']==name),None)
+        meetings=[x for x in parse_auto_calendar(schedule_html,scheduled)
+                  if x['name']==name or (name=='川口' and x['name']=='川口２')]
     except ValueError:return {}
-    if not meeting:return {}
+    # With two separate Kawaguchi sessions, a rider's venue alone does not
+    # tell us whether they race in the daytime or nighttime meeting.
+    if len(meetings)!=1:return {}
+    meeting=meetings[0]
     details={key:meeting[key] for key in ('grade','timeType') if meeting.get(key)}
     # Match an independent official venue schedule when available; conflicting
     # information must not be shown until the sources agree.
@@ -753,10 +756,12 @@ def collect(today,s,previous=None):
         # confirmed venue meeting, never from the *current* future calendar.
         item=sections['mori'].get('item')
         if item and item.get('type')=='today':
-            matching=next((x for x in sections['auto'].get('items',[]) if x['name']==item['name']),None)
-            if matching:
+            matches=[x for x in sections['auto'].get('items',[])
+                     if x['name']==item['name'] or
+                        (item['name']=='川口' and x['name']=='川口２')]
+            if len(matches)==1:
                 for field in ('grade','timeType'):
-                    if matching.get(field):item[field]=matching[field]
+                    if matches[0].get(field):item[field]=matches[0][field]
         if item and item.get('type')=='today':
             mori_start_times(s,item,previous,today)
         if sections['mori']['status']=='error' and isinstance(previous,dict) and previous.get('date')==today.isoformat():
