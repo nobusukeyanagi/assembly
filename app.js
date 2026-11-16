@@ -1,7 +1,7 @@
 (() => {
 'use strict';
 const weekday=['日','月','火','水','木','金','土'];
-const limits={keirin:12,auto:3,soda:8};
+const limits={keirin:12,auto:6,soda:8};
 let latest=null;
 const get=id=>document.getElementById(id);
 function node(tag,cls,text){
@@ -150,10 +150,11 @@ function mori(section,stale,targetDate){
 }
 function layoutRows(sections,stale){
   const hasVerifiedItems=section=>!stale&&section&&
-    (section.status==='ok'||section.status==='cached')&&Array.isArray(section.items);
+    (section.status==='ok'||section.status==='cached'||section.status==='partial')&&Array.isArray(section.items);
   const keirinRows=hasVerifiedItems(sections.keirin)&&sections.keirin.items.length<=8?2:3;
+  const autoRows=hasVerifiedItems(sections.auto)&&sections.auto.items.length>3?2:1;
   const sodaRows=hasVerifiedItems(sections.soda)&&sections.soda.items.length<=4?1:2;
-  return {keirinRows,sodaRows,totalRows:keirinRows+1+sodaRows};
+  return {keirinRows,autoRows,sodaRows,totalRows:keirinRows+autoRows+sodaRows};
 }
 
 const vehiclePalette={
@@ -310,6 +311,7 @@ function render(data,targetDate,mode){
   const layout=layoutRows(s,stale);
   const stage=get('stage');
   stage.style.setProperty('--keirin-rows',String(layout.keirinRows));
+  stage.style.setProperty('--auto-rows',String(layout.autoRows));
   stage.style.setProperty('--soda-rows',String(layout.sodaRows));
   stage.dataset.totalRows=String(layout.totalRows);
   get('display-mode-indicator').hidden=mode!=='selected';

@@ -14,6 +14,7 @@
   --tile-height: 146px;
   --tile-gap: 12px;
   --keirin-rows: 3;
+  --auto-rows: 1;
   --soda-rows: 2;
   --band-pad-y: 8px;
 }
@@ -72,7 +73,9 @@ h1 {
    below the date, leaving 960px for the three sports bands.
    Every band has 16px of vertical inset and every adjacent card row has a
    12px gap. Thus: tile = (960 - 48 - (totalRows - 3)*12)/totalRows.
-   6 rows: 146px; 5 rows: 177.6px; 4 rows: 225px. */
+   7 rows: 123.428571px; 6 rows: 146px; 5 rows: 177.6px;
+   4 rows: 225px. */
+.stage[data-total-rows="7"] { --tile-height: 123.428571px; }
 .stage[data-total-rows="5"] { --tile-height: 177.6px; }
 .stage[data-total-rows="4"] { --tile-height: 225px; }
 .dashboard {
@@ -94,7 +97,7 @@ h1 {
   overflow: hidden;
 }
 .keirin { background: var(--keirin); height: calc(var(--keirin-rows) * var(--tile-height) + (var(--keirin-rows) - 1) * var(--tile-gap) + 2 * var(--band-pad-y)); }
-.auto { background: var(--auto); height: calc(var(--tile-height) + 2 * var(--band-pad-y)); }
+.auto { background: var(--auto); height: calc(var(--auto-rows) * var(--tile-height) + (var(--auto-rows) - 1) * var(--tile-gap) + 2 * var(--band-pad-y)); }
 .soda { background: var(--soda); height: calc(var(--soda-rows) * var(--tile-height) + (var(--soda-rows) - 1) * var(--tile-gap) + 2 * var(--band-pad-y)); }
 .panel-head {
   display: flex;
@@ -126,7 +129,7 @@ h1 {
   overflow: hidden;
 }
 .keirin .entries { grid-template-rows: repeat(var(--keirin-rows), var(--tile-height)); }
-.auto .entries { grid-template-rows: var(--tile-height); }
+.auto .entries { grid-template-rows: repeat(var(--auto-rows), var(--tile-height)); }
 .soda .entries { grid-template-rows: repeat(var(--soda-rows), var(--tile-height)); }
 .auto-items { display: contents; }
 
@@ -236,6 +239,7 @@ h1 {
 .entry .girls { color: #cf4a7a; font-weight: 900; }
 .mori-tile {
   grid-column: 4;
+  grid-row: 1;
   grid-template-rows: 30px auto;
   align-content: center;
   row-gap: 4px;
@@ -265,6 +269,24 @@ h1 {
   min-width: 0;
 }
 .entry .mori-primary { font-size: var(--font-60); height: 66px; line-height: 66px; }
+/* Rare seven-row layout: keep all six possible autorace meetings visible
+   without clipping the date header or Mori's card. */
+.stage[data-total-rows="7"] .entry {
+  grid-template-rows: 72px 36px;
+  row-gap: 2px;
+}
+.stage[data-total-rows="7"] .entry .venue {
+  font-size: var(--font-60);
+  height: 72px;
+  line-height: 72px;
+}
+.stage[data-total-rows="7"] .mori-tile { grid-template-rows: 30px auto; row-gap: 2px; }
+.stage[data-total-rows="7"] .mori-body { grid-template-rows: 48px 30px; gap: 0; }
+.stage[data-total-rows="7"] .entry .mori-primary {
+  font-size: var(--font-30);
+  height: 48px;
+  line-height: 48px;
+}
 /* Finals reuse the same date header and show the racecard instead of venue tiles. */
 .stage.is-final .dashboard { display: none; }
 .final-screen {

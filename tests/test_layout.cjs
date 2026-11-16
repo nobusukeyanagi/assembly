@@ -3,34 +3,45 @@ const assert=require('node:assert/strict');
 const {layoutRows,isEmptyVenueSection,venueStatusText}=require('../app.js');
 
 // The same function used by the published browser determines all row counts.
-function sections(keirin,soda,keirinStatus='ok',sodaStatus='ok'){
+function sections(keirin,soda,keirinStatus='ok',sodaStatus='ok',auto=0,autoStatus='ok'){
   return {
     keirin:{status:keirinStatus,items:Array.from({length:keirin},(_,i)=>({name:'k'+i}))},
+    auto:{status:autoStatus,items:Array.from({length:auto},(_,i)=>({name:i===1?'川口２':'a'+i}))},
     soda:{status:sodaStatus,items:Array.from({length:soda},(_,i)=>({name:'s'+i}))},
   };
 }
 const cases=[
-  {k:12,s:8,expected:[3,2,6,146]},
-  {k:12,s:4,expected:[3,1,5,177.6]},
-  {k:9,s:1,expected:[3,1,5,177.6]},
-  {k:8,s:8,expected:[2,2,5,177.6]},
-  {k:8,s:4,expected:[2,1,4,225]},
-  {k:4,s:0,expected:[2,1,4,225]},
-  {k:0,s:4,expected:[2,1,4,225]},
+  {k:12,s:8,expected:[3,1,2,6,146]},
+  {k:12,s:4,expected:[3,1,1,5,177.6]},
+  {k:9,s:1,expected:[3,1,1,5,177.6]},
+  {k:8,s:8,expected:[2,1,2,5,177.6]},
+  {k:8,s:4,expected:[2,1,1,4,225]},
+  {k:4,s:0,expected:[2,1,1,4,225]},
+  {k:0,s:4,expected:[2,1,1,4,225]},
 ];
-const tileHeights={4:225,5:177.6,6:146};
+const tileHeights={4:225,5:177.6,6:146,7:864/7};
 for(const {k,s,expected} of cases){
   const out=layoutRows(sections(k,s),false);
   const h=tileHeights[out.totalRows];
-  assert.deepEqual([out.keirinRows,out.sodaRows,out.totalRows,h],expected,`keirin=${k} soda=${s}`);
+  assert.deepEqual([out.keirinRows,out.autoRows,out.sodaRows,out.totalRows,h],expected,`keirin=${k} soda=${s}`);
   const band=rowCount=>rowCount*h+(rowCount-1)*12+16;
-  const used=band(out.keirinRows)+band(1)+band(out.sodaRows);
+  const used=band(out.keirinRows)+band(out.autoRows)+band(out.sodaRows);
   assert.ok(Math.abs(used-960)<0.00001,`must fill exactly 960px: ${used}`);
 }
-assert.deepEqual(layoutRows(sections(12,4,'error','ok'),false),{keirinRows:3,sodaRows:1,totalRows:5});
-assert.deepEqual(layoutRows(sections(8,4,'ok','error'),false),{keirinRows:2,sodaRows:2,totalRows:5});
-assert.deepEqual(layoutRows(sections(8,4),true),{keirinRows:3,sodaRows:2,totalRows:6});
-assert.deepEqual(layoutRows(sections(8,4,'cached','cached'),false),{keirinRows:2,sodaRows:1,totalRows:4});
+assert.deepEqual(layoutRows(sections(12,4,'error','ok'),false),{keirinRows:3,autoRows:1,sodaRows:1,totalRows:5});
+assert.deepEqual(layoutRows(sections(8,4,'ok','error'),false),{keirinRows:2,autoRows:1,sodaRows:2,totalRows:5});
+assert.deepEqual(layoutRows(sections(8,4),true),{keirinRows:3,autoRows:1,sodaRows:2,totalRows:6});
+assert.deepEqual(layoutRows(sections(8,4,'cached','cached'),false),{keirinRows:2,autoRows:1,sodaRows:1,totalRows:4});
+// If more than three autorace meetings exist, all venues get a second row.
+for (const [k,s,n,rows] of [[12,8,4,7],[8,4,5,5],[12,4,6,6]]){
+  const out=layoutRows(sections(k,s,'ok','ok',n),false);
+  assert.equal(out.autoRows,2);
+  assert.equal(out.totalRows,rows);
+  const h=tileHeights[rows];
+  const band=x=>x*h+(x-1)*12+16;
+  assert.ok(Math.abs(band(out.keirinRows)+band(out.autoRows)+band(out.sodaRows)-960)<0.001);
+}
+assert.equal(layoutRows(sections(8,4,'ok','ok',4,'partial'),false).autoRows,2);
 // No-meeting state is intentionally different from an error or an outdated snapshot.
 assert.equal(isEmptyVenueSection({status:'ok',items:[]},false),true);
 assert.equal(isEmptyVenueSection({status:'cached',items:[]},false),true);

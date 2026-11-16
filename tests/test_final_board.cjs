@@ -69,7 +69,7 @@ for(const [size,left,right] of [[6,3,3],[7,4,3],[8,4,4],[9,5,4]]){
 }
 
 const css=fs.readFileSync(path.join(__dirname,'..','styles.css'),'utf8');
-const fontTokens={30:7,60:6,80:5};
+const fontTokens={30:8,60:7,80:5};
 for(const [size,expectedCount] of Object.entries(fontTokens)){
   const token='--font-'+size;
   const definition=new RegExp('\\s'+token+':\\s*'+size+'px;');
