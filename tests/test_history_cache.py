@@ -95,6 +95,59 @@ class HistoricalRetentionTests(unittest.TestCase):
                              'モーニング')
             self.assertTrue(found['sections']['keirin']['items'][0]['girls'])
 
+    def test_partial_provider_outage_keeps_earlier_verified_same_day_venues(self):
+        old={'date':self.date,'sections':{'auto':{
+            'status':'ok','items':[
+                {'name':'伊勢崎','grade':'普通','day':'初日','timeType':'ナイター',
+                 'fieldSources':{'grade':'伊勢崎オート公式日程',
+                                 'day':'伊勢崎オート公式日程',
+                                 'timeType':'伊勢崎オート公式日程'}},
+                {'name':'飯塚','grade':'普通','day':'初日','timeType':None,
+                 'fieldSources':{'grade':'飯塚オート公式出走表',
+                                 'day':'飯塚オート公式出走表'}}]}}}
+        current={'date':self.date,'sections':{'auto':{
+            'status':'ok','items':[{
+                'name':'伊勢崎','grade':'普通','day':'初日',
+                'timeType':'ナイター','fieldSources':{
+                    'grade':'伊勢崎オート公式日程','day':'伊勢崎オート公式日程'}}],
+            'verification':{'providers':{'伊勢崎オート公式日程':1},
+                            'errors':[('WINTICKET指定月','403')],
+                            'fieldCoverage':{'grade':1,'day':1,'timeType':1}}}}}
+        result=merge(old,current)
+        auto=result['sections']['auto']
+        self.assertEqual(auto['status'],'partial')
+        self.assertEqual({r['name'] for r in auto['items']},{'伊勢崎','飯塚'})
+        self.assertEqual(auto['verification']['retainedVerifiedVenues'],['飯塚'])
+        self.assertEqual(auto['verification']['fieldCoverage']['grade'],2)
+        self.assertEqual(auto['verification']['fieldCoverage']['day'],2)
+        self.assertTrue(next(r for r in auto['items'] if r['name']=='飯塚')
+                        ['restoredFromEarlierFetch'])
+        # A second capture of this partial result must not erase the earlier
+        # independent source evidence.
+        saved=merge(old,result)
+        self.assertEqual(len(saved['sections']['auto']['items']),2)
+        broken={'date':self.date,'sections':{'auto':{'status':'error','items':[]}}}
+        rescued=merge(result,broken)
+        self.assertEqual(rescued['sections']['auto']['status'],'cached')
+        self.assertEqual(len(rescued['sections']['auto']['items']),2)
+
+    def test_fresh_comprehensive_schedule_supersedes_old_venue_and_no_date_guess(self):
+        old={'date':self.date,'sections':{'auto':{'status':'ok','items':[
+            {'name':'飯塚','grade':'普通','day':'初日',
+             'fieldSources':{'grade':'WINTICKET指定月','day':'WINTICKET指定月'}}]}}}
+        current={'date':self.date,'sections':{'auto':{
+            'status':'ok','items':[],
+            'verification':{'providers':{'WINTICKET指定月':0},
+                            'fieldCoverage':{'grade':0,'day':0,'timeType':0}}}}}
+        self.assertEqual(merge(old,current)['sections']['auto']['items'],[])
+        self.assertEqual(merge(dict(old,date='2026-11-12'),current)
+                         ['sections']['auto']['items'],[])
+        # Unattributed or incomplete records cannot be resurrected.
+        unreliable={'date':self.date,'sections':{'auto':{'status':'ok','items':[
+            {'name':'飯塚','grade':'普通','day':'初日'}]}}}
+        current['sections']['auto']['verification']['providers']={}
+        self.assertEqual(merge(unreliable,current)['sections']['auto']['items'],[])
+
     def test_invalid_archive_date_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError):
