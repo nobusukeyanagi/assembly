@@ -75,6 +75,15 @@ class OfficialHostCalendarTests(unittest.TestCase):
                          ['山陽オート公式日程'])
         self.assertEqual(len(result['items']), 1)
 
+    def test_hamamatsu_homepage_uses_honba_and_jogai_labels(self):
+        today = datetime.now(update.TZ).date()
+        html = ('<title>浜松オート オフィシャルサイト</title>今日のレース ' +
+                str(today.month) + '月' + str(today.day) + '日 本場 GⅡウィナーズカップ'
+                ' 場外 伊勢崎 明日のレース 12月1日 本場 レースはありません 場外 飯塚')
+        actual = autorace_local.homepage_meetings(html, today, '浜松', update)
+        self.assertEqual(actual[0]['name'], '浜松')
+        self.assertEqual(actual[0]['grade'], 'G2')
+
     def test_homepage_no_local_race_is_not_evidence(self):
         today=datetime.now(update.TZ).date()
         html=('<title>浜松オート公式</title>今日のレース '
