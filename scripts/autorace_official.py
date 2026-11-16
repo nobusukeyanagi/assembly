@@ -11,6 +11,9 @@ from bs4 import BeautifulSoup
 
 JKA_GRADE_CALENDAR='https://autorace.jp/calendar/graderace/'
 KAWAGUCHI_CALENDAR='https://www.kawaguchiauto.jp/race-calender/'
+ISESAKI_CALENDAR='https://www.isesaki-auto.jp/race/'
+IIZUKA_RACECARDS='https://www.iizuka-auto.jp/dl/'
+IIZUKA_HOME='https://www.iizuka-auto.jp/'
 GRADES={'SG','G1','G2','特G1'}
 
 
@@ -101,3 +104,113 @@ def kawaguchi_meetings(html,selected,u):
     if len(result)>1:
         raise ValueError('川口オート公式日程で同日開催が重複')
     return result
+
+
+def isesaki_meetings(html,selected,u):
+    """Read only '本場' event blocks in the organizer's dated race calendar.
+
+    The same calendar advertises other tracks as 場外: those must never be
+    mistaken for races actually hosted by 伊勢崎.
+    """
+    soup=BeautifulSoup(html,'html.parser')
+    title=normalize_text(soup.title.get_text(' ',strip=True)) if soup.title else ''
+    text=normalize_text(soup.get_text(' ',strip=True))
+    if '伊勢崎' not in title or '開催情報' not in text:
+        raise ValueError('伊勢崎オート公式開催日程の見出しがありません')
+    if not re.search(rf'(?<!\d){selected.year}\s*年\s*{selected.month}\s*月',text):
+        return []
+    blocks=re.split(r'(?<!\S)(本場|場外)\s+',text)
+    dates=re.compile(r'(?<!\d)(\d{1,2})\s*/\s*(\d{1,2})\s*'
+                     r'[～〜~\-]\s*(\d{1,2})\s*/\s*(\d{1,2})(?!\d)')
+    matched={}
+    for i in range(1,len(blocks)-1,2):
+        if blocks[i]!='本場':continue
+        event=blocks[i+1]
+        if '伊勢崎' not in event[:180]:continue
+        marker=re.search(r'(普通レース|SG|特\s*G(?:III|II|I|[123])|G(?:III|II|I|[123]))',
+                         event[:140],re.I)
+        if not marker:continue
+        for dm in dates.finditer(event):
+            bounds=u.period(selected,*map(int,dm.groups()))
+            if not bounds or not bounds[0]<=selected<=bounds[1]:continue
+            # Ignore unrelated published broadcast hours; the event's date
+            # and local track must be in the same 本場 block.
+            grade=(u.autorace_grade(marker.group(1))
+                   if marker.group(1)!='普通レース' else '普通')
+            row={'name':'伊勢崎','grade':grade,
+                 'day':u.day_label(selected,*bounds),
+                 'timeType':u.race_time_type(event[:dm.end()])}
+            existing=matched.get('伊勢崎')
+            if existing and row!=existing:
+                raise ValueError('伊勢崎公式日程で対象日の開催が重複')
+            matched['伊勢崎']=row
+    return list(matched.values())
+
+
+def iizuka_racecards(html,selected,u):
+    """Read the Iizuka organizer's year-qualified downloadable racecard notice."""
+    soup=BeautifulSoup(html,'html.parser')
+    text=normalize_text(soup.get_text(' ',strip=True))
+    title=normalize_text(soup.title.get_text(' ',strip=True)) if soup.title else ''
+    if '飯塚' not in title or '出走表' not in text:
+        raise ValueError('飯塚オート公式出走表サービスの見出しがありません')
+    period_rx=re.compile(
+        r'(?<!\d)(20\d{2})年(\d{1,2})月(\d{1,2})日\s*'
+        r'[～〜~\-]\s*(?:(20\d{2})年)?(?:(\d{1,2})月)?(\d{1,2})日')
+    result=[]
+    for dm in period_rx.finditer(text):
+        sy,sm,sd,ey,em,ed=dm.groups()
+        try:
+            start=date(int(sy),int(sm),int(sd))
+            month=int(em or sm)
+            end=date(int(ey) if ey else int(sy)+int(month<int(sm)),month,int(ed))
+        except ValueError:continue
+        if not start<=selected<=end:continue
+        # The same official page may advertise PDFs for 場外 races.
+        # Require a positive label that the meeting is held at 飯塚.
+        event=text[dm.end():dm.end()+100]
+        if not re.search(r'飯塚本場開催|本場開催',event):
+            continue
+        label=event.split('（')[0].split('(')[0]
+        gm=re.search(r'(SG|特\s*G(?:III|II|I|[123])|G(?:III|II|I|[123]))',
+                     label,re.I)
+        result.append({
+            'name':'飯塚',
+            'grade':u.autorace_grade(gm.group(1)) if gm else '普通',
+            'day':u.day_label(selected,start,end),
+            'timeType':u.race_time_type(label)})
+    if len(result)>1:
+        raise ValueError('飯塚公式出走表に複数の当日開催情報があります')
+    return result
+
+
+def iizuka_home_meetings(html,selected,u):
+    """Last-resort current-day organizer record, when its PDF list is unavailable.
+
+    The homepage's 本日の開催 section is ephemeral, so never reuse for another
+    calendar date, even when the published date range spans several days.
+    """
+    if selected!=datetime.now(u.TZ).date():return []
+    soup=BeautifulSoup(html,'html.parser')
+    text=normalize_text(soup.get_text(' ',strip=True))
+    title=normalize_text(soup.title.get_text(' ',strip=True)) if soup.title else ''
+    if '飯塚' not in title or 'RACE INFORMATION' not in text:
+        raise ValueError('飯塚公式トップページの開催情報を確認できません')
+    anchor=text.find('本日の開催')
+    if anchor<0:raise ValueError('飯塚公式トップの当日開催欄がありません')
+    section=text[anchor:anchor+280].split('SCHEDULE')[0]
+    if '飯塚本場開催' not in section:return []
+    m=re.search(r'(?<!\d)(\d{2})/(\d{1,2})/(\d{1,2})\s*\([^)]*\)\s*'
+                r'[-～〜~]\s*(\d{2})/(\d{1,2})/(\d{1,2})',section)
+    if not m:return []
+    yy,mm,dd,yy2,mm2,dd2=map(int,m.groups())
+    try:
+        start=date(2000+yy,mm,dd);end=date(2000+yy2,mm2,dd2)
+    except ValueError:return []
+    if not start<=selected<=end:return []
+    event=section.split('飯塚本場開催',1)[1].split(m.group(0))[0]
+    gm=re.search(r'(SG|特\s*G(?:III|II|I|[123])|G(?:III|II|I|[123]))',
+                 event,re.I)
+    return [{'name':'飯塚','grade':u.autorace_grade(gm.group(1)) if gm else '普通',
+             'day':u.day_label(selected,start,end),
+             'timeType':u.race_time_type(event)}]
