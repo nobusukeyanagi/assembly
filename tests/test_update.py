@@ -893,6 +893,19 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(result,{'grade':'普通','timeType':'ナイター'})
         mismatch='<h4>SG第58回</h4><p>11/22(日) ～ 11/25(水)</p>'
         self.assertNotIn('grade',mori_meeting_metadata(html,date(2026,11,22),'川口',mismatch))
+    def test_mori_double_kawaguchi_does_not_guess_day_or_night(self):
+        html='<h2>2026年11月 開催日程</h2>'
+        for venue in ('川口','伊勢崎','浜松','飯塚','山陽'):
+            html+=f'<h3>{venue} オートレース</h3>'
+            if venue=='川口':
+                html+='<a>11月20日 〜 11月22日SG日本選手権</a>'
+                html+='<a>11月20日 〜 11月22日川口ナイトレース</a>'
+            else:
+                html+='<a>11月1日 〜 11月2日普通開催</a>'
+                html+='<a>11月5日 〜 11月7日普通開催</a>'
+        # Mori's venue name alone is not enough to identify his session.
+        self.assertEqual(mori_meeting_metadata(
+            html,date(2026,11,20),'川口'),{})
     def test_mori_missing_meeting_no_guessed_metadata(self):
         html='<h2>2026年12月 開催日程</h2>'
         self.assertEqual(mori_meeting_metadata(html,date(2026,11,22),'川口'),{})
