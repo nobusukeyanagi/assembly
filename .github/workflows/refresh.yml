@@ -183,8 +183,17 @@ jobs:
                           line=f"  公式出走表の未照合 {missed.get('name','-')}: {missed.get('reason','-')}"
                           print(line)
                           lines.append(line)
+                  retained=checked.get('retainedVerifiedVenues',[])
+                  if retained:
+                      notice=(f"{fname} {title}: 前回同日確認済みの開催を保持 "
+                              f"{'・'.join(retained)}")
+                      print(f"::warning::{notice}")
+                      lines.append(f"  同日保存データから復元: {'・'.join(retained)}")
+                  if section.get('recoveredFromArchive'):
+                      print(f"::warning::{fname} {title}: 全取得元が失敗し同日保存データを採用")
                   if section.get('status')=='error':
-                      print(f"::warning::{fname} {title}: 全取得元を確認できませんでした")
+                      print(f"::warning::{fname} {title}: 開催情報を確認できず、表示は空欄")
+                      lines.append(f"  {title}: 要調査（全取得元失敗、同日保存なし）")
                   if key=='mori' and isinstance(section.get('item'),dict):
                       item=section['item']
                       races=item.get('races') or ([item['race']] if isinstance(item.get('race'),int) else [])

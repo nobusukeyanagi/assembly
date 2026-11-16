@@ -35,6 +35,10 @@ class DisplayModeTests(unittest.TestCase):
         self.assertNotIn("- cron: '40 14 * * *'",workflow)
         self.assertEqual(workflow.count("set --mode 当日"),1)
         self.assertIn("python scripts/history_cache.py --input data/today.json",workflow)
+        # Verified snapshots from code updates are also persisted. Otherwise
+        # a successful code-push run could disappear at the next refresh.
+        self.assertIn("name: Save snapshots and mode in repository",workflow)
+        self.assertNotIn("github.event_name != 'push'",workflow)
         update_command="run: python scripts/display_mode.py set --mode 当日"
         selected_fetch="name: Gather the selected date from public schedules"
         self.assertIn(schedule_step,workflow)
