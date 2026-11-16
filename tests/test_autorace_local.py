@@ -1,5 +1,6 @@
 import calendar
 import unittest
+from unittest.mock import patch
 from datetime import date, datetime, timedelta
 from pathlib import Path
 import sys
@@ -7,6 +8,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import autorace_local
 import update
+import verified_sources
 
 
 def grid(year, month, venue='山陽', event='山陽ミッドナイト', place='本場開催'):
@@ -55,6 +57,23 @@ class OfficialHostCalendarTests(unittest.TestCase):
                                   'day':None,'timeType':'ミッドナイト'}])
         self.assertEqual(autorace_local.homepage_meetings(
             html,today-timedelta(days=10),'山陽',update),[])
+
+    def test_winticket_and_other_sources_down_still_keep_official_venue(self):
+        """One host-verified date remains visible even when WINTICKET is 403."""
+        target = date(2026, 11, 20)
+        def fetch(_session, url, params=None):
+            if url == autorace_local.SANYO_CALENDAR:
+                return grid(2026, 11)
+            raise RuntimeError('403 unavailable: ' + url)
+        with patch.object(update, 'fetch', side_effect=fetch):
+            result = verified_sources.auto(object(), target, None, update)
+        self.assertEqual(result['status'], 'ok')
+        self.assertEqual(result['items'][0]['name'], '山陽')
+        self.assertEqual(result['items'][0]['day'], '2日目')
+        self.assertEqual(result['items'][0]['timeType'], 'ミッドナイト')
+        self.assertEqual(result['items'][0]['confirmedBy'],
+                         ['山陽オート公式日程'])
+        self.assertEqual(len(result['items']), 1)
 
     def test_homepage_no_local_race_is_not_evidence(self):
         today=datetime.now(update.TZ).date()
