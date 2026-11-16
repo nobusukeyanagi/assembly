@@ -34,6 +34,7 @@ on:
       - scripts/autorace_official.py
       - scripts/schedule_enrichment.py
       - scripts/history_cache.py
+      - scripts/forecast.py
       - scripts/finals.py
       - scripts/display_mode.py
       - requirements.txt
@@ -67,7 +68,7 @@ jobs:
         run: |
           node --check app.js
           node --check holidays.js
-          python -m py_compile scripts/update.py scripts/verified_sources.py scripts/autorace_official.py scripts/schedule_enrichment.py scripts/history_cache.py scripts/finals.py
+          python -m py_compile scripts/update.py scripts/verified_sources.py scripts/autorace_official.py scripts/schedule_enrichment.py scripts/history_cache.py scripts/forecast.py scripts/finals.py
       - name: Unit tests
         run: |
           python -m unittest discover -s tests -v
@@ -94,6 +95,10 @@ jobs:
 
       - name: Gather today's information
         run: python scripts/update.py
+
+      - name: Pre-check tomorrow's verified race schedule
+        if: ${{ github.event_name == 'schedule' && (github.event.schedule == '10 0 * * *' || github.event.schedule == '10 8 * * *') }}
+        run: python scripts/forecast.py
 
       - name: Retain verified daily history for future historical dates
         if: ${{ github.event_name != 'push' }}
