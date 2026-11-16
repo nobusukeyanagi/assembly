@@ -1,6 +1,6 @@
 {
   "date": "2026-11-16",
-  "updatedAt": "2026-11-16T12:11+09:00",
+  "updatedAt": "2026-11-16T14:26+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -292,6 +292,7 @@
           "grade": [
             "AUTORACE.JP年間グレード日程",
             "AUTORACE.JP出走表",
+            "川口市公式広報2026年2月",
             "川口オート公式日程",
             "伊勢崎オート公式日程",
             "飯塚オート公式出走表",
@@ -306,6 +307,7 @@
           "day": [
             "AUTORACE.JP年間グレード日程",
             "AUTORACE.JP出走表",
+            "川口市公式広報2026年2月",
             "川口オート公式日程",
             "伊勢崎オート公式日程",
             "飯塚オート公式出走表",
@@ -320,6 +322,7 @@
           "timeType": [
             "AUTORACE.JP年間グレード日程",
             "AUTORACE.JP出走表",
+            "川口市公式広報2026年2月",
             "川口オート公式日程",
             "伊勢崎オート公式日程",
             "飯塚オート公式出走表",

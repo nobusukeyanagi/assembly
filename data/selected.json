@@ -1,6 +1,6 @@
 {
   "date": "2026-02-06",
-  "updatedAt": "2026-11-16T12:11+09:00",
+  "updatedAt": "2026-11-16T14:25+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -167,10 +167,106 @@
       }
     },
     "auto": {
-      "status": "error",
-      "items": [],
-      "message": "すべてのオートレース開催日程が取得できません",
+      "status": "ok",
+      "items": [
+        {
+          "name": "川口",
+          "girls": false,
+          "confirmedBy": [
+            "川口市公式広報2026年2月"
+          ],
+          "grade": "普通",
+          "day": "最終日",
+          "timeType": "デイ",
+          "fieldSources": {
+            "grade": "川口市公式広報2026年2月",
+            "day": "川口市公式広報2026年2月",
+            "timeType": "川口市公式広報2026年2月"
+          }
+        },
+        {
+          "name": "川口２",
+          "girls": false,
+          "confirmedBy": [
+            "川口市公式広報2026年2月"
+          ],
+          "grade": "普通",
+          "day": "最終日",
+          "timeType": "ナイター",
+          "fieldSources": {
+            "grade": "川口市公式広報2026年2月",
+            "day": "川口市公式広報2026年2月",
+            "timeType": "川口市公式広報2026年2月"
+          }
+        }
+      ],
       "verification": {
+        "providers": {
+          "川口市公式広報2026年2月": 2
+        },
+        "crossConfirmed": 0,
+        "singleSource": 2,
+        "gradeCrossConfirmed": 0,
+        "fieldCoverage": {
+          "grade": 2,
+          "day": 2,
+          "timeType": 2,
+          "girlsDetected": 0
+        },
+        "priorityPolicy": {
+          "grade": [
+            "AUTORACE.JP年間グレード日程",
+            "AUTORACE.JP出走表",
+            "川口市公式広報2026年2月",
+            "川口オート公式日程",
+            "伊勢崎オート公式日程",
+            "飯塚オート公式出走表",
+            "飯塚オート公式トップ",
+            "浜松オート公式日程",
+            "山陽オート公式日程",
+            "浜松オート公式当日案内",
+            "山陽オート公式当日案内",
+            "WINTICKET指定月",
+            "オッズパーク日別"
+          ],
+          "day": [
+            "AUTORACE.JP年間グレード日程",
+            "AUTORACE.JP出走表",
+            "川口市公式広報2026年2月",
+            "川口オート公式日程",
+            "伊勢崎オート公式日程",
+            "飯塚オート公式出走表",
+            "飯塚オート公式トップ",
+            "浜松オート公式日程",
+            "山陽オート公式日程",
+            "浜松オート公式当日案内",
+            "山陽オート公式当日案内",
+            "WINTICKET指定月",
+            "オッズパーク日別"
+          ],
+          "timeType": [
+            "AUTORACE.JP年間グレード日程",
+            "AUTORACE.JP出走表",
+            "川口市公式広報2026年2月",
+            "川口オート公式日程",
+            "伊勢崎オート公式日程",
+            "飯塚オート公式出走表",
+            "飯塚オート公式トップ",
+            "浜松オート公式日程",
+            "山陽オート公式日程",
+            "浜松オート公式当日案内",
+            "山陽オート公式当日案内",
+            "WINTICKET指定月",
+            "オッズパーク日別"
+          ],
+          "girls": [
+            "AUTORACE.JP出走表",
+            "オッズパーク日別",
+            "WINTICKET指定月"
+          ]
+        },
+        "conflicts": [],
+        "ignoredFields": [],
         "errors": [
           [
             "WINTICKET指定月",
@@ -180,6 +276,19 @@
             "AUTORACE.JP年間グレード日程",
             "AUTORACE.JPの対象年度グレード日程を確認できません"
           ]
+        ],
+        "officialConfirmed": [],
+        "officialConfirmedCount": 0,
+        "organizerConfirmed": {
+          "川口市公式広報2026年2月": [
+            "川口",
+            "川口２"
+          ]
+        },
+        "ambiguousTwoMeetings": [],
+        "officialVerifiedVenues": [
+          "川口",
+          "川口２"
         ],
         "unconfirmedOfficial": [
           {
