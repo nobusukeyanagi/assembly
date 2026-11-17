@@ -7,7 +7,7 @@ import autorace_sessions
 import finals
 import history_cache
 from unicodedata import normalize
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import requests
@@ -548,6 +548,42 @@ def mori_previous_item(previous,today):
     return item
 
 
+def mori_recent_assignment(target, root=None, lookback_days=14):
+    """Reuse a recently verified future assignment across midnight outages.
+
+    Daily snapshots are keyed by their own calendar date, so a normal
+    same-day history lookup cannot retain yesterday's next appearance.
+    Read only previously published, successful Mori sections; never
+    fabricate a race number, turn an upcoming assignment into a confirmed
+    same-day start, or bring forward a meeting that has already begun.
+    """
+    root=Path(root) if root is not None else ROOT
+    for age in range(1,lookback_days+1):
+        snapshot_date=target-timedelta(days=age)
+        path=root/'data'/'history'/(snapshot_date.isoformat()+'.json')
+        try:
+            saved=json.loads(path.read_text(encoding='utf-8'))
+            if not isinstance(saved,dict) or saved.get('date')!=snapshot_date.isoformat():
+                continue
+            section=saved.get('sections',{}).get('mori',{})
+            if not isinstance(section,dict) or section.get('status') not in ('ok','cached','partial'):
+                continue
+            item=mori_previous_item(saved,target)
+            if not item or item.get('type')!='next':
+                continue
+            meeting_date=date.fromisoformat(item['date'])
+            if meeting_date<=target or (meeting_date-snapshot_date).days>45:
+                continue
+            # The preserved record is a verified assignment, not proof that
+            # the rider will start in any particular race on the event day.
+            result=dict(item)
+            result['retainedFromDate']=snapshot_date.isoformat()
+            return result
+        except (OSError,TypeError,ValueError,AttributeError):
+            continue
+    return None
+
+
 AUTO_SITE_CODES={'川口':'02','伊勢崎':'03','浜松':'04','飯塚':'05','山陽':'06'}
 
 
@@ -813,9 +849,14 @@ def collect(today,s,previous=None):
         mori_start_times(s,item,previous,today)
     else:
         cached=mori_previous_item(previous,today)
+        if not cached:
+            cached=mori_recent_assignment(today)
         if cached:
-            sections['mori']=ok(item=cached)
-            log.warning('森選手: 前回確認済みの将来予定を継続')
+            sections['mori']=dict(ok(item=cached),status='cached',
+                                  note='取得元が失敗したため、直近の確認済み次回予定を継続')
+            log.warning('森選手: 確認済みの次回予定を継続 %s %s (元データ日付 %s)',
+                        cached['date'],cached['name'],
+                        cached.get('retainedFromDate',today.isoformat()))
         else:
             sections['mori']=bad('公式・WINTICKET・オッズパークの日程を確認できません')
     out['finals']=finals.collect(s,today,sections,active,previous)
