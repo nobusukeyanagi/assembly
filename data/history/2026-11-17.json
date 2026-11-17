@@ -1,6 +1,6 @@
 {
   "date": "2026-11-17",
-  "updatedAt": "2026-11-17T09:10+09:00",
+  "updatedAt": "2026-11-17T09:37+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -533,9 +533,18 @@
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
     },
     "mori": {
-      "status": "error",
+      "status": "cached",
       "items": [],
-      "message": "公式・WINTICKET・オッズパークの日程を確認できません"
+      "item": {
+        "date": "2026-11-22",
+        "name": "川口",
+        "type": "next",
+        "unconfirmed": true,
+        "grade": "普通",
+        "timeType": "ナイター",
+        "retainedFromDate": "2026-11-16"
+      },
+      "note": "取得元が失敗したため、直近の確認済み次回予定を継続"
     }
   },
   "finals": {
