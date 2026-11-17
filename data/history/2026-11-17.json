@@ -1,6 +1,6 @@
 {
   "date": "2026-11-17",
-  "updatedAt": "2026-11-17T09:58+09:00",
+  "updatedAt": "2026-11-17T16:49+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
