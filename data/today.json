@@ -1,6 +1,6 @@
 {
   "date": "2026-11-18",
-  "updatedAt": "2026-11-18T08:28+09:00",
+  "updatedAt": "2026-11-18T16:19+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -421,7 +421,6 @@
           "girls": true,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇",
             "BOAT RACE公式G3日程"
           ],
           "grade": "G3",
@@ -440,8 +439,7 @@
           "name": "びわこ",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
+            "BOAT RACE公式"
           ],
           "grade": "一般",
           "day": "5日目",
@@ -455,8 +453,7 @@
           "name": "宮島",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
+            "BOAT RACE公式"
           ],
           "grade": "一般",
           "day": "2日目",
@@ -470,8 +467,7 @@
           "name": "桐生",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
+            "BOAT RACE公式"
           ],
           "grade": "一般",
           "day": "2日目",
@@ -486,8 +482,7 @@
           "name": "若松",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
+            "BOAT RACE公式"
           ],
           "grade": "一般",
           "day": "最終日",
@@ -502,12 +497,11 @@
       "verification": {
         "providers": {
           "BOAT RACE公式": 5,
-          "きょうの競艇": 5,
           "BOAT RACE公式G3日程": 1
         },
-        "crossConfirmed": 5,
-        "singleSource": 0,
-        "gradeCrossConfirmed": 4,
+        "crossConfirmed": 1,
+        "singleSource": 4,
+        "gradeCrossConfirmed": 0,
         "fieldCoverage": {
           "grade": 5,
           "day": 5,
@@ -545,26 +539,15 @@
             "alternative": "一般",
             "source": "BOAT RACE公式",
             "alternativeSource": "BOAT RACE公式"
-          },
-          {
-            "name": "びわこ",
-            "field": "grade",
-            "primary": "一般",
-            "selectedSource": "BOAT RACE公式",
-            "alternative": "G1",
-            "source": "きょうの競艇",
-            "alternativeSource": "きょうの競艇"
           }
         ],
-        "ignoredFields": [
-          {
-            "name": "びわこ",
-            "field": "day",
-            "source": "きょうの競艇",
-            "reason": "採用グレードとの不一致"
-          }
-        ],
-        "errors": []
+        "ignoredFields": [],
+        "errors": [
+          [
+            "きょうの競艇",
+            "日別ボート一覧の全場数が不一致: 10/11"
+          ]
+        ]
       },
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
     },
