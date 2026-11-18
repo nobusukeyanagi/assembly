@@ -1,6 +1,6 @@
 {
   "date": "2026-11-19",
-  "updatedAt": "2026-11-19T02:09+09:00",
+  "updatedAt": "2026-11-19T07:55+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -30,6 +30,7 @@
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
           ],
@@ -37,6 +38,7 @@
           "day": "初日",
           "timeType": "モーニング",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "fieldSources": {
@@ -51,6 +53,7 @@
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
           ],
@@ -58,6 +61,7 @@
           "day": "最終日",
           "timeType": "モーニング",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "fieldSources": {
@@ -72,6 +76,7 @@
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F1",
@@ -88,6 +93,7 @@
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F1",
@@ -104,12 +110,14 @@
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F2",
           "day": "最終日",
           "timeType": "ナイター",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "fieldSources": {
@@ -144,6 +152,7 @@
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F2",
@@ -160,6 +169,7 @@
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F2",
@@ -175,6 +185,7 @@
       "verification": {
         "providers": {
           "楽天Kドリームス": 8,
+          "KEIRIN HEX": 7,
           "KEIRIN.JP": 8,
           "KEIRIN.JPモーニング日程": 2
         },
@@ -216,13 +227,46 @@
             "楽天Kドリームス"
           ]
         },
-        "conflicts": [],
+        "conflicts": [
+          {
+            "name": "松山",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          },
+          {
+            "name": "静岡",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          },
+          {
+            "name": "宇都宮",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          },
+          {
+            "name": "高知",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          }
+        ],
         "ignoredFields": [],
         "errors": [
-          [
-            "KEIRIN HEX",
-            "HTTPSConnectionPool(host='keirinhex.jp', port=443): Max retries exceeded with url: /races/20261119/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='keirinhex.jp', port=443) at 0x7f966e120fb0>, 'Connection to keirinhex.jp timed out. (connect timeout=10)'))"
-          ],
           [
             "WINTICKET 2026年11月決勝日程",
             "403 Client Error:  for url: https://www.winticket.jp/keirin/campaign/pK2vUymUNoU1cwWwXXQm14"
@@ -235,8 +279,22 @@
       }
     },
     "auto": {
-      "status": "partial",
+      "status": "ok",
       "items": [
+        {
+          "name": "川口",
+          "girls": false,
+          "confirmedBy": [
+            "川口オート公式日程"
+          ],
+          "grade": "G2",
+          "day": "初日",
+          "timeType": null,
+          "fieldSources": {
+            "grade": "川口オート公式日程",
+            "day": "川口オート公式日程"
+          }
+        },
         {
           "name": "浜松",
           "girls": false,
@@ -251,30 +309,16 @@
             "grade": "AUTORACE.JP年間グレード日程",
             "day": "AUTORACE.JP年間グレード日程"
           }
-        },
-        {
-          "name": "川口",
-          "girls": false,
-          "confirmedBy": [
-            "川口オート公式日程"
-          ],
-          "grade": "G2",
-          "day": "初日",
-          "timeType": null,
-          "fieldSources": {
-            "grade": "川口オート公式日程",
-            "day": "川口オート公式日程"
-          },
-          "restoredFromEarlierFetch": true
         }
       ],
       "verification": {
         "providers": {
           "AUTORACE.JP年間グレード日程": 1,
+          "川口オート公式日程": 1,
           "浜松オート公式日程": 1
         },
         "crossConfirmed": 1,
-        "singleSource": 0,
+        "singleSource": 1,
         "gradeCrossConfirmed": 1,
         "fieldCoverage": {
           "grade": 2,
@@ -340,14 +384,6 @@
           [
             "WINTICKET指定月",
             "403 Client Error:  for url: https://www.winticket.jp/autorace/schedules/202611"
-          ],
-          [
-            "川口オート公式日程",
-            "HTTPSConnectionPool(host='www.kawaguchiauto.jp', port=443): Max retries exceeded with url: /race-calender/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.kawaguchiauto.jp', port=443) at 0x7f9664f7d700>, 'Connection to www.kawaguchiauto.jp timed out. (connect timeout=10)'))"
-          ],
-          [
-            "伊勢崎オート公式日程",
-            "HTTPSConnectionPool(host='www.isesaki-auto.jp', port=443): Max retries exceeded with url: /race/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.isesaki-auto.jp', port=443) at 0x7f9664f7ccb0>, 'Connection to www.isesaki-auto.jp timed out. (connect timeout=10)'))"
           ]
         ],
         "officialConfirmed": [],
@@ -356,13 +392,17 @@
           "AUTORACE.JP年間グレード日程": [
             "浜松"
           ],
+          "川口オート公式日程": [
+            "川口"
+          ],
           "浜松オート公式日程": [
             "浜松"
           ]
         },
         "ambiguousTwoMeetings": [],
         "officialVerifiedVenues": [
-          "浜松"
+          "浜松",
+          "川口"
         ],
         "unconfirmedOfficial": [
           {
@@ -407,9 +447,6 @@
             "name": "山陽",
             "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=06&kaisaiBi=20261119"
           }
-        ],
-        "retainedVerifiedVenues": [
-          "川口"
         ]
       }
     },
