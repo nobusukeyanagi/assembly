@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {layoutRows,isEmptyVenueSection,venueStatusText}=require('../app.js');
+const {layoutRows,isEmptyVenueSection,venueStatusText,resolveSnapshot}=require('../app.js');
 
 // The same function used by the published browser determines all row counts.
 function sections(keirin,soda,keirinStatus='ok',sodaStatus='ok',auto=0,autoStatus='ok'){
@@ -60,4 +60,27 @@ assert.equal(venueStatusText({status:'ok',items:[]},true,'selected'),'');
 assert.equal(venueStatusText({status:'cached',items:[]},true,'today'),'');
 assert.equal(venueStatusText({status:'partial',items:[{name:'川口'}]},false),null);
 assert.equal(venueStatusText({status:'ok',items:[{name:'浜松'}]},false,'today'),null);
+// When a nightly scheduled workflow is late, serve a dated verified snapshot
+// rather than silently hiding all venues for the new day.
+const todayChoice={mode:'today',date:'2026-11-19'};
+const yesterday={date:'2026-11-18',sections:sections(8,5)};
+const todayData={date:'2026-11-19',sections:sections(7,4)};
+const reserve={date:'2026-11-19',purpose:'verified-next-day-fallback',
+               sections:sections(8,4,'ok','ok',2)};
+assert.equal(resolveSnapshot(todayChoice,yesterday,reserve).mode,'forecast');
+assert.equal(resolveSnapshot(todayChoice,yesterday,reserve).data.sections.auto.items.length,2);
+assert.deepEqual(layoutRows(resolveSnapshot(todayChoice,yesterday,reserve).data.sections,false),
+                 {keirinRows:2,autoRows:1,sodaRows:1,totalRows:4});
+assert.equal(resolveSnapshot(todayChoice,todayData,reserve).mode,'today');
+assert.equal(resolveSnapshot(todayChoice,todayData,reserve).data,todayData);
+assert.equal(resolveSnapshot(todayChoice,yesterday,
+                 {...reserve,date:'2026-11-18'}).mode,'unavailable');
+assert.equal(resolveSnapshot(todayChoice,yesterday,
+                 {...reserve,purpose:'unverified'}).mode,'unavailable');
+assert.equal(resolveSnapshot(todayChoice,yesterday,
+                 {...reserve,sections:{}}).mode,'unavailable');
+assert.equal(resolveSnapshot({mode:'selected',date:'2026-11-19'},
+                 yesterday,reserve).mode,'unavailable');
+assert.equal(resolveSnapshot(todayChoice,null,reserve).mode,'forecast');
+
 console.log('Layout tests passed: dynamic rows, unified band notices, errors, cache, stale data');
