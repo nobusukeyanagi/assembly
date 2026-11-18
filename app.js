@@ -305,6 +305,23 @@ function onSpaceKey(event){
   event.preventDefault();
   advanceFinal();
 }
+function resolveSnapshot(choice, primary, backup){
+  // Never display yesterday's race venues under today's date. Only an
+  // independently verified, date-matched next-day snapshot can bridge a
+  // skipped/delayed GitHub Actions 01:10 run.
+  if(primary&&primary.date===choice.date&&primary.sections){
+    return {data:primary,mode:choice.mode};
+  }
+  if(choice.mode==='today'&&backup&&backup.date===choice.date&&
+     backup.purpose==='verified-next-day-fallback'&&backup.sections&&
+     ['keirin','auto','soda'].some(k=>
+       backup.sections[k]&&
+       ['ok','cached','partial'].includes(backup.sections[k].status)&&
+       Array.isArray(backup.sections[k].items))){
+    return {data:backup,mode:'forecast'};
+  }
+  return {data:{date:choice.date,sections:{}},mode:'unavailable'};
+}
 function render(data,targetDate,mode){
   latest=data;
   const stale=data.date!==targetDate,s=data.sections||{};
@@ -314,7 +331,11 @@ function render(data,targetDate,mode){
   stage.style.setProperty('--auto-rows',String(layout.autoRows));
   stage.style.setProperty('--soda-rows',String(layout.sodaRows));
   stage.dataset.totalRows=String(layout.totalRows);
-  get('display-mode-indicator').hidden=mode!=='selected';
+  const indicator=get('display-mode-indicator');
+  const indicatorLabel={selected:'日付指定表示',forecast:'事前確認情報',
+                        unavailable:'更新待ち'}[mode];
+  indicator.textContent=indicatorLabel||'';
+  indicator.hidden=!indicatorLabel;
   dateDisplay(targetDate);
   entries('keirin',s.keirin,stale);
   entries('auto',s.auto,stale);
@@ -341,19 +362,36 @@ async function displayChoice(){
 }
 async function refresh(){
   const choice=await displayChoice();
+  let primary=null, backup=null;
   try{
     const response=await fetch('./data/'+choice.file+'?v='+Date.now(),{cache:'no-store'});
     if(!response.ok)throw Error('HTTP '+response.status);
     const data=await response.json();
     if(!data.date||!data.sections)throw Error('Missing schedule fields');
-    render(data,choice.date,choice.mode);
+    primary=data;
   }catch(err){
-    if(!(latest&&latest.date===choice.date))render({date:choice.date,sections:{}},choice.date,choice.mode);
-    console.warn(err);
+    console.warn('Current schedule unavailable',err);
   }
+  if(choice.mode==='today'&&(!primary||primary.date!==choice.date)){
+    try{
+      const response=await fetch('./data/forecast/'+choice.date+'.json?v='+Date.now(),
+                                 {cache:'no-store'});
+      if(!response.ok)throw Error('Forecast HTTP '+response.status);
+      backup=await response.json();
+    }catch(err){
+      console.warn('Date-specific verified reserve unavailable',err);
+    }
+  }
+  const selected=resolveSnapshot(choice,primary,backup);
+  // A transient request failure must not clear a verified same-day display.
+  if(selected.mode==='unavailable'&&latest&&latest.date===choice.date&&
+     ['keirin','auto','soda'].some(k=>
+       latest.sections?.[k]&&Array.isArray(latest.sections[k].items)&&
+       latest.sections[k].items.length>0))return;
+  render(selected.data,choice.date,selected.mode);
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={layoutRows,isEmptyVenueSection,venueStatusText,finalRaceText,displayGrade,isMajorGrade,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
+if(typeof module!=='undefined'&&module.exports)module.exports={resolveSnapshot,layoutRows,isEmptyVenueSection,venueStatusText,finalRaceText,displayGrade,isMajorGrade,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
