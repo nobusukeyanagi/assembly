@@ -244,6 +244,10 @@ jobs:
           cp index.html app.js holidays.js styles.css .nojekyll dist/
           cp data/today.json data/display.json dist/data/
           if [ -f data/selected.json ]; then cp data/selected.json dist/data/; fi
+          mkdir -p dist/data/forecast
+          for snapshot in data/forecast/????-??-??.json; do
+            if [ -f "$snapshot" ]; then cp "$snapshot" dist/data/forecast/; fi
+          done
       # One-time prerequisite: Settings > Pages > Source = GitHub Actions
       - name: Configure Pages
         uses: actions/configure-pages@v6
