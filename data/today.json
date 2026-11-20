@@ -1,6 +1,6 @@
 {
   "date": "2026-11-20",
-  "updatedAt": "2026-11-20T08:00+09:00",
+  "updatedAt": "2026-11-20T16:06+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -395,7 +395,6 @@
           "girls": true,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇",
             "BOAT RACE公式G3日程"
           ],
           "grade": "G3",
@@ -414,8 +413,7 @@
           "name": "宮島",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
+            "BOAT RACE公式"
           ],
           "grade": "一般",
           "day": "4日目",
@@ -429,8 +427,7 @@
           "name": "芦屋",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
+            "BOAT RACE公式"
           ],
           "grade": "一般",
           "day": "初日",
@@ -444,8 +441,7 @@
           "name": "桐生",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
+            "BOAT RACE公式"
           ],
           "grade": "一般",
           "day": "4日目",
@@ -460,12 +456,11 @@
       "verification": {
         "providers": {
           "BOAT RACE公式": 4,
-          "きょうの競艇": 4,
           "BOAT RACE公式G3日程": 1
         },
-        "crossConfirmed": 4,
-        "singleSource": 0,
-        "gradeCrossConfirmed": 3,
+        "crossConfirmed": 1,
+        "singleSource": 3,
+        "gradeCrossConfirmed": 0,
         "fieldCoverage": {
           "grade": 4,
           "day": 4,
@@ -503,26 +498,15 @@
             "alternative": "一般",
             "source": "BOAT RACE公式",
             "alternativeSource": "BOAT RACE公式"
-          },
-          {
-            "name": "芦屋",
-            "field": "grade",
-            "primary": "一般",
-            "selectedSource": "BOAT RACE公式",
-            "alternative": "G3",
-            "source": "きょうの競艇",
-            "alternativeSource": "きょうの競艇"
           }
         ],
-        "ignoredFields": [
-          {
-            "name": "芦屋",
-            "field": "day",
-            "source": "きょうの競艇",
-            "reason": "採用グレードとの不一致"
-          }
-        ],
-        "errors": []
+        "ignoredFields": [],
+        "errors": [
+          [
+            "きょうの競艇",
+            "日別ボート一覧の全場数が不一致: 11/12"
+          ]
+        ]
       },
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
     },
