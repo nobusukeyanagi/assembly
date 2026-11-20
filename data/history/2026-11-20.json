@@ -1,6 +1,6 @@
 {
   "date": "2026-11-20",
-  "updatedAt": "2026-11-20T02:19+09:00",
+  "updatedAt": "2026-11-20T08:00+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -29,6 +29,7 @@
           "name": "福井",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
@@ -51,6 +52,7 @@
           "name": "西武園",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -67,6 +69,7 @@
           "name": "大垣",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -83,6 +86,7 @@
           "name": "小倉",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP"
           ],
           "grade": "G1",
@@ -102,6 +106,7 @@
           "name": "前橋",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -118,6 +123,7 @@
           "name": "名古屋",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -133,13 +139,14 @@
       ],
       "verification": {
         "providers": {
+          "楽天Kドリームス": 6,
           "KEIRIN HEX": 5,
           "KEIRIN.JP": 6,
           "KEIRIN.JPモーニング日程": 1
         },
-        "crossConfirmed": 5,
-        "singleSource": 1,
-        "gradeCrossConfirmed": 5,
+        "crossConfirmed": 6,
+        "singleSource": 0,
+        "gradeCrossConfirmed": 6,
         "fieldCoverage": {
           "grade": 6,
           "day": 6,
@@ -198,8 +205,8 @@
         "ignoredFields": [],
         "errors": [
           [
-            "楽天Kドリームス",
-            "指定日の開催一覧がありません: 2026年11月20日 開催一覧"
+            "WINTICKET 2026年11月決勝日程",
+            "403 Client Error:  for url: https://www.winticket.jp/keirin/campaign/pK2vUymUNoU1cwWwXXQm14"
           ],
           [
             "CTC開催日程",
