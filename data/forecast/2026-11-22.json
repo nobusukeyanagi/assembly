@@ -1,6 +1,6 @@
 {
   "date": "2026-11-22",
-  "createdAt": "2026-11-21T03:56+09:00",
+  "createdAt": "2026-11-21T17:59+09:00",
   "purpose": "verified-next-day-fallback",
   "sections": {
     "keirin": {
@@ -380,7 +380,7 @@
       }
     },
     "soda": {
-      "status": "ok",
+      "status": "cached",
       "items": [
         {
           "name": "戸田",
@@ -553,7 +553,8 @@
           ]
         ]
       },
-      "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
+      "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。",
+      "recoveredFromArchive": true
     }
   }
 }

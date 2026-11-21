@@ -1,6 +1,6 @@
 {
   "date": "2026-11-21",
-  "updatedAt": "2026-11-21T07:37+09:00",
+  "updatedAt": "2026-11-21T15:59+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -385,125 +385,114 @@
           "name": "戸田",
           "girls": true,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇",
-            "BOAT RACE公式G3日程"
+            "きょうの競艇"
           ],
           "grade": "G3",
           "day": "4日目",
           "timeType": null,
+          "fieldSources": {
+            "grade": "きょうの競艇",
+            "day": "きょうの競艇",
+            "girls": "BOAT RACE公式G3日程"
+          },
           "girlsConfirmedBy": [
             "BOAT RACE公式G3日程"
-          ],
-          "fieldSources": {
-            "grade": "BOAT RACE公式G3日程",
-            "day": "BOAT RACE公式",
-            "girls": "BOAT RACE公式G3日程"
-          }
+          ]
         },
         {
           "name": "多摩川",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
             "きょうの競艇"
           ],
           "grade": "一般",
           "day": "初日",
           "timeType": null,
           "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
+            "grade": "きょうの競艇",
+            "day": "きょうの競艇"
           }
         },
         {
           "name": "三国",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇",
-            "BOAT RACE公式G3日程"
+            "きょうの競艇"
           ],
           "grade": "G3",
           "day": "初日",
           "timeType": null,
           "fieldSources": {
-            "grade": "BOAT RACE公式G3日程",
-            "day": "BOAT RACE公式"
+            "grade": "きょうの競艇",
+            "day": "きょうの競艇"
           }
         },
         {
           "name": "宮島",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
             "きょうの競艇"
           ],
           "grade": "一般",
           "day": "5日目",
           "timeType": null,
           "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
+            "grade": "きょうの競艇",
+            "day": "きょうの競艇"
           }
         },
         {
           "name": "芦屋",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
             "きょうの競艇"
           ],
-          "grade": "一般",
+          "grade": "G3",
           "day": "2日目",
           "timeType": null,
           "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
+            "grade": "きょうの競艇",
+            "day": "きょうの競艇"
           }
         },
         {
           "name": "桐生",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
             "きょうの競艇"
           ],
           "grade": "一般",
           "day": "5日目",
           "timeType": "ナイター",
           "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式",
-            "timeType": "BOAT RACE公式"
+            "grade": "きょうの競艇",
+            "day": "きょうの競艇",
+            "timeType": "きょうの競艇"
           }
         },
         {
           "name": "蒲郡",
           "girls": false,
           "confirmedBy": [
-            "BOAT RACE公式",
             "きょうの競艇"
           ],
           "grade": "一般",
           "day": "初日",
           "timeType": "ナイター",
           "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式",
-            "timeType": "BOAT RACE公式"
+            "grade": "きょうの競艇",
+            "day": "きょうの競艇",
+            "timeType": "きょうの競艇"
           }
         }
       ],
       "verification": {
         "providers": {
-          "BOAT RACE公式": 7,
-          "きょうの競艇": 7,
-          "BOAT RACE公式G3日程": 2
+          "きょうの競艇": 7
         },
-        "crossConfirmed": 7,
-        "singleSource": 0,
-        "gradeCrossConfirmed": 6,
+        "crossConfirmed": 0,
+        "singleSource": 7,
+        "gradeCrossConfirmed": 0,
         "fieldCoverage": {
           "grade": 7,
           "day": 7,
@@ -532,44 +521,24 @@
             "きょうの競艇"
           ]
         },
-        "conflicts": [
-          {
-            "name": "戸田",
-            "field": "grade",
-            "primary": "G3",
-            "selectedSource": "BOAT RACE公式G3日程",
-            "alternative": "一般",
-            "source": "BOAT RACE公式",
-            "alternativeSource": "BOAT RACE公式"
-          },
-          {
-            "name": "三国",
-            "field": "grade",
-            "primary": "G3",
-            "selectedSource": "BOAT RACE公式G3日程",
-            "alternative": "一般",
-            "source": "BOAT RACE公式",
-            "alternativeSource": "BOAT RACE公式"
-          },
-          {
-            "name": "芦屋",
-            "field": "grade",
-            "primary": "一般",
-            "selectedSource": "BOAT RACE公式",
-            "alternative": "G3",
-            "source": "きょうの競艇",
-            "alternativeSource": "きょうの競艇"
-          }
+        "conflicts": [],
+        "ignoredFields": [],
+        "errors": [
+          [
+            "BOAT RACE公式",
+            "403 Client Error: Forbidden for url: https://www.boatrace.jp/owpc/pc/race/index?hd=20261121"
+          ],
+          [
+            "BOAT RACE公式G3日程",
+            "403 Client Error: Forbidden for url: https://www.boatrace.jp/owpc/pc/race/gradesch?hcd=03"
+          ]
         ],
-        "ignoredFields": [
+        "restoredFromArchive": [
           {
-            "name": "芦屋",
-            "field": "day",
-            "source": "きょうの競艇",
-            "reason": "採用グレードとの不一致"
+            "venue": "戸田",
+            "field": "girls"
           }
-        ],
-        "errors": []
+        ]
       },
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
     },
