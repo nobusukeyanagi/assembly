@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from unicodedata import normalize
 
 from bs4 import BeautifulSoup
+import meeting_order
 import schedule_enrichment
 import autorace_sessions
 import autorace_official
@@ -101,7 +102,9 @@ def cached_section(previous,selected,category):
     if not isinstance(result,dict) or result.get('status') not in ('ok','cached','partial'):return None
     items=result.get('items')
     if not isinstance(items,list) or not items:return None
-    return dict(result,status='cached',note='取得元の障害により同じ日付の前回確認済みデータを再表示',
+    return dict(result,status='cached',
+                items=meeting_order.sort_meetings(items,category),
+                note='取得元の障害により同じ日付の前回確認済みデータを再表示',
                 reusedFrom=previous.get('updatedAt'))
 
 # Highest-ranked, date-checked source wins per field, not per entire row.
@@ -240,9 +243,7 @@ def reconcile(category,lists,venue_order,sort_by_time):
             provenance['girls']=min(positive,key=lambda source:source_rank(category,'girls',source))
         result['fieldSources']=provenance
         merged.append(result)
-    merged.sort(key=lambda x:venue_order.index(x['name'])
-                if x['name'] in venue_order else len(venue_order))
-    ordered=sort_by_time(merged)
+    ordered=sort_by_time(merged,venue_order,category)
     fields=('grade','day','timeType')
     verification={
         'providers':providers,
@@ -322,6 +323,8 @@ def restore_same_date_fields(result,previous,selected,category):
         coverage['girlsDetected']=sum(r.get('girls') is True for r in result['items'])
         result['verification']['sameDateRestored']=restorations
         LOG.info('%s 過去日の同日データ補完: %s',category,restorations)
+        # A restored night/midnight slot may change the meeting's position.
+        result['items']=meeting_order.sort_meetings(result['items'],category)
     return result
 
 def parse_keirin_month_finals(html,selected,archive,u):
