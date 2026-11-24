@@ -2,6 +2,7 @@
 """JST daily meeting collector. Public official schedules; failures are visible."""
 from __future__ import annotations
 import argparse, json, logging, re, sys
+import meeting_order
 import verified_sources
 import mori_racecards
 import autorace_sessions
@@ -36,9 +37,9 @@ AUTO_OFFICIAL='https://autorace.jp/race_info/Program/'
 KAWAGUCHI_SCHEDULE='https://www.kawaguchiauto.jp/race-calender/'
 NIGHT_BOAT={'桐生','蒲郡','若松'}
 SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','auto_hamamatsu_official':'https://www.hamamatsuauto.jp/calendar/','auto_sanyo_official':'https://sanyoauto.jp/calendar/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_start_time':MORI_RACE_START,'mori_official_start_time':MORI_OFFICIAL_START,'mori_chariloto_start_time':MORI_CHARILOTO_START,'mori_date_entrants':MORI_DATED_RACE,'mori_kawaguchi_start_times':MORI_KAWAGUCHI_NIGHT,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
-KEIRIN_NAMES='函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本'.split()
+KEIRIN_NAMES=meeting_order.KEIRIN_VENUES
 AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
-SODA_NAMES='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
+SODA_NAMES=meeting_order.SODA_VENUES
 DATE_RANGE=re.compile(r'(\d{1,2})\s*/\s*(\d{1,2})\s*[^\d/]{0,8}[～~〜\-－]\s*(\d{1,2})\s*/\s*(\d{1,2})')
 BOAT_RANGE=re.compile(r'(\d{1,2})\s*/\s*(\d{1,2})\s*[-～~]\s*(\d{1,2})\s*/\s*(\d{1,2})')
 GRADES=re.compile(r'^(?:GP|SG|PG[ⅠI1]|特G[ⅠI1]|G[123ⅠⅡⅢI]{1,3}|F[12]|一般|普通)$',re.I)
@@ -95,10 +96,17 @@ def soup_with_alt(html):
         if val:img.replace_with(' '+val+' ')
     return soup
 
-def sort_by_time(items):
-    """Stable morning, day, night, midnight order; unknowns stay unlabelled."""
-    order={'モーニング':0,'デイ':1,None:1,'ナイター':2,'ミッドナイト':3}
-    return sorted(items,key=lambda item:order.get(item.get('timeType'),4))
+def sort_by_time(items,venue_order=None,category=None):
+    """Sort verified meeting cards; preserve legacy stable order for raw parser tests.
+
+    Once a sport and its venue sequence are known, use session -> grade ->
+    venue precedence. Original time-only ordering is used for parsers whose
+    sport is not yet determined.
+    """
+    if category:
+        return meeting_order.sort_meetings(items,category,venue_order)
+    return sorted(items,key=lambda item:meeting_order.TIME_RANK.get(
+        item.get('timeType'),4))
 
 def parse_keirin(html,today):
     """Read verified KEIRIN.JP schedule grade, time category, and day."""
