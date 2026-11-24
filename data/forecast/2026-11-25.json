@@ -1,6 +1,6 @@
 {
   "date": "2026-11-25",
-  "createdAt": "2026-11-24T05:07+09:00",
+  "createdAt": "2026-11-24T18:49+09:00",
   "purpose": "verified-next-day-fallback",
   "sections": {
     "keirin": {
@@ -10,6 +10,7 @@
           "name": "武雄",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
           ],
@@ -30,6 +31,7 @@
           "name": "静岡",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP"
           ],
           "grade": "F1",
@@ -45,6 +47,7 @@
           "name": "福井",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP"
           ],
           "grade": "F1",
@@ -57,24 +60,10 @@
           }
         },
         {
-          "name": "西武園",
-          "girls": false,
-          "confirmedBy": [
-            "KEIRIN.JP"
-          ],
-          "grade": "F2",
-          "day": "最終日",
-          "timeType": "ナイター",
-          "fieldSources": {
-            "grade": "KEIRIN.JP",
-            "day": "KEIRIN.JP",
-            "timeType": "KEIRIN.JP"
-          }
-        },
-        {
           "name": "松山",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP"
           ],
           "grade": "F1",
@@ -87,9 +76,26 @@
           }
         },
         {
+          "name": "西武園",
+          "girls": false,
+          "confirmedBy": [
+            "楽天Kドリームス",
+            "KEIRIN.JP"
+          ],
+          "grade": "F2",
+          "day": "最終日",
+          "timeType": "ナイター",
+          "fieldSources": {
+            "grade": "KEIRIN.JP",
+            "day": "KEIRIN.JP",
+            "timeType": "KEIRIN.JP"
+          }
+        },
+        {
           "name": "川崎",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP"
           ],
           "grade": "F2",
@@ -109,6 +115,7 @@
           "name": "四日市",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP"
           ],
           "grade": "F2",
@@ -128,6 +135,7 @@
           "name": "玉野",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN.JP"
           ],
           "grade": "F2",
@@ -146,12 +154,13 @@
       ],
       "verification": {
         "providers": {
+          "楽天Kドリームス": 8,
           "KEIRIN.JP": 8,
           "KEIRIN.JPモーニング日程": 1
         },
-        "crossConfirmed": 1,
-        "singleSource": 7,
-        "gradeCrossConfirmed": 0,
+        "crossConfirmed": 8,
+        "singleSource": 0,
+        "gradeCrossConfirmed": 8,
         "fieldCoverage": {
           "grade": 8,
           "day": 8,
@@ -191,12 +200,12 @@
         "ignoredFields": [],
         "errors": [
           [
-            "楽天Kドリームス",
-            "指定日の開催一覧がありません: 2026年11月25日 開催一覧"
-          ],
-          [
             "KEIRIN HEX",
             "404 Client Error: Not Found for url: https://keirinhex.jp/races/20261125/"
+          ],
+          [
+            "WINTICKET 2026年11月決勝日程",
+            "403 Client Error:  for url: https://www.winticket.jp/keirin/campaign/pK2vUymUNoU1cwWwXXQm14"
           ],
           [
             "CTC開催日程",
@@ -358,20 +367,6 @@
       "status": "ok",
       "items": [
         {
-          "name": "多摩川",
-          "girls": false,
-          "confirmedBy": [
-            "BOAT RACE公式"
-          ],
-          "grade": "一般",
-          "day": "5日目",
-          "timeType": null,
-          "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
-          }
-        },
-        {
           "name": "三国",
           "girls": false,
           "confirmedBy": [
@@ -383,6 +378,20 @@
           "timeType": null,
           "fieldSources": {
             "grade": "BOAT RACE公式G3日程",
+            "day": "BOAT RACE公式"
+          }
+        },
+        {
+          "name": "多摩川",
+          "girls": false,
+          "confirmedBy": [
+            "BOAT RACE公式"
+          ],
+          "grade": "一般",
+          "day": "5日目",
+          "timeType": null,
+          "fieldSources": {
+            "grade": "BOAT RACE公式",
             "day": "BOAT RACE公式"
           }
         },
