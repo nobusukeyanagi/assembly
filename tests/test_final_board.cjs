@@ -144,9 +144,13 @@ assert.doesNotMatch(appSource,/['"`][^'"`]*(?:情報確認中|出走予定確認
                     'do not render pending-verification text');
 assert.match(html,/id="page-indicator"[^>]*class="page-indicator"[^>]*hidden/,
              'only show page dots when there is at least one final');
-assert.match(css,/\.page-indicator\s*\{[^}]*position:\s*absolute;[^}]*top:\s*62px;[^}]*right:\s*24px;/s,
+assert.match(css,/\.page-indicator\s*\{[^}]*position:\s*absolute;[^}]*top:\s*20px;[^}]*right:\s*24px;/s,
              'dots are small and at the top-right');
-assert.match(css,/\.page-dot\s*\{[^}]*width:\s*12px;[^}]*height:\s*12px;[^}]*border-radius:\s*50%;/s);
+assert.match(css,/\.page-dot\s*\{[^}]*width:\s*16px;[^}]*height:\s*16px;[^}]*border-radius:\s*50%;/s);
+assert.match(css,/\\.page-indicator\\s*\\{[^}]*gap:\\s*10px;/s,
+             'keep the existing 10px gap between enlarged dots');
+assert.match(css,/\\.header:has\\(\\.page-indicator:not\\(\\[hidden\\]\\)\\) #display-mode-indicator:not\\(\\[hidden\\]\\)\\s*\\{[^}]*top:\\s*56px;/s,
+             'selected-date badge stays clear of the higher pagination dots');
 assert.match(css,/\.page-dot\.is-active\s*\{[^}]*background:\s*var\(--ink\);/s);
 assert.match(css,/\.final-row\s*\{[^}]*border-bottom:\s*1px solid color-mix\(in srgb, var\(--line\) 85%, var\(--ink\)\);/s,
              'one shade darker than the shared default line');
