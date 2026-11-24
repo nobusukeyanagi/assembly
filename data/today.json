@@ -1,6 +1,6 @@
 {
   "date": "2026-11-24",
-  "updatedAt": "2026-11-24T11:53+09:00",
+  "updatedAt": "2026-11-24T11:54+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -108,23 +108,6 @@
           }
         },
         {
-          "name": "西武園",
-          "girls": false,
-          "confirmedBy": [
-            "楽天Kドリームス",
-            "KEIRIN HEX",
-            "KEIRIN.JP"
-          ],
-          "grade": "F2",
-          "day": "2日目",
-          "timeType": "ナイター",
-          "fieldSources": {
-            "grade": "KEIRIN.JP",
-            "day": "KEIRIN.JP",
-            "timeType": "KEIRIN.JP"
-          }
-        },
-        {
           "name": "松山",
           "girls": false,
           "confirmedBy": [
@@ -134,6 +117,23 @@
           ],
           "grade": "F1",
           "day": "初日",
+          "timeType": "ナイター",
+          "fieldSources": {
+            "grade": "KEIRIN.JP",
+            "day": "KEIRIN.JP",
+            "timeType": "KEIRIN.JP"
+          }
+        },
+        {
+          "name": "西武園",
+          "girls": false,
+          "confirmedBy": [
+            "楽天Kドリームス",
+            "KEIRIN HEX",
+            "KEIRIN.JP"
+          ],
+          "grade": "F2",
+          "day": "2日目",
           "timeType": "ナイター",
           "fieldSources": {
             "grade": "KEIRIN.JP",
@@ -478,21 +478,6 @@
           }
         },
         {
-          "name": "多摩川",
-          "girls": false,
-          "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
-          ],
-          "grade": "一般",
-          "day": "4日目",
-          "timeType": null,
-          "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
-          }
-        },
-        {
           "name": "三国",
           "girls": false,
           "confirmedBy": [
@@ -505,6 +490,21 @@
           "timeType": null,
           "fieldSources": {
             "grade": "BOAT RACE公式G3日程",
+            "day": "BOAT RACE公式"
+          }
+        },
+        {
+          "name": "多摩川",
+          "girls": false,
+          "confirmedBy": [
+            "BOAT RACE公式",
+            "きょうの競艇"
+          ],
+          "grade": "一般",
+          "day": "4日目",
+          "timeType": null,
+          "fieldSources": {
+            "grade": "BOAT RACE公式",
             "day": "BOAT RACE公式"
           }
         },
