@@ -204,6 +204,31 @@ function finalIdentity(item){
 function nextFinalIndex(index,length){
   return length>0 ? (index+1<length ? index+1 : -1) : -1;
 }
+function pageIndicatorState(finalCount,finalIndex){
+  // Position 0 is the venue list, followed by one position per racecard.
+  const total=Math.max(0,finalCount)+1;
+  const active=finalIndex>=0&&finalIndex<finalCount?finalIndex+1:0;
+  return {visible:finalCount>0,total,active};
+}
+function paintPageIndicator(){
+  const pager=get('page-indicator');
+  const state=pageIndicatorState(finalCards.length,activeFinalIndex);
+  pager.hidden=!state.visible;
+  if(!state.visible){
+    pager.replaceChildren();
+    return;
+  }
+  const dots=[];
+  for(let i=0;i<state.total;i++){
+    const dot=node('span','page-dot'+(i===state.active?' is-active':''));
+    dot.setAttribute('aria-hidden','true');
+    dots.push(dot);
+  }
+  pager.replaceChildren(...dots);
+  const label=state.active===0?'場一覧':'出走表 '+state.active+'/'+finalCards.length;
+  pager.setAttribute('aria-label',
+    label+'（'+(state.active+1)+'/'+state.total+'ページ）');
+}
 function finalRaceLabel(name){
   if(String(name).includes('優勝戦'))return '優勝戦';
   if(String(name).includes('決勝'))return '決勝';
@@ -244,6 +269,7 @@ function paintFinal(){
   const screen=get('final-screen');
   stage.classList.toggle('is-final',active);
   screen.hidden=!active;
+  paintPageIndicator();
   if(!active)return;
   const data=finalCards[activeFinalIndex];
   const board=get('final-card');
@@ -397,7 +423,7 @@ async function refresh(){
   render(selected.data,choice.date,selected.mode);
 }
 // Allow unit testing the actual row selection logic without a browser.
-if(typeof module!=='undefined'&&module.exports)module.exports={resolveSnapshot,layoutRows,isEmptyVenueSection,venueStatusText,finalRaceText,displayGrade,isMajorGrade,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
+if(typeof module!=='undefined'&&module.exports)module.exports={pageIndicatorState,resolveSnapshot,layoutRows,isEmptyVenueSection,venueStatusText,finalRaceText,displayGrade,isMajorGrade,verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalEventLabel,finalRiderName,finalSort};
 if(typeof document==='undefined')return;
 resize();
 addEventListener('resize',resize);
