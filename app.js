@@ -122,7 +122,13 @@ function mori(section,stale,targetDate){
   const status=get('mori-status');
   status.textContent='';
   root.replaceChildren();
-  if(stale||!section||section.status==='error'||!section.item)return;
+  // A failed profile/racecard lookup is not proof of no next appearance.
+  // Show a distinct unverified state instead of an inexplicably empty tile.
+  if(stale||!section||section.status==='error'||!section.item){
+    status.textContent=stale?'更新待ち':'次回未確認';
+    root.replaceChildren(node('div','venue mori-primary','確認中'));
+    return;
+  }
   const x=section.item;
   const isToday=x.type==='today'&&x.date===targetDate;
   const numbers=Array.isArray(x.races)?x.races:[x.race];
