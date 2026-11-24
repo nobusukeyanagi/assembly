@@ -139,7 +139,7 @@ def parse_keirin(html,today):
         gr=None;time_type=None;girls=False
     if sum(bool(DATE_RANGE.search(t)) for t in tokens)<12:raise ValueError('競輪開催日程のDOMを解析できません')
     if not items:raise ValueError('競輪開催場を特定できません')
-    return sort_by_time(items)
+    return sort_by_time(items,KEIRIN_NAMES,'keirin')
 
 
 def parse_keirin_archive(html, target):
