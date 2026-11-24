@@ -144,7 +144,7 @@ assert.doesNotMatch(appSource,/['"`][^'"`]*(?:情報確認中|出走予定確認
                     'do not render pending-verification text');
 assert.match(html,/id="page-indicator"[^>]*class="page-indicator"[^>]*hidden/,
              'only show page dots when there is at least one final');
-assert.match(css,/\.page-indicator\s*\{[^}]*position:\s*absolute;[^}]*top:\s*78px;[^}]*right:\s*24px;/s,
+assert.match(css,/\.page-indicator\s*\{[^}]*position:\s*absolute;[^}]*top:\s*62px;[^}]*right:\s*24px;/s,
              'dots are small and at the top-right');
 assert.match(css,/\.page-dot\s*\{[^}]*width:\s*12px;[^}]*height:\s*12px;[^}]*border-radius:\s*50%;/s);
 assert.match(css,/\.page-dot\.is-active\s*\{[^}]*background:\s*var\(--ink\);/s);
