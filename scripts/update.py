@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse, json, logging, re, sys
 import verified_sources
+import mori_racecards
 import autorace_sessions
 import finals
 import history_cache
@@ -27,12 +28,14 @@ MORI_HISTORY='https://handicapper.jp/riders/118'
 MORI_RACE_START='https://autorace.tokyo-sports.co.jp/list/race/{day}{venue}{race}'
 MORI_OFFICIAL_START='https://autorace.jp/race_info/{section}/{venue}/{date}_{race}'
 MORI_CHARILOTO_START='https://www.chariloto.com/auto/athletes/{day}/{venue}'
+MORI_DATED_RACE=mori_racecards.PREDICTIONS
+MORI_KAWAGUCHI_NIGHT=mori_racecards.KAWAGUCHI_NIGHT
 ASSEN='https://sp.atrc.jp/racer/racerasseninfo/player_id/2529'
 ODDSPARK='https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529'
 AUTO_OFFICIAL='https://autorace.jp/race_info/Program/'
 KAWAGUCHI_SCHEDULE='https://www.kawaguchiauto.jp/race-calender/'
 NIGHT_BOAT={'桐生','蒲郡','若松'}
-SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','auto_hamamatsu_official':'https://www.hamamatsuauto.jp/calendar/','auto_sanyo_official':'https://sanyoauto.jp/calendar/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_start_time':MORI_RACE_START,'mori_official_start_time':MORI_OFFICIAL_START,'mori_chariloto_start_time':MORI_CHARILOTO_START,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
+SOURCES={'keirin':KEIRIN,'keirin_archive':KEIRIN_ARCHIVE,'keirin_races':KEIRIN_RACES,'auto':AUTO,'auto_official':'https://autorace.jp/','auto_hamamatsu_official':'https://www.hamamatsuauto.jp/calendar/','auto_sanyo_official':'https://sanyoauto.jp/calendar/','soda':'https://so-da.jp/aud/top','soda_schedule':BOAT,'mori':MORI,'mori_history':MORI_HISTORY,'mori_start_time':MORI_RACE_START,'mori_official_start_time':MORI_OFFICIAL_START,'mori_chariloto_start_time':MORI_CHARILOTO_START,'mori_date_entrants':MORI_DATED_RACE,'mori_kawaguchi_start_times':MORI_KAWAGUCHI_NIGHT,'mori_official':ASSEN,'mori_racecard':ODDSPARK,'auto_racecard':AUTO_OFFICIAL,'mori_venue_schedule':KAWAGUCHI_SCHEDULE}
 KEIRIN_NAMES='函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本'.split()
 AUTO_NAMES={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
 SODA_NAMES='桐生 戸田 多摩川 浜名湖 蒲郡 三国 びわこ 宮島 若松 芦屋'.split()
@@ -715,6 +718,16 @@ def mori_start_times(s,item,previous=None,selected=None):
             fetch(s,source),day,item['name'],races).items()})
     except Exception as exc:
         log.info('チャリロト日別発走時刻 %s: %s',item['name'],exc)
+    # Kawaguchi night racing publishes a date-qualified 1R–8R schedule.
+    # This is independent of rider profiles and betting/closing time links.
+    if item['name']=='川口' and any(str(n) not in found for n in races):
+        try:
+            official_times=mori_racecards.kawaguchi_night_starts(
+                fetch(s,MORI_KAWAGUCHI_NIGHT),day,races)
+            for num,clock in official_times.items():
+                found.setdefault(str(num),clock)
+        except Exception as exc:
+            log.info('川口ナイト公式発走時刻: %s',exc)
     for number in races:
         if str(number) in found:continue
         uri=MORI_RACE_START.format(day=day.strftime('%Y%m%d'),venue=venue,race=number)
@@ -819,6 +832,28 @@ def collect(today,s,previous=None):
                 candidate.setdefault('type','today' if dt==today else 'next')
                 candidates.setdefault((candidate['date'],candidate['name']),[]).append((source,candidate))
         except Exception as e:log.warning('森選手 %s 日程取得失敗: %s',source,e)
+    # Dated rider entries are independent of the three profile endpoints:
+    # all three often return HTTP 403 from GitHub-hosted runners.  Read only
+    # confirmed meetings (and independently confirm today's name and race).
+    if sections['auto'].get('status') in ('ok','cached','partial'):
+        seen_venues=set()
+        for meeting in sections['auto'].get('items',[]):
+            venue=meeting.get('name')
+            if venue=='川口２':venue='川口'
+            if venue not in AUTO_NAMES or venue in seen_venues:continue
+            seen_venues.add(venue)
+            url=MORI_DATED_RACE.format(
+                venue=mori_racecards.CODES[venue],day=today.isoformat())
+            try:
+                races=mori_racecards.predictions(fetch(s,url),today,venue)
+                if races:
+                    candidate={'date':today.isoformat(),'name':venue,
+                               'type':'today','races':races,
+                               'race':races[0],'source':'dated-entrant-list'}
+                    candidates.setdefault((candidate['date'],venue),[]).append(
+                        ('dated-racecard',candidate))
+            except Exception as exc:
+                log.warning('森選手 %s 当日出走表取得失敗: %s',venue,exc)
     if candidates:
         scored=[]
         for key,records in candidates.items():
@@ -843,6 +878,15 @@ def collect(today,s,previous=None):
                 except Exception as e:log.info('森選手の川口公式開催日程を照合できません: %s',e)
             item.update(mori_meeting_metadata(monthly_html,scheduled,item['name'],venue_html))
         except Exception as e:log.warning('森選手の次回開催属性を確認できません: %s',e)
+        # The verified race-calendar row contains the correct meeting
+        # grade/slot, even when WINTICKET's month endpoint is unavailable.
+        if item['type']=='today':
+            matching=[r for r in sections['auto'].get('items',[])
+                      if r.get('name')==item['name']]
+            if len(matching)==1:
+                for field in ('grade','timeType'):
+                    if matching[0].get(field):
+                        item.setdefault(field,matching[0][field])
         if item['type']=='today' and not item.get('races') and not isinstance(item.get('race'),int):
             sections['mori']={'status':'partial','items':[],'item':item,'message':'出走R確認中'}
         else:sections['mori']=ok(item=item)
