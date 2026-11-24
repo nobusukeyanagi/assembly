@@ -486,7 +486,7 @@ h1 {
    Keep below the top-right selected-date label when both are visible. */
 .page-indicator {
   position: absolute;
-  top: 78px;
+  top: 62px;
   right: 24px;
   z-index: 2;
   display: flex;
