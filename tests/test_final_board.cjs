@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {verifiedFinals,nextFinalIndex,splitFinalRiders,finalRaceLabel,finalRaceText,finalEventLabel,finalRiderName,finalSort,displayGrade,isMajorGrade}=require('../app.js');
+const {verifiedFinals,nextFinalIndex,pageIndicatorState,splitFinalRiders,finalRaceLabel,finalRaceText,finalEventLabel,finalRiderName,finalSort,displayGrade,isMajorGrade}=require('../app.js');
 const day='2026-11-03';
 const card=(sport,venue,race,time)=>({
   sport,venue,race,startTime:time,event:'SG日本選手権オートレース',
@@ -20,6 +20,23 @@ assert.equal(verifiedFinals({date:day,finals:{items:[
   {...card('auto','浜松',12,'16:10'),raceName:'最終予選'}]}},day).length,0);
 assert.deepEqual([-1,0,1,2,3].map(i=>nextFinalIndex(i,3)),[0,1,2,-1,-1]);
 assert.equal(nextFinalIndex(-1,0),-1);
+// Dots represent the venue list plus each verified final, in Space-key order.
+assert.deepEqual(pageIndicatorState(0,-1),{visible:false,total:1,active:0});
+assert.deepEqual(pageIndicatorState(1,-1),{visible:true,total:2,active:0});
+assert.deepEqual(pageIndicatorState(1,0),{visible:true,total:2,active:1});
+for(const [index,expected] of [[-1,0],[0,1],[1,2],[2,3]]){
+  assert.deepEqual(pageIndicatorState(3,index),
+    {visible:true,total:4,active:expected});
+}
+assert.deepEqual(pageIndicatorState(3,3),{visible:true,total:4,active:0});
+let index=-1;
+const pages=[];
+do {
+  pages.push(pageIndicatorState(3,index).active);
+  index=nextFinalIndex(index,3);
+} while(index!==-1);
+pages.push(pageIndicatorState(3,index).active);
+assert.deepEqual(pages,[0,1,2,3,0]);
 const sample=[
   {...card('auto','浜松',11,'15:24'),feature:'mori'},
   {...card('auto','浜松',12,'16:10')},
@@ -125,6 +142,15 @@ assert.equal((appSource.match(/gradeBadge\(/g)||[]).length,4,
 assert.doesNotMatch(html,/読み込み中|確認中/,'initial HTML must be blank until verified data arrives');
 assert.doesNotMatch(appSource,/['"`][^'"`]*(?:情報確認中|出走予定確認中|出走R確認中|発走時刻確認中)[^'"`]*['"`]/,
                     'do not render pending-verification text');
+assert.match(html,/id="page-indicator"[^>]*class="page-indicator"[^>]*hidden/,
+             'only show page dots when there is at least one final');
+assert.match(css,/\.page-indicator\s*\{[^}]*position:\s*absolute;[^}]*top:\s*78px;[^}]*right:\s*24px;/s,
+             'dots are small and at the top-right');
+assert.match(css,/\.page-dot\s*\{[^}]*width:\s*12px;[^}]*height:\s*12px;[^}]*border-radius:\s*50%;/s);
+assert.match(css,/\.page-dot\.is-active\s*\{[^}]*background:\s*var\(--ink\);/s);
+assert.match(css,/\.final-row\s*\{[^}]*border-bottom:\s*1px solid color-mix\(in srgb, var\(--line\) 85%, var\(--ink\)\);/s,
+             'one shade darker than the shared default line');
+assert.match(css,/\.final-row-empty\s*\{[^}]*border-bottom-color:\s*transparent;/s);
 assert.match(html,/id="final-screen"[^>]*hidden/);
 assert.match(html,/<kbd>Space Key<\/kbd><span>で出走表表示<\/span>/);
 console.log('Final board tests passed: race info+grade label 60px, keirin suffix removal, 2-column riders and other text 80px');
