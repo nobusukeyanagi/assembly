@@ -1,6 +1,6 @@
 {
   "date": "2026-11-24",
-  "updatedAt": "2026-11-24T05:06+09:00",
+  "updatedAt": "2026-11-24T11:15+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -16,6 +16,8 @@
     "mori_start_time": "https://autorace.tokyo-sports.co.jp/list/race/{day}{venue}{race}",
     "mori_official_start_time": "https://autorace.jp/race_info/{section}/{venue}/{date}_{race}",
     "mori_chariloto_start_time": "https://www.chariloto.com/auto/athletes/{day}/{venue}",
+    "mori_date_entrants": "https://www.chariloto.com/auto/predictions/{venue}/{day}",
+    "mori_kawaguchi_start_times": "https://www.kawaguchiauto.jp/nightrace/",
     "mori_official": "https://sp.atrc.jp/racer/racerasseninfo/player_id/2529",
     "mori_racecard": "https://sp.oddspark.com/autorace/SpPlayerDetail.do?playerCd=2529",
     "auto_racecard": "https://autorace.jp/race_info/Program/",
@@ -29,6 +31,7 @@
           "name": "広島",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
@@ -46,6 +49,7 @@
           "name": "武雄",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
@@ -68,6 +72,7 @@
           "name": "静岡",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -84,6 +89,7 @@
           "name": "奈良",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -105,6 +111,7 @@
           "name": "西武園",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -121,6 +128,7 @@
           "name": "松山",
           "girls": false,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -137,6 +145,7 @@
           "name": "川崎",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -158,6 +167,7 @@
           "name": "四日市",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -179,6 +189,7 @@
           "name": "玉野",
           "girls": true,
           "confirmedBy": [
+            "楽天Kドリームス",
             "KEIRIN HEX",
             "KEIRIN.JP"
           ],
@@ -199,6 +210,7 @@
       ],
       "verification": {
         "providers": {
+          "楽天Kドリームス": 9,
           "KEIRIN HEX": 9,
           "KEIRIN.JP": 9,
           "KEIRIN.JPモーニング日程": 2
@@ -264,8 +276,8 @@
         "ignoredFields": [],
         "errors": [
           [
-            "楽天Kドリームス",
-            "指定日の開催一覧がありません: 2026年11月24日 開催一覧"
+            "WINTICKET 2026年11月決勝日程",
+            "403 Client Error:  for url: https://www.winticket.jp/keirin/campaign/pK2vUymUNoU1cwWwXXQm14"
           ],
           [
             "CTC開催日程",
@@ -622,14 +634,69 @@
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
     },
     "mori": {
-      "status": "error",
+      "status": "ok",
       "items": [],
-      "message": "公式・WINTICKET・オッズパークの日程を確認できません"
+      "item": {
+        "date": "2026-11-24",
+        "name": "川口",
+        "type": "today",
+        "races": [
+          6
+        ],
+        "race": 6,
+        "source": "dated-entrant-list",
+        "grade": "普通",
+        "timeType": "ナイター",
+        "startTimes": {
+          "6": "20:55"
+        }
+      }
     }
   },
   "finals": {
     "status": "partial",
     "items": [
+      {
+        "sport": "auto",
+        "venue": "川口",
+        "grade": "普通",
+        "event": "令和8年度川口市営 川口ナイトレース 11/22~",
+        "raceName": "準決勝戦",
+        "race": 6,
+        "startTime": "20:55",
+        "riders": [
+          {
+            "number": 1,
+            "name": "谷島 俊行"
+          },
+          {
+            "number": 2,
+            "name": "広瀬 勝光"
+          },
+          {
+            "number": 3,
+            "name": "川原 剛"
+          },
+          {
+            "number": 4,
+            "name": "阿部 剛士"
+          },
+          {
+            "number": 5,
+            "name": "中山 光"
+          },
+          {
+            "number": 6,
+            "name": "森 且行"
+          },
+          {
+            "number": 7,
+            "name": "平田 雅崇"
+          }
+        ],
+        "sourceUrl": "https://autorace.tokyo-sports.co.jp/list/race/20261124026",
+        "feature": "mori"
+      },
       {
         "sport": "soda",
         "venue": "戸田",
@@ -671,8 +738,8 @@
     "verification": {
       "targetDate": "2026-11-24",
       "eligibleMeetings": 1,
-      "confirmedRaces": 1,
-      "moriRaces": 0,
+      "confirmedRaces": 2,
+      "moriRaces": 1,
       "sodaRaces": 1,
       "errors": [
         "SODA 戸田 発走時刻未確認: 発走表記が公式締切時刻と同一のため採用しません"
