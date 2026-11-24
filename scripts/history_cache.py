@@ -10,6 +10,7 @@ import argparse
 import copy
 import json
 import re
+import meeting_order
 from datetime import date
 from pathlib import Path
 
@@ -83,16 +84,14 @@ def merge(prior, current):
                 current_items.append(row)
                 keep.append(name)
             if keep:
-                time_rank={'モーニング':0,'デイ':1,None:1,'ナイター':2,
-                           'ミッドナイト':3}
-                current_items.sort(key=lambda row:time_rank.get(row.get('timeType'),4))
+                current_items[:]=meeting_order.sort_meetings(current_items,sport)
                 checked['retainedVerifiedVenues']=keep
                 after['status']='partial'
                 checked.setdefault('fieldCoverage',{}).update({
                     'grade':sum(bool(r.get('grade')) for r in current_items),
                     'day':sum(bool(r.get('day')) for r in current_items),
-                    'timeType':sum(r.get('timeType') in time_rank and
-                                    r.get('timeType') is not None
+                    'timeType':sum(r.get('timeType') in meeting_order.TIME_RANK
+                                    and r.get('timeType') is not None
                                     for r in current_items),
                     'girlsDetected':sum(r.get('girls') is True for r in current_items)})
         restored=[]
@@ -125,6 +124,10 @@ def merge(prior, current):
             coverage['girlsDetected']=sum(row.get('girls') is True
                 for row in after.get('items',[]))
             checked['restoredFromArchive']=restored
+        # The same-date archive may restore a time category or add an
+        # independently confirmed venue.  Re-apply the board's shared order.
+        if isinstance(after.get('items'),list):
+            after['items']=meeting_order.sort_meetings(after['items'],sport)
     old_mori=previous_sections.get('mori',{}).get('item') if isinstance(
         previous_sections.get('mori'),dict) else None
     new_section=sections.get('mori',{})
