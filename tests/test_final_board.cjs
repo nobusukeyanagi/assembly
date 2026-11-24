@@ -147,9 +147,9 @@ assert.match(html,/id="page-indicator"[^>]*class="page-indicator"[^>]*hidden/,
 assert.match(css,/\.page-indicator\s*\{[^}]*position:\s*absolute;[^}]*top:\s*20px;[^}]*right:\s*24px;/s,
              'dots are small and at the top-right');
 assert.match(css,/\.page-dot\s*\{[^}]*width:\s*16px;[^}]*height:\s*16px;[^}]*border-radius:\s*50%;/s);
-assert.match(css,/\\.page-indicator\\s*\\{[^}]*gap:\\s*10px;/s,
+assert.match(css,/\.page-indicator\s*\{[^}]*gap:\s*10px;/s,
              'keep the existing 10px gap between enlarged dots');
-assert.match(css,/\\.header:has\\(\\.page-indicator:not\\(\\[hidden\\]\\)\\) #display-mode-indicator:not\\(\\[hidden\\]\\)\\s*\\{[^}]*top:\\s*56px;/s,
+assert.match(css,/\.header:has\(\.page-indicator:not\(\[hidden\]\)\) #display-mode-indicator:not\(\[hidden\]\)\s*\{[^}]*top:\s*56px;/s,
              'selected-date badge stays clear of the higher pagination dots');
 assert.match(css,/\.page-dot\.is-active\s*\{[^}]*background:\s*var\(--ink\);/s);
 assert.match(css,/\.final-row\s*\{[^}]*border-bottom:\s*1px solid color-mix\(in srgb, var\(--line\) 85%, var\(--ink\)\);/s,
