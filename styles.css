@@ -377,7 +377,7 @@ h1 {
   justify-content: flex-start;
   gap: 20px;
   padding: 0 10px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 85%, var(--ink));
 }
 .final-row-empty { border-bottom-color: transparent; }
 .final-number {
@@ -481,6 +481,30 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
   .fullscreen-hint { animation: fullscreen-hint-dismiss 0s linear 3s forwards; }
 }
+
+/* Pagination: one dot for the venue list, then one per verified final.
+   Keep below the top-right selected-date label when both are visible. */
+.page-indicator {
+  position: absolute;
+  top: 78px;
+  right: 24px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+.page-indicator[hidden] { display: none; }
+.page-dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: transparent;
+}
+.page-dot.is-active { background: var(--ink); }
 
 /* Label selected-date display without changing the dashboard's grid geometry. */
 #display-mode-indicator {
