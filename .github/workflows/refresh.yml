@@ -30,6 +30,7 @@ on:
       - holidays.js
       - styles.css
       - scripts/update.py
+      - scripts/mori_racecards.py
       - scripts/verified_sources.py
       - scripts/autorace_official.py
       - scripts/autorace_local.py
@@ -71,7 +72,7 @@ jobs:
         run: |
           node --check app.js
           node --check holidays.js
-          python -m py_compile scripts/update.py scripts/verified_sources.py scripts/autorace_official.py scripts/autorace_local.py scripts/autorace_sessions.py scripts/autorace_verified_calendar.py scripts/schedule_enrichment.py scripts/history_cache.py scripts/forecast.py scripts/finals.py
+          python -m py_compile scripts/update.py scripts/mori_racecards.py scripts/verified_sources.py scripts/autorace_official.py scripts/autorace_local.py scripts/autorace_sessions.py scripts/autorace_verified_calendar.py scripts/schedule_enrichment.py scripts/history_cache.py scripts/forecast.py scripts/finals.py
       - name: Unit tests
         run: |
           python -m unittest discover -s tests -v
