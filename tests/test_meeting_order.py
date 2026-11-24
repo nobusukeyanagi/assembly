@@ -87,11 +87,11 @@ class SharedMeetingOrderTests(unittest.TestCase):
 
     def test_reconcile_all_sports_uses_same_rule(self):
         cases=[
-            ('keirin',['西武園','松山'],[row('松山','F1','ナイター'),
+            ('keirin',['松山','西武園'],[row('松山','F1','ナイター'),
                                       row('西武園','F2','ナイター')]),
             ('auto',['浜松','川口'],[row('川口','普通','デイ'),
                                    row('浜松','G1','デイ')]),
-            ('soda',['びわこ','戸田'],[row('びわこ','一般',None),
+            ('soda',['戸田','びわこ'],[row('びわこ','一般',None),
                                     row('戸田','G3',None)]),
         ]
         for sport,want,items in cases:
