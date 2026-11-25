@@ -1,6 +1,6 @@
 {
   "date": "2026-11-25",
-  "updatedAt": "2026-11-25T10:24+09:00",
+  "updatedAt": "2026-11-25T10:30+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -467,59 +467,16 @@
           "confirmedBy": [
             "BOAT RACE公式",
             "きょうの競艇",
+            "ボートレースサーチ開催一覧",
             "BOAT RACE公式G3日程"
           ],
           "grade": "G3",
           "day": "5日目",
-          "timeType": null,
+          "timeType": "モーニング",
           "fieldSources": {
             "grade": "BOAT RACE公式G3日程",
-            "day": "BOAT RACE公式"
-          }
-        },
-        {
-          "name": "多摩川",
-          "girls": false,
-          "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
-          ],
-          "grade": "一般",
-          "day": "5日目",
-          "timeType": null,
-          "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
-          }
-        },
-        {
-          "name": "びわこ",
-          "girls": false,
-          "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
-          ],
-          "grade": "一般",
-          "day": "3日目",
-          "timeType": null,
-          "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
-          }
-        },
-        {
-          "name": "宮島",
-          "girls": false,
-          "confirmedBy": [
-            "BOAT RACE公式",
-            "きょうの競艇"
-          ],
-          "grade": "一般",
-          "day": "初日",
-          "timeType": null,
-          "fieldSources": {
-            "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
+            "day": "BOAT RACE公式",
+            "timeType": "ボートレースサーチ開催一覧"
           }
         },
         {
@@ -527,14 +484,68 @@
           "girls": false,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇"
+            "きょうの競艇",
+            "ボートレースサーチ開催一覧",
+            "BOAT RACE公式マスターズリーグ日程"
+          ],
+          "grade": "G3",
+          "day": "最終日",
+          "timeType": "モーニング",
+          "fieldSources": {
+            "grade": "BOAT RACE公式マスターズリーグ日程",
+            "day": "BOAT RACE公式",
+            "timeType": "ボートレースサーチ開催一覧"
+          }
+        },
+        {
+          "name": "多摩川",
+          "girls": false,
+          "confirmedBy": [
+            "BOAT RACE公式",
+            "きょうの競艇",
+            "ボートレースサーチ開催一覧"
           ],
           "grade": "一般",
-          "day": "最終日",
-          "timeType": null,
+          "day": "5日目",
+          "timeType": "デイ",
           "fieldSources": {
             "grade": "BOAT RACE公式",
-            "day": "BOAT RACE公式"
+            "day": "BOAT RACE公式",
+            "timeType": "ボートレースサーチ開催一覧"
+          }
+        },
+        {
+          "name": "びわこ",
+          "girls": false,
+          "confirmedBy": [
+            "BOAT RACE公式",
+            "きょうの競艇",
+            "ボートレースサーチ開催一覧"
+          ],
+          "grade": "一般",
+          "day": "3日目",
+          "timeType": "デイ",
+          "fieldSources": {
+            "grade": "BOAT RACE公式",
+            "day": "BOAT RACE公式",
+            "timeType": "ボートレースサーチ開催一覧"
+          }
+        },
+        {
+          "name": "宮島",
+          "girls": false,
+          "confirmedBy": [
+            "BOAT RACE公式",
+            "きょうの競艇",
+            "ボートレースサーチ開催一覧"
+          ],
+          "grade": "一般",
+          "day": "初日",
+          "timeType": "デイ",
+          "fieldSources": {
+            "grade": "BOAT RACE公式",
+            "day": "BOAT RACE公式",
+            "timeType": "ボートレースサーチ開催一覧"
           }
         },
         {
@@ -542,7 +553,8 @@
           "girls": false,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇"
+            "きょうの競艇",
+            "ボートレースサーチ開催一覧"
           ],
           "grade": "一般",
           "day": "初日",
@@ -558,20 +570,23 @@
         "providers": {
           "BOAT RACE公式": 6,
           "きょうの競艇": 6,
-          "BOAT RACE公式G3日程": 1
+          "ボートレースサーチ開催一覧": 6,
+          "BOAT RACE公式G3日程": 1,
+          "BOAT RACE公式マスターズリーグ日程": 1
         },
         "crossConfirmed": 6,
         "singleSource": 0,
-        "gradeCrossConfirmed": 5,
+        "gradeCrossConfirmed": 6,
         "fieldCoverage": {
           "grade": 6,
           "day": 6,
-          "timeType": 1,
+          "timeType": 6,
           "girlsDetected": 0
         },
         "priorityPolicy": {
           "grade": [
             "BOAT RACE公式G3日程",
+            "BOAT RACE公式マスターズリーグ日程",
             "BOAT RACE公式",
             "きょうの競艇"
           ],
@@ -582,6 +597,7 @@
           ],
           "timeType": [
             "BOAT RACE公式",
+            "ボートレースサーチ開催一覧",
             "きょうの競艇",
             "BOAT RACE公式G3日程"
           ],
@@ -604,21 +620,14 @@
           {
             "name": "芦屋",
             "field": "grade",
-            "primary": "一般",
-            "selectedSource": "BOAT RACE公式",
-            "alternative": "G3",
-            "source": "きょうの競艇",
-            "alternativeSource": "きょうの競艇"
+            "primary": "G3",
+            "selectedSource": "BOAT RACE公式マスターズリーグ日程",
+            "alternative": "一般",
+            "source": "BOAT RACE公式",
+            "alternativeSource": "BOAT RACE公式"
           }
         ],
-        "ignoredFields": [
-          {
-            "name": "芦屋",
-            "field": "day",
-            "source": "きょうの競艇",
-            "reason": "採用グレードとの不一致"
-          }
-        ],
+        "ignoredFields": [],
         "errors": []
       },
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
@@ -644,7 +653,7 @@
     }
   },
   "finals": {
-    "status": "ok",
+    "status": "partial",
     "items": [
       {
         "sport": "auto",
@@ -686,15 +695,62 @@
         ],
         "sourceUrl": "https://autorace.tokyo-sports.co.jp/list/race/20261125026",
         "feature": "mori"
+      },
+      {
+        "sport": "soda",
+        "venue": "芦屋",
+        "grade": "G3",
+        "event": "マスターズリーグ第8戦",
+        "raceName": "優勝戦",
+        "race": 12,
+        "startTime": null,
+        "officialClosingTime": "14:23",
+        "riders": [
+          {
+            "number": 1,
+            "name": "山口 裕二"
+          },
+          {
+            "number": 2,
+            "name": "森永 淳"
+          },
+          {
+            "number": 3,
+            "name": "宇佐見 淳"
+          },
+          {
+            "number": 4,
+            "name": "江夏 満"
+          },
+          {
+            "number": 5,
+            "name": "平石 和男"
+          },
+          {
+            "number": 6,
+            "name": "田村 隆信"
+          }
+        ],
+        "sourceUrl": "https://www.boatrace.jp/owpc/pc/race/racelist?hd=20261125&jcd=21&rno=12",
+        "sourceName": "BOAT RACE公式",
+        "confirmedBy": [
+          "BOAT RACE公式",
+          "きょうの競艇"
+        ],
+        "sourceErrors": [
+          "ボートレースサーチ: 開催節名を確認できません"
+        ]
       }
     ],
     "verification": {
       "targetDate": "2026-11-25",
-      "eligibleMeetings": 0,
-      "confirmedRaces": 1,
+      "eligibleMeetings": 1,
+      "confirmedRaces": 2,
       "moriRaces": 1,
-      "sodaRaces": 0,
-      "errors": []
+      "sodaRaces": 1,
+      "errors": [
+        "SODA 芦屋 発走時刻未確認: 発走表記が公式締切時刻と同一のため採用しません"
+      ]
     }
   }
 }
