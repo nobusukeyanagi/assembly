@@ -272,6 +272,36 @@ class GradeFinalTests(unittest.TestCase):
         out=collect(object(),day,sections,SimpleNamespace(fetch=fetch))
         self.assertEqual(out["verification"]["sodaRaces"],0)
 
+    def test_netkeirin_fallback_on_hex_failure(self):
+        from finals import NETKEIRIN,parse_netkeirin_final
+        names=['佐藤一郎','田中二郎','山本三郎','鈴木四郎','高橋五郎','山田六郎','渡辺七郎','吉田八郎','小林九郎']
+        rows=''.join(f'<tr><td>{min(i,6)}</td><td>{i}</td><td></td><td><img alt="{n}">{n}</td></tr>' for i,n in enumerate(names,1))
+        html='<title>防府競輪 周防国府杯争奪戦 GIII 2026年11月3日 12R 決　勝 出走表</title><p>S級 決勝 発走 16:26 締切 16:21</p><table><tr><th>枠</th><th>車</th><th>印</th><th>選手名</th></tr>'+rows+'</table>'
+        self.assertEqual(len(parse_netkeirin_final(html,DAY,'防府',12,'G3')['riders']),9)
+        def fetch(_,url):
+            if url==NETKEIRIN.format(day='20261103',venue='63',race=12):return html
+            raise RuntimeError('403')
+        sections={'keirin':{'items':[{'name':'防府','grade':'G3','day':'最終日'}]}}
+        result=collect(object(),DAY,sections,SimpleNamespace(fetch=fetch))
+        self.assertEqual(result['items'][0]['sourceName'],'netkeirin')
+        with self.assertRaises(ValueError):
+            parse_netkeirin_final(html,DAY,'防府',11,'G3')
+
+    def test_auto_odds_alternative_when_primary_is_blocked(self):
+        from finals import AUTO_ODDS_CARD,parse_auto_odds_card
+        names=['佐藤一郎','田中二郎','山本三郎','鈴木四郎','高橋五郎','山田六郎','渡辺七郎','吉田八郎']
+        rows=''.join(f'<tr><td>{i}</td><td>{n} (浜松)</td></tr>' for i,n in enumerate(names,1))
+        html='<h1>優勝戦 4100m(8周)｜2026年11月3日（火） 浜松 12R出走表</h1><table>'+rows+'</table>'
+        # The site uses a full-width divider after the distance.
+        data=parse_auto_odds_card(html,DAY,'浜松',12,'G2')
+        self.assertEqual(len(data['riders']),8)
+        self.assertIsNone(data['startTime'])
+        def fetch(_,url):
+            if url==AUTO_ODDS_CARD.format(day='20261103',venue='04',race=12):return html
+            raise RuntimeError('403')
+        out=collect(object(),DAY,{'auto':{'items':[{'name':'浜松','grade':'G2','day':'最終日'}]}},SimpleNamespace(fetch=fetch))
+        self.assertEqual(out['items'][0]['sourceName'],'オッズパーク')
+
     def test_mori_race_types(self):
         html=auto_detail(11,"準優勝戦").replace("中村　雅人","森　且行")
         race=parse_autorace_race(html,DAY,"浜松",11,"SG",

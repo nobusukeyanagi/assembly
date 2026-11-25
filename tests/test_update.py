@@ -700,6 +700,28 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(out['items'][0]['day'],'4日目')
         self.assertGreaterEqual(out['verification']['crossConfirmed'],1)
 
+    def test_masters_league_separate_official_calendar(self):
+        from verified_sources import BOAT_MASTERS,parse_boat_search_daily
+        from types import SimpleNamespace
+        d=date(2026,11,25)
+        master='<h2>マスターズリーグスケジュール</h2><h3>2026 年</h3><table><tr><td>11/20-11/25</td><td><img alt="芦屋"></td><td>マスターズリーグ第8戦</td></tr></table>'
+        listing='<p>2026年11月25日(水)</p><p>1場で開催</p><a href="/race/2026-11-25/ashiya/">芦屋最終日1R 08:43 モーニング</a>'
+        self.assertEqual(parse_boat_search_daily(listing,d,['芦屋'])[0]['timeType'],'モーニング')
+        with self.assertRaises(ValueError):
+            parse_boat_search_daily(listing,date(2026,11,24),['芦屋'])
+        def fetch(s,url,params=None):
+            if url==BOAT_MASTERS:return master
+            if 'boatrace-search' in url:return listing
+            if 'ikachi' in url:return '<h1>2026年11月25日のボートレース全1場</h1><h2>芦屋G3・最終日・マスターズリーグ第8戦</h2>'
+            if 'gradesch' in url:raise RuntimeError('403')
+            return 'official daily'
+        u=SimpleNamespace(fetch=fetch,BOAT='official',SODA_NAMES=['芦屋'],NIGHT_BOAT=set(),
+                          sort_by_time=sort_by_time,bad=lambda msg:{'status':'error','items':[]},
+                          parse_boat=lambda *args:[{'name':'芦屋','grade':'一般','day':'最終日','timeType':None}])
+        out=verified_soda(object(),d,None,u)
+        self.assertEqual((out['items'][0]['grade'],out['items'][0]['timeType']),('G3','モーニング'))
+        self.assertEqual(out['items'][0]['fieldSources']['grade'],'BOAT RACE公式マスターズリーグ日程')
+
     def test_soda_secondary_works_when_official_is_unavailable(self):
         from types import SimpleNamespace
         d=date(2026,10,12)

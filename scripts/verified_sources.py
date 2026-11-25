@@ -28,6 +28,8 @@ AUTO_OFFICIAL_PATHS={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamama
                      '飯塚':'iizuka','山陽':'sanyou'}
 BOAT_DAILY='https://www.ikachi.org/kyotei/{day}'
 BOAT_G3='https://www.boatrace.jp/owpc/pc/race/gradesch?hcd=03'
+BOAT_MASTERS='https://www.boatrace.jp/owpc/pc/race/gradesch?hcd=06'
+BOAT_SEARCH_DAILY='https://boatrace-search.com/day/{day}/'
 # Published, dated final-race tables. Never guess a campaign URL for months
 # that have not been independently identified and verified.
 KEIRIN_MONTH_FINALS={
@@ -126,9 +128,9 @@ FIELD_SOURCE_PRIORITY={
         'girls':('AUTORACE.JP出走表','オッズパーク日別','WINTICKET指定月'),
     },
     'soda':{
-        'grade':('BOAT RACE公式G3日程','BOAT RACE公式','きょうの競艇'),
+        'grade':('BOAT RACE公式G3日程','BOAT RACE公式マスターズリーグ日程','BOAT RACE公式','きょうの競艇'),
         'day':('BOAT RACE公式','きょうの競艇','BOAT RACE公式G3日程'),
-        'timeType':('BOAT RACE公式','きょうの競艇','BOAT RACE公式G3日程'),
+        'timeType':('BOAT RACE公式','ボートレースサーチ開催一覧','きょうの競艇','BOAT RACE公式G3日程'),
         'girls':('BOAT RACE公式G3日程','BOAT RACE公式','きょうの競艇'),
     },
 }
@@ -159,7 +161,7 @@ def compatible_grade(category,selected_grade,other_grade,grade_source):
     if not valid_field('grade',other_grade) or not valid_field('grade',selected_grade):
         return True
     if selected_grade==other_grade:return True
-    return (category=='soda' and grade_source=='BOAT RACE公式G3日程' and
+    return (category=='soda' and grade_source in ('BOAT RACE公式G3日程','BOAT RACE公式マスターズリーグ日程') and
             selected_grade=='G3' and other_grade in ('一般','普通'))
 
 
@@ -665,10 +667,10 @@ def auto(s,selected,previous,u):
     return result
 
 
-def parse_boat_g3_schedule(html,selected,venue_names):
+def parse_boat_g3_schedule(html,selected,venue_names,heading_label='G3スケジュール'):
     """Read BOAT RACE official G3 annual calendar with year/date/venue checks."""
     soup=BeautifulSoup(html,'html.parser')
-    h2=next((h for h in soup.find_all('h2') if 'G3スケジュール' in h.get_text(' ',strip=True)),None)
+    h2=next((h for h in soup.find_all('h2') if heading_label in h.get_text(' ',strip=True)),None)
     current_year=next((h for h in soup.find_all(['h2','h3'])
                        if re.fullmatch(r'\s*'+str(selected.year)+r'\s*年\s*',
                                        normalize('NFKC',h.get_text(' ',strip=True)))),None)
@@ -710,6 +712,29 @@ def parse_boat_g3_schedule(html,selected,venue_names):
     return found
 
 
+def parse_boat_search_daily(html,selected,venue_names):
+    """Dated independent listing; never infer a grade from a race time."""
+    soup=BeautifulSoup(html,'html.parser')
+    text=normalize('NFKC',soup.get_text(' ',strip=True))
+    if not re.search(rf'{selected.year}年\s*{selected.month}月\s*{selected.day}日',text):
+        raise ValueError('ボートレースサーチの日付が不一致')
+    expected=re.search(r'(\d+)場で開催',text)
+    if not expected:raise ValueError('開催場数を確認できません')
+    names='|'.join(map(re.escape,sorted(BOAT_ALL,key=len,reverse=True)))
+    items={}
+    for a in soup.find_all('a',href=True):
+        value=normalize('NFKC',a.get_text(' ',strip=True))
+        match=re.fullmatch(rf'({names})\s*(初日|最終日|\d+日目)\s*1R\s*\d{{1,2}}:\d{{2}}\s*(モーニング|ナイター)?',value)
+        if not match:continue
+        name,day,slot=match.groups()
+        if f'/race/{selected.isoformat()}/' not in a['href']:continue
+        if name in items:raise ValueError('開催場の重複')
+        items[name]={'name':name,'day':day,'timeType':slot or 'デイ','girls':False}
+    if len(items)!=int(expected.group(1)):
+        raise ValueError('開催場数の不一致')
+    return [row for name,row in items.items() if name in venue_names]
+
+
 def soda(s,selected,previous,u):
     lists=[];errors=[]
     try:
@@ -721,6 +746,10 @@ def soda(s,selected,previous,u):
         rows=parse_ikachi_boat(html,selected,u.SODA_NAMES,u.NIGHT_BOAT)
         if rows:lists.append(('きょうの競艇',rows))
     except Exception as exc:errors.append(('きょうの競艇',str(exc)))
+    try:
+        rows=parse_boat_search_daily(u.fetch(s,BOAT_SEARCH_DAILY.format(day=selected.isoformat())),selected,u.SODA_NAMES)
+        if rows:lists.append(('ボートレースサーチ開催一覧',rows))
+    except Exception as exc:errors.append(('ボートレースサーチ開催一覧',str(exc)))
     if not lists:
         saved=cached_section(previous,selected,'soda')
         return saved if saved else u.bad('すべてのSODA対象開催日程が取得できません')
@@ -738,6 +767,13 @@ def soda(s,selected,previous,u):
             lists.append(('BOAT RACE公式G3日程',matched))
     except Exception as exc:
         errors.append(('BOAT RACE公式G3日程',str(exc)))
+    try:
+        masters=parse_boat_g3_schedule(u.fetch(s,BOAT_MASTERS),selected,u.SODA_NAMES,
+                                      'マスターズリーグスケジュール')
+        matched=[row for row in masters.values()
+                 if any(row['name']==item['name'] for _,items in lists for item in items)]
+        if matched:lists.append(('BOAT RACE公式マスターズリーグ日程',matched))
+    except Exception as exc:errors.append(('BOAT RACE公式マスターズリーグ日程',str(exc)))
     result=reconcile('soda',lists,u.SODA_NAMES,u.sort_by_time)
     result=restore_same_date_fields(result,previous,selected,'soda')
     result['verification']['errors']=errors

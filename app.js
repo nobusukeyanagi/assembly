@@ -183,9 +183,7 @@ function verifiedFinals(data,targetDate){
       : /決勝|優勝戦/.test(r.raceName))&&
     typeof r.venue==='string'&&r.venue.length>0&&
     Number.isInteger(r.race)&&r.race>=1&&r.race<=12&&
-    (r.sport==='soda'
-      ? r.startTime==null||/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime)
-      : /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime))&&
+    (r.startTime==null||/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.startTime))&&
     Array.isArray(r.riders)&&r.riders.length>=5&&r.riders.length<=9&&
     r.riders.every(p=>Number.isInteger(p.number)&&p.number>=1&&p.number<=9&&
                    typeof p.name==='string'&&p.name.length>0)

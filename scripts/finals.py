@@ -393,6 +393,175 @@ def parse_soda_search(html,selected,venue,grade):
     return soda_fallback_card(selected,venue,grade,event,close.group(1).zfill(5),riders,url)
 
 
+
+NETKEIRIN="https://keirin.netkeiba.com/race/entry/?race_id={day}{venue}{race:02d}"
+KEIRIN_CODES=dict(zip(
+    "函館 青森 いわき平 弥彦 前橋 取手 宇都宮 大宮 西武園 京王閣 立川 松戸 千葉 川崎 平塚 小田原 伊東 静岡 名古屋 岐阜 大垣 豊橋 富山 松阪 四日市 福井 奈良 向日町 和歌山 岸和田 玉野 広島 防府 高松 小松島 高知 松山 小倉 久留米 武雄 佐世保 別府 熊本".split(),
+    "11 12 13 21 22 23 24 25 26 27 28 31 32 34 35 36 37 38 42 43 44 45 46 47 48 51 53 54 55 56 61 62 63 71 73 74 75 81 83 84 85 86 87".split()))
+AUTO_OFFICIAL_CARD="https://autorace.jp/race_info/Program/{slug}/{date}_{race}/program?next=1"
+AUTO_SLUGS={"川口":"kawaguchi","伊勢崎":"isesaki","浜松":"hamamatsu","飯塚":"iizuka","山陽":"sanyou"}
+AUTO_ODDS_CARD="https://sp.oddspark.com/autorace/SpRaceInfo.do?joCd={venue}&joCode={venue}&kaisaiBi={day}&opTrackCd={venue}&raceDy={day}&raceNb={race}&raceNo={race}"
+NAME_RX=re.compile(r"[\u3400-\u9fff々ぁ-んァ-ヶー・\s]{2,24}")
+
+
+def strict_numbered_names(rows,minimum,maximum):
+    if not minimum<=len(rows)<=maximum or set(rows)!=set(range(1,len(rows)+1)):
+        raise ValueError("出走者番号・人数が不完全")
+    if len({re.sub(r"\s+","",r["name"]) for r in rows.values()})!=len(rows):
+        raise ValueError("選手名重複")
+    return [rows[i] for i in sorted(rows)]
+
+
+def parse_netkeirin_final(html,selected,venue,race,grade):
+    """Use the dated title, main race type, full-name entry table, and start."""
+    soup=BeautifulSoup(html,"html.parser")
+    title=text_clean(soup.title.get_text(" ",strip=True)) if soup.title else ""
+    g={"G1":"GI","G2":"GII","G3":"GIII","GP":"GP"}[grade]
+    pattern=rf"^{re.escape(venue)}競輪\s+(.+?)\s+(?:{g}|{grade})\s+{selected.year}年0?{selected.month}月0?{selected.day}日\s+{race}R\s+決\s*勝\s+出走表"
+    match=re.search(pattern,title,re.I)
+    if not match:raise ValueError("netkeirin 日付・場・R・グレード・決勝不一致")
+    event=match.group(1)
+    header=text_clean(soup.get_text(" ",strip=True))
+    start=re.search(r"(?:S級\s*決\s*勝|GP\s*決\s*勝|決\s*勝)\s*発走\s*([0-2]?\d:[0-5]\d)\s*締切",header)
+    if not start or not CLOCK.fullmatch(start.group(1).zfill(5)):raise ValueError("決勝発走時刻未確認")
+    for table in soup.find_all("table"):
+        ths=[text_clean(x.get_text(" ",strip=True)) for x in table.find_all("th")]
+        if "車" not in ths or not any("選手名" in x for x in ths):continue
+        rows={}
+        for tr in table.find_all("tr"):
+            cells=tr.find_all("td",recursive=False)
+            if len(cells)<4:continue
+            # Full-name table contains rider photos with Japanese name alt,
+            # not the abbreviated desktop table. Number precedes photo.
+            for j,cell in enumerate(cells):
+                names=[text_clean(img.get("alt","")) for img in cell.find_all("img",alt=True)]
+                names=[n for n in names if NAME_RX.fullmatch(n)]
+                if len(set(names))!=1:continue
+                name=names[0]
+                if j<2:continue
+                # Frame/vehicle columns are leading columns, including
+                # rowspan rows that omit the shared frame.
+                lead=[text_clean(c.get_text(" ",strip=True)) for c in cells[:j]]
+                nums=[]
+                for val in lead[:2]:
+                    if re.fullmatch(r"[1-9]",val):nums.append(int(val))
+                    else:break
+                if not nums:continue
+                n=nums[-1]
+                if n in rows:raise ValueError("車番重複")
+                row={"number":n,"name":name}
+                if SCRATCHED.search(text_clean(cell.get_text(" ",strip=True))):row["status"]="scratched"
+                rows[n]=row
+                break
+        try:riders=strict_numbered_names(rows,7,9)
+        except ValueError:continue
+        return {"sport":"keirin","venue":venue,"grade":grade,"event":event,"raceName":"決勝",
+                "race":race,"startTime":start.group(1).zfill(5),"riders":riders,
+                "sourceName":"netkeirin","sourceUrl":NETKEIRIN.format(day=selected.strftime("%Y%m%d"),venue=KEIRIN_CODES[venue],race=race)}
+    raise ValueError("netkeirin の全選手名を確認できません")
+
+
+def parse_auto_odds_card(html,selected,venue,race,grade,require_mori=False):
+    """Read the actual numbered rider rows, not estimates or betting times."""
+    soup=BeautifulSoup(html,"html.parser")
+    title=text_clean(soup.title.get_text(" ",strip=True)) if soup.title else ""
+    heading=next((text_clean(h.get_text(" ",strip=True)) for h in soup.find_all("h1")
+                  if re.search(r"\d{4}年",h.get_text(" ",strip=True))),title)
+    match=re.match(rf"(.+?)\s+\d+m.*?{selected.year}年0?{selected.month}月0?{selected.day}日(?:\([^)]*\))?\s*{venue}\s*{race}R出走表",heading)
+    if not match:raise ValueError("オッズパークの日付・場・R不一致")
+    kind=match.group(1).strip()
+    if not require_mori and kind!="優勝戦":raise ValueError("優勝戦ではありません")
+    rows={}
+    for table in soup.find_all("table"):
+        current={}
+        for tr in table.find_all("tr"):
+            cells=tr.find_all(["td","th"],recursive=False)
+            if len(cells)<2:continue
+            number=text_clean(cells[0].get_text(" ",strip=True))
+            if not re.fullmatch(r"[1-8]",number):continue
+            name_match=re.match(r"([\u3400-\u9fff々ぁ-んァ-ヶー・\s]{2,24})\s*\((?:川口|伊勢崎|浜松|飯塚|山陽)\)",text_clean(cells[1].get_text(" ",strip=True)))
+            if not name_match:continue
+            n=int(number)
+            if n in current:raise ValueError("車番重複")
+            row={"number":n,"name":name_match.group(1).strip()}
+            if SCRATCHED.search(text_clean(cells[1].get_text(" ",strip=True))):row["status"]="scratched"
+            current[n]=row
+        if len(current)>len(rows):rows=current
+    riders=strict_numbered_names(rows,5,8)
+    if require_mori and not any(re.sub(r"\s+","",r["name"])=="森且行" for r in riders):
+        raise ValueError("森選手未確認")
+    start=re.search(r"発走(?:予定)?\s*[:：]?\s*([0-2]?\d:[0-5]\d)",text_clean(soup.get_text(" ",strip=True)))
+    # Official meeting title may be missing; use truthful generic label.
+    return {"sport":"auto","venue":venue,"grade":grade,"event":venue+"オートレース",
+            "raceName":kind,"race":race,"startTime":start.group(1).zfill(5) if start and CLOCK.fullmatch(start.group(1).zfill(5)) else None,
+            "riders":riders,"sourceName":"オッズパーク",
+            "sourceUrl":AUTO_ODDS_CARD.format(day=selected.strftime("%Y%m%d"),venue=AUTO_CODES[venue],race=race)}
+
+
+def parse_auto_official_card(html,selected,venue,race,grade,require_mori=False):
+    """Official rendered HTML when present; reject empty JS-only shells."""
+    soup=BeautifulSoup(html,"html.parser")
+    title=text_clean(soup.title.get_text(" ",strip=True)) if soup.title else ""
+    if not re.search(rf"{selected.year}/0?{selected.month}/0?{selected.day}\s+出走表.*{venue}オート",title):
+        raise ValueError("公式日付・場不一致")
+    text=text_clean(soup.get_text(" ",strip=True))
+    label=re.search(rf"{selected.month}月{selected.day}日(?:\([^)]*\))?\s+(優勝戦|選抜戦|一般戦|準決勝戦|予選)\s*{race}R\b",text)
+    if not label or (not require_mori and label.group(1)!="優勝戦"):
+        raise ValueError("公式レース種別・番号未確認")
+    event=next((text_clean(h.get_text(" ",strip=True)) for h in soup.find_all(["h2","h3"])
+                if re.search(r"杯|選手権|カップ|開催",h.get_text(" ",strip=True)) and "開催期間" not in h.get_text(" ",strip=True)),venue+"オートレース")
+    for table in soup.find_all("table"):
+        heads=[text_clean(h.get_text(" ",strip=True)) for h in table.find_all("th")]
+        if not ("車" in heads or "車番" in heads) or not any("選手" in h for h in heads):continue
+        rows={}
+        for tr in table.find_all("tr"):
+            cells=tr.find_all("td",recursive=False)
+            for i,cell in enumerate(cells[:-1]):
+                n=text_clean(cell.get_text(" ",strip=True))
+                if not re.fullmatch(r"[1-8]",n):continue
+                nxt=cells[i+1]
+                a=nxt.find("a",href=re.compile(r"/Profile/",re.I))
+                raw=text_clean(a.get_text(" ",strip=True)) if a else ""
+                if not NAME_RX.fullmatch(raw):
+                    raw=text_clean(nxt.get_text(" ",strip=True))
+                    p=re.match(r"([\u3400-\u9fff々ぁ-んァ-ヶー・]+)\s+([\u3400-\u9fff々ぁ-んァ-ヶー・]+)(?:\s|$)",raw)
+                    if not p:continue
+                    raw=p.group(1)+" "+p.group(2)
+                num=int(n)
+                if num in rows:raise ValueError("公式車番重複")
+                rows[num]={"number":num,"name":raw}
+                if SCRATCHED.search(text_clean(nxt.get_text(" ",strip=True))):rows[num]["status"]="scratched"
+                break
+        try:riders=strict_numbered_names(rows,5,8)
+        except ValueError:continue
+        if require_mori and not any(re.sub(r"\s+","",r["name"])=="森且行" for r in riders):continue
+        start=re.search(r"発走(?:予定)?\s*[:：]?\s*([0-2]?\d:[0-5]\d)",text[:text.find("表の見方")] if "表の見方" in text else text)
+        return {"sport":"auto","venue":venue,"grade":grade,"event":event,"raceName":label.group(1),
+                "race":race,"startTime":start.group(1).zfill(5) if start and CLOCK.fullmatch(start.group(1).zfill(5)) else None,
+                "riders":riders,"sourceName":"AUTORACE.JP",
+                "sourceUrl":AUTO_OFFICIAL_CARD.format(slug=AUTO_SLUGS[venue],date=selected.isoformat(),race=race)}
+    raise ValueError("公式出走表が動的表示または不完全")
+
+
+def auto_alternative(s,selected,venue,race,grade,u,require_mori=False):
+    """Independent race-card fallbacks; only show time if separately verified."""
+    attempts=[
+        (AUTO_OFFICIAL_CARD.format(slug=AUTO_SLUGS[venue],date=selected.isoformat(),race=race),parse_auto_official_card),
+        (AUTO_ODDS_CARD.format(day=selected.strftime("%Y%m%d"),venue=AUTO_CODES[venue],race=race),parse_auto_odds_card)]
+    errors=[]
+    for uri,parser in attempts:
+        try:
+            card=parser(u.fetch(s,uri),selected,venue,race,grade,require_mori)
+            if require_mori:card["feature"]="mori"
+            if not card["startTime"] and hasattr(u,"mori_start_times"):
+                query={"type":"today","date":selected.isoformat(),"name":venue,"races":[race]}
+                u.mori_start_times(s,query,selected=selected)
+                card["startTime"]=query.get("startTimes",{}).get(str(race))
+            return card
+        except Exception as exc:errors.append(str(exc))
+    raise ValueError("; ".join(errors))
+
+
 def collect(s,selected,sections,u,previous=None):
     """Fetch verified grade finals only. Stable order is start time then sport/venue."""
     keirin=[m for m in sections.get("keirin",{}).get("items",[])
@@ -414,6 +583,18 @@ def collect(s,selected,sections,u,previous=None):
                 except Exception as exc:
                     errors.append(f"競輪 {candidate['venue']} {candidate['race']}R: {exc}")
         except Exception as exc:errors.append(f"競輪日別一覧: {exc}")
+    # Recover missing graded finals even when HEX itself is unavailable.
+    for meeting in keirin:
+        venue=meeting["name"]
+        if venue not in KEIRIN_CODES or any(x["sport"]=="keirin" and x["venue"]==venue for x in found):continue
+        issues=[]
+        for race in (12,11,10,9):
+            uri=NETKEIRIN.format(day=selected.strftime("%Y%m%d"),venue=KEIRIN_CODES[venue],race=race)
+            try:
+                found.append(parse_netkeirin_final(u.fetch(s,uri),selected,venue,race,meeting["grade"]))
+                break
+            except Exception as exc:issues.append(str(exc))
+        else:errors.append(f"競輪 {venue} 決勝未確認: {'; '.join(issues)}")
     for meeting in auto:
         venue=meeting["name"]
         if venue not in AUTO_CODES:continue
@@ -429,6 +610,10 @@ def collect(s,selected,sections,u,previous=None):
                 break
             except Exception as exc:
                 attempts.append(f"{race}R: {exc}")
+                try:
+                    found.append(auto_alternative(s,selected,venue,race,meeting["grade"],u))
+                    break
+                except Exception as alt:attempts.append(f"{race}R 代替: {alt}")
         else:
             errors.append(f"オート {venue} 優勝戦未確認: {'; '.join(attempts)}")
     # Deduplicate one race across sources and ensure no identical seat numbers.
@@ -436,7 +621,7 @@ def collect(s,selected,sections,u,previous=None):
     for item in found:
         key=(item["sport"],item["venue"],item["race"])
         results[key]=item
-    ordered=sorted(results.values(),key=lambda x:(x["startTime"],x["sport"],x["venue"],x["race"]))
+    ordered=sorted(results.values(),key=lambda x:(x.get("startTime") or "99:99",x["sport"],x["venue"],x["race"]))
     # Same-day confirmed records can survive brief source outages, never
     # another date, another race, or a change in the known meeting's grade.
     if isinstance(previous,dict) and previous.get("date")==selected.isoformat():
@@ -451,7 +636,7 @@ def collect(s,selected,sections,u,previous=None):
                 5<=len(race.get("riders",[]))<=9 and
                 CLOCK.fullmatch(str(race.get("startTime","")))):
                 results[key]=race
-        ordered=sorted(results.values(),key=lambda x:(x["startTime"],x["sport"],x["venue"],x["race"]))
+        ordered=sorted(results.values(),key=lambda x:(x.get("startTime") or "99:99",x["sport"],x["venue"],x["race"]))
     # Mori's verified racecards are presented after every graded final.
     mori_section=sections.get("mori",{})
     mori=mori_section.get("item") if isinstance(mori_section,dict) else None
@@ -473,7 +658,9 @@ def collect(s,selected,sections,u,previous=None):
                                         require_final=False,require_mori=True)
                 results[key]=item
             except Exception as exc:
-                errors.append(f"森且行 {mori['name']} {number}R: {exc}")
+                try:
+                    results[key]=auto_alternative(s,selected,mori["name"],number,mori.get("grade","普通"),u,True)
+                except Exception as alt:errors.append(f"森且行 {mori['name']} {number}R: {exc}; {alt}")
     # Independent publishers can still supply a dated racecard when
     # the national official site blocks automated access.
     for meeting in soda:
@@ -498,6 +685,16 @@ def collect(s,selected,sections,u,previous=None):
                 failures.append(f"{provider}: {exc}")
         if not cards:
             errors.append(f"SODA {venue} 優勝戦未確認: {'; '.join(failures)}")
+            # Keep only previously confirmed exact-day grade final, not a
+            # different race or a contradictory fresh card.
+            if isinstance(previous,dict) and previous.get("date")==selected.isoformat():
+                for saved in previous.get("finals",{}).get("items",[]):
+                    if (saved.get("sport")=="soda" and saved.get("venue")==venue
+                        and saved.get("grade")==meeting["grade"] and saved.get("raceName")=="優勝戦"
+                        and saved.get("race")==12 and len(saved.get("riders",[]))==6
+                        and {x.get("number") for x in saved["riders"]}==set(range(1,7))):
+                        results[("soda",venue,12)]=dict(saved,retainedFromSameDate=True)
+                        break
             continue
         card=cards[0]
         signature=lambda r:tuple((x["number"],re.sub(r"\s+","",x["name"])) for x in r["riders"])
