@@ -65,6 +65,31 @@ def grade_meetings(html,selected,u):
     return list(output.values())
 
 
+def kawaguchi_host_event(heading):
+    """The organizer publishes both 本場 and 場外 event modals.
+
+    The modal's 出場予定選手 link points to the actual host venue.
+    Require positive venue evidence, not merely the absence of 場外
+    in a race title. Stop at the next event heading to avoid borrowing
+    a different meeting's link.
+    """
+    event=normalize_text(heading.get_text(' ',strip=True))
+    if '場外' in event:return False
+    venues=set()
+    for part in heading.next_elements:
+        if getattr(part,'name',None) in ('h1','h2','h3','h4'):break
+        if getattr(part,'name',None)!='a':continue
+        href=part.get('href','')
+        match=re.search(r'(?:/netstadium/|/race_info/)Player/'
+                        r'(kawaguchi|isesaki|hamamatsu|iizuka|sanyo|sanyou)(?:/|[?#]|$)',
+                        href,re.I)
+        if match:venues.add(match.group(1).lower())
+    if venues:
+        return venues=={'kawaguchi'}
+    # Explicit home-venue titles are safe when the link is absent.
+    return bool(re.search(r'川口(?:オート|ナイトレース|自場|本場)',event))
+
+
 def kawaguchi_meetings(html,selected,u):
     """Read Kawaguchi organizer's date-ranged event titles, not venue navigation.
 
@@ -94,7 +119,7 @@ def kawaguchi_meetings(html,selected,u):
         if not start_end:continue
         start,end=start_end
         if not start<=selected<=end:continue
-        if '場外' in event:continue
+        if not kawaguchi_host_event(h):continue
         gm=re.search(r'(SG|特\s*G(?:III|II|I|[123])|G(?:III|II|I|[123]))',
                      event,re.I)
         result.append({

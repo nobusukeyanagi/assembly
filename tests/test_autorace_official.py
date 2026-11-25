@@ -38,10 +38,14 @@ KAWAGUCHI_PAGE=(
     '<h4>テレ玉presents 川口ナイトレース(無観客開催)</h4>'
     '<p>11/01(日) ～ 11/04(水)</p>'
     '<h4>第6回 埼玉高速鉄道杯</h4><p>11/07(土) ～ 11/10(火)</p>'
+    '<a href="https://autorace.jp/netstadium/Player/kawaguchi/">出場予定選手</a>'
     '<h4>テレ玉presents 川口ナイトレース(無観客開催)</h4>'
     '<p>11/13(金) ～ 11/15(日)</p>'
     '<h4>ギャンブー杯GⅡウィナーズカップ</h4>'
     '<p>11/19(木) ～ 11/23(月)</p>'
+    '<a href="https://autorace.jp/netstadium/Player/hamamatsu/">出場予定選手</a>'
+    '<h4>川口ナイトレース</h4><p>11/22(日) ～ 11/25(水)</p>'
+    '<a href="https://autorace.jp/netstadium/Player/kawaguchi/">出場予定選手</a>'
     '</body></html>'
 )
 
@@ -92,7 +96,8 @@ class OfficialAutoraceCalendars(unittest.TestCase):
     def test_double_kawaguchi_official_day_and_night(self):
         # Two distinct legitimate meetings can share the same calendar days.
         doubled=KAWAGUCHI_PAGE.replace('</body>','<h4>SG日本選手権</h4>'
-            '<p>11/13(金) ～ 11/15(日)</p></body>')
+            '<p>11/13(金) ～ 11/15(日)</p>'
+            '<a href="https://autorace.jp/race_info/Player/kawaguchi/">出場予定選手</a></body>')
         with patch('autorace_official.datetime') as clock:
             clock.now.return_value=datetime(2026,11,13,16,0,tzinfo=UPSTREAM.TZ)
             out=kawaguchi_meetings(doubled,date(2026,11,13),UPSTREAM)
@@ -100,6 +105,20 @@ class OfficialAutoraceCalendars(unittest.TestCase):
         self.assertEqual(next(x for x in out if x['name']=='川口')['grade'],'SG')
         self.assertEqual(next(x for x in out if x['name']=='川口２')['timeType'],
                          'ナイター')
+
+    def test_offsite_grade_modal_is_not_kawaguchi_home(self):
+        # Actual November 2026 calendar advertises Hamamatsu's G2 offsite
+        # without the word 場外 in its modal title.
+        with patch('autorace_official.datetime') as clock:
+            clock.now.return_value=datetime(2026,11,25,10,0,tzinfo=UPSTREAM.TZ)
+            for day in (19,20,21):
+                self.assertEqual(kawaguchi_meetings(KAWAGUCHI_PAGE,
+                                 date(2026,11,day),UPSTREAM),[])
+            for day, label in ((22,'初日'),(23,'2日目')):
+                self.assertEqual(kawaguchi_meetings(KAWAGUCHI_PAGE,
+                                 date(2026,11,day),UPSTREAM),
+                                 [{'name':'川口','grade':'普通','day':label,
+                                   'timeType':'ナイター'}])
 
     def test_conflicting_organizer_meeting_is_not_silently_selected(self):
         # Two *night* entries are not a day/night pair. Reject as ambiguous.

@@ -308,20 +308,6 @@
       "status": "ok",
       "items": [
         {
-          "name": "川口",
-          "girls": false,
-          "confirmedBy": [
-            "川口オート公式日程"
-          ],
-          "grade": "G2",
-          "day": "最終日",
-          "timeType": null,
-          "fieldSources": {
-            "grade": "川口オート公式日程",
-            "day": "川口オート公式日程"
-          }
-        },
-        {
           "name": "浜松",
           "girls": false,
           "confirmedBy": [
@@ -337,7 +323,7 @@
           }
         },
         {
-          "name": "川口２",
+          "name": "川口",
           "girls": false,
           "confirmedBy": [
             "川口オート公式日程"
@@ -355,15 +341,15 @@
       "verification": {
         "providers": {
           "AUTORACE.JP年間グレード日程": 1,
-          "川口オート公式日程": 2,
+          "川口オート公式日程": 1,
           "浜松オート公式日程": 1
         },
         "crossConfirmed": 1,
-        "singleSource": 2,
+        "singleSource": 1,
         "gradeCrossConfirmed": 1,
         "fieldCoverage": {
-          "grade": 3,
-          "day": 3,
+          "grade": 2,
+          "day": 2,
           "timeType": 1,
           "girlsDetected": 0
         },
@@ -434,7 +420,6 @@
             "浜松"
           ],
           "川口オート公式日程": [
-            "川口２",
             "川口"
           ],
           "浜松オート公式日程": [
@@ -444,7 +429,6 @@
         "ambiguousTwoMeetings": [],
         "officialVerifiedVenues": [
           "浜松",
-          "川口２",
           "川口"
         ],
         "unconfirmedOfficial": [
@@ -489,6 +473,14 @@
           {
             "name": "山陽",
             "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=06&kaisaiBi=20261123"
+          }
+        ],
+        "corrections": [
+          {
+            "reason": "川口公式日程の場外発売（浜松GⅡ）を本場と誤認した記録を訂正",
+            "source": "https://www.kawaguchiauto.jp/race-calender/",
+            "actualHost": "浜松",
+            "date": "2026-11-23"
           }
         ]
       }
@@ -728,7 +720,7 @@
     ],
     "verification": {
       "targetDate": "2026-11-23",
-      "eligibleMeetings": 3,
+      "eligibleMeetings": 2,
       "confirmedRaces": 1,
       "moriRaces": 0,
       "sodaRaces": 0,

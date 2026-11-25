@@ -155,5 +155,18 @@ class HistoricalRetentionTests(unittest.TestCase):
         self.assertFalse(matching_meeting(self.row,dict(self.row,grade='G3')))
 
 
+    def test_do_not_revive_disproved_second_kawaguchi_session(self):
+        old={'name':'川口２','grade':'普通','day':'2日目',
+             'timeType':'ナイター','confirmedBy':['川口オート公式日程'],
+             'fieldSources':{'grade':'川口オート公式日程','day':'川口オート公式日程'}}
+        single=dict(old,name='川口')
+        previous={'date':self.date,'sections':{'auto':{'status':'ok','items':[old]}}}
+        current={'date':self.date,'sections':{'auto':{'status':'ok','items':[single],
+                   'verification':{'providers':{'川口オート公式日程':1},
+                   'organizerConfirmed':{'川口オート公式日程':['川口']}}}}}
+        self.assertEqual([x['name'] for x in merge(previous,current)
+                          ['sections']['auto']['items']],['川口'])
+
+
 if __name__=='__main__':
     unittest.main()

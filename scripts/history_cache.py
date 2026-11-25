@@ -70,6 +70,13 @@ def merge(prior, current):
             keep=[]
             for name,original in old.items():
                 if name in present:continue
+                # A newly verified local Kawaguchi calendar that identifies
+                # a single session must not resurrect a stale second session
+                # from that same calendar's older, less strict parser.
+                local=checked.get('organizerConfirmed',{}).get('川口オート公式日程',[])
+                if (name in ('川口','川口２') and local and name not in local
+                    and set(original.get('confirmedBy',[]))=={'川口オート公式日程'}):
+                    continue
                 evidence=original.get('fieldSources')
                 if not isinstance(evidence,dict):continue
                 if not (evidence.get('grade') and evidence.get('day')
