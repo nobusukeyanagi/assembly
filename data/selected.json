@@ -1,6 +1,6 @@
 {
   "date": "2026-11-23",
-  "updatedAt": "2026-11-25T10:19+09:00",
+  "updatedAt": "2026-11-25T10:23+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -476,14 +476,6 @@
             "name": "山陽",
             "reason": "403 Client Error: Forbidden for url: https://sp.oddspark.com/autorace/SpRaceList.do?gamenId=S711&gamenKoumokuId=iconAutoraceRaceList&joCd=06&kaisaiBi=20261123"
           }
-        ],
-        "corrections": [
-          {
-            "reason": "川口公式日程の場外発売（浜松GⅡ）を本場と誤認した記録を訂正",
-            "source": "https://www.kawaguchiauto.jp/race-calender/",
-            "actualHost": "浜松",
-            "date": "2026-11-23"
-          }
         ]
       }
     },
@@ -678,6 +670,8 @@
           5
         ],
         "source": "historical-results",
+        "grade": "普通",
+        "timeType": "ナイター",
         "startTimes": {
           "5": "20:30"
         }
@@ -685,7 +679,7 @@
     }
   },
   "finals": {
-    "status": "partial",
+    "status": "ok",
     "items": [
       {
         "sport": "auto",
@@ -779,9 +773,7 @@
       "confirmedRaces": 2,
       "moriRaces": 1,
       "sodaRaces": 0,
-      "errors": [
-        "オート 川口 優勝戦未確認: 12R: 404 Client Error: Not Found for url: https://autorace.tokyo-sports.co.jp/list/race/202611230212; 11R: 404 Client Error: Not Found for url: https://autorace.tokyo-sports.co.jp/list/race/202611230211; 10R: 404 Client Error: Not Found for url: https://autorace.tokyo-sports.co.jp/list/race/202611230210; 9R: 404 Client Error: Not Found for url: https://autorace.tokyo-sports.co.jp/list/race/20261123029"
-      ]
+      "errors": []
     }
   }
 }
