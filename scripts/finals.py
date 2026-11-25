@@ -22,6 +22,11 @@ SODA_CODES={"桐生":"01","戸田":"02","多摩川":"05","浜名湖":"06",
             "若松":"20","芦屋":"21"}
 BOAT_FINAL="https://www.boatrace.jp/owpc/pc/race/racelist?hd={day}&jcd={venue}&rno=12"
 BOAT_START="https://boatrace-rating.com/stadiums/{venue}/12"
+BOAT_IKACHI="https://www.ikachi.org/kyotei/{date}/{venue}/12"
+BOAT_SEARCH="https://boatrace-search.com/race/{date}/{slug}/"
+BOAT_SLUGS={"桐生":"kiryu","戸田":"toda","多摩川":"tamagawa","浜名湖":"hamanako",
+            "蒲郡":"gamagori","三国":"mikuni","びわこ":"biwako","宮島":"miyajima",
+            "若松":"wakamatsu","芦屋":"ashiya"}
 KEIRIN_GRADES=frozenset(("GP","G1","G2","G3"))
 AUTO_GRADES=frozenset(("SG","特G1","G1","G2"))
 SODA_GRADES=frozenset(("SG","PG1","G1","G2","G3"))
@@ -289,6 +294,105 @@ def parse_soda_final(html,selected,venue,grade):
                                           venue=SODA_CODES[venue])}
 
 
+
+def soda_fallback_card(selected,venue,grade,event,closing,riders,url):
+    """Only complete, explicitly numbered six-boat finals are publishable."""
+    if venue not in SODA_CODES or grade not in SODA_GRADES:
+        raise ValueError("対象外の開催")
+    if not event or not CLOCK.fullmatch(closing):
+        raise ValueError("開催節名または締切時刻が不明")
+    if set(riders)!=set(range(1,7)):
+        raise ValueError("1～6号艇の全選手を確認できません")
+    if len({re.sub(r"\s+","",x["name"]) for x in riders.values()})!=6:
+        raise ValueError("出走選手名の重複")
+    return {"sport":"soda","venue":venue,"grade":grade,"event":event,
+            "raceName":"優勝戦","race":12,"startTime":None,
+            "officialClosingTime":closing,"riders":[riders[n] for n in range(1,7)],
+            "sourceUrl":url}
+
+
+def parse_soda_ikachi(html,selected,venue,grade):
+    """Dated single-race card: use explicit frame numbers, not prediction order."""
+    soup=BeautifulSoup(html,"html.parser")
+    heading=soup.find("h1")
+    text=text_clean(heading.get_text(" ",strip=True)) if heading else ""
+    pattern=rf"^{re.escape(venue)}\s*12R\s*優勝戦\s*{selected.year}年{selected.month}月{selected.day}日(?:\([^)]*\))?\s*・\s*締切\s*([0-2]?\d:[0-5]\d)\s*・\s*(.+)$"
+    match=re.fullmatch(pattern,text)
+    if not match:
+        raise ValueError("日付・場・12R優勝戦の見出し不一致")
+    closing,event=match.groups()
+    riders={}
+    for table in soup.find_all("table"):
+        headers=[text_clean(th.get_text(" ",strip=True)) for th in table.find_all("th")]
+        if not ("枠" in headers and "選手" in headers):continue
+        for row in table.find_all("tr"):
+            cells=row.find_all(["th","td"],recursive=False)
+            if len(cells)<2:continue
+            number=text_clean(cells[0].get_text(" ",strip=True))
+            if not re.fullmatch(r"[1-6]",number):continue
+            link=cells[1].find("a",href=True)
+            if not link:continue
+            name=text_clean(link.get_text(" ",strip=True))
+            if not re.fullmatch(r"[\u3400-\u9fff々ぁ-んァ-ヶー・\s]{2,24}",name):continue
+            num=int(number)
+            if num in riders:raise ValueError("枠番重複")
+            riders[num]={"number":num,"name":name}
+            if SCRATCHED.search(text_clean(cells[1].get_text(" ",strip=True))):
+                riders[num]["status"]="scratched"
+        if riders:break
+    return soda_fallback_card(selected,venue,grade,event,closing.zfill(5),riders,
+        BOAT_IKACHI.format(date=selected.isoformat(),venue=SODA_CODES[venue]))
+
+
+def parse_soda_search(html,selected,venue,grade):
+    """Dated venue-wide listing: isolate the explicit 12R final section."""
+    soup=BeautifulSoup(html,"html.parser")
+    for tag in soup(["script","style","noscript"]):tag.decompose()
+    heading=next((h for h in soup.find_all(["h1","h2"])
+                  if re.fullmatch(rf"{re.escape(venue)}\s*12R\s*優勝戦",
+                                  text_clean(h.get_text(" ",strip=True)))),None)
+    if heading is None:raise ValueError("場・12R優勝戦を確認できません")
+    # If the document declares a canonical dated URL it must match the request.
+    url=BOAT_SEARCH.format(date=selected.isoformat(),slug=BOAT_SLUGS[venue])
+    canonical=soup.find("link",rel="canonical")
+    if canonical and canonical.get("href"):
+        if urlparse(canonical["href"]).path.rstrip("/")!=urlparse(url).path.rstrip("/"):
+            raise ValueError("日付指定URLが不一致")
+    section=[]
+    for part in heading.next_elements:
+        if getattr(part,"name",None) in ("h1",):break
+        if isinstance(part,NavigableString) and part.parent!=heading:
+            value=text_clean(part)
+            if value:section.append(value)
+    text=" ".join(section)
+    if not re.search(rf"{re.escape(venue)}\s*0?{selected.month}/0?{selected.day}\s*12R\s*の出走表",text):
+        raise ValueError("対象日・場・Rの出走表を確認できません")
+    close=re.search(r"締切\s*([0-2]?\d:[0-5]\d)",text[:300])
+    if not close:raise ValueError("対象Rの締切が不明")
+    event=None
+    for part in heading.previous_elements:
+        if getattr(part,"name",None) in ("h1",):break
+        if isinstance(part,NavigableString):
+            value=text_clean(part)
+            m=re.fullmatch(r"(.+?)\s*(?:最終日|[1-9]\d*日目)",value)
+            if m and len(m.group(1))<=100:
+                event=m.group(1).strip()
+                break
+    if not event:raise ValueError("開催節名を確認できません")
+    # Cards have the frame, linked name, A/B rank and registration number
+    # immediately adjacent; this avoids unrelated rider links and statistics.
+    pattern=r"(?:^|\s)([1-6])\s+([\u3400-\u9fff々ぁ-んァ-ヶー・]+(?:\s+[\u3400-\u9fff々ぁ-んァ-ヶー・]+)?)\s*[AB][12]\s+(\d{4})(?=\s)"
+    riders={}
+    registrations=set()
+    for num,name,registration in re.findall(pattern,text):
+        n=int(num)
+        if n in riders or registration in registrations:
+            raise ValueError("枠番または選手登録番号が重複")
+        registrations.add(registration)
+        riders[n]={"number":n,"name":name}
+    return soda_fallback_card(selected,venue,grade,event,close.group(1).zfill(5),riders,url)
+
+
 def collect(s,selected,sections,u,previous=None):
     """Fetch verified grade finals only. Stable order is start time then sport/venue."""
     keirin=[m for m in sections.get("keirin",{}).get("items",[])
@@ -370,26 +474,51 @@ def collect(s,selected,sections,u,previous=None):
                 results[key]=item
             except Exception as exc:
                 errors.append(f"森且行 {mori['name']} {number}R: {exc}")
-    # SODA final: verify all six competitors on the BOAT RACE official
-    # racecard. Actual start time is a separate concept from its deadline.
+    # Independent publishers can still supply a dated racecard when
+    # the national official site blocks automated access.
     for meeting in soda:
         venue=meeting["name"]
         uri=BOAT_FINAL.format(day=selected.strftime("%Y%m%d"),
                               venue=SODA_CODES[venue])
-        try:
-            card=parse_soda_final(u.fetch(s,uri),selected,venue,meeting["grade"])
+        candidates=(
+            ("BOAT RACE公式",uri,parse_soda_final),
+            ("きょうの競艇",BOAT_IKACHI.format(date=selected.isoformat(),
+                                               venue=SODA_CODES[venue]),parse_soda_ikachi),
+            ("ボートレースサーチ",BOAT_SEARCH.format(date=selected.isoformat(),
+                                                     slug=BOAT_SLUGS[venue]),parse_soda_search),
+        )
+        cards=[]
+        failures=[]
+        for provider,url,parse in candidates:
             try:
-                start_url=BOAT_START.format(venue=int(SODA_CODES[venue]))
-                card["startTime"]=parse_soda_start(
-                    u.fetch(s,start_url),selected,venue,
-                    card["officialClosingTime"])
-                card["startSourceUrl"]=start_url
+                card=parse(u.fetch(s,url),selected,venue,meeting["grade"])
+                card["sourceName"]=provider
+                cards.append(card)
             except Exception as exc:
-                # An official closing time is never an actual start time.
-                errors.append(f"SODA {venue} 発走時刻未確認: {exc}")
-            results[("soda",venue,12)]=card
+                failures.append(f"{provider}: {exc}")
+        if not cards:
+            errors.append(f"SODA {venue} 優勝戦未確認: {'; '.join(failures)}")
+            continue
+        card=cards[0]
+        signature=lambda r:tuple((x["number"],re.sub(r"\s+","",x["name"])) for x in r["riders"])
+        agreeing=[x["sourceName"] for x in cards if signature(x)==signature(card)]
+        card["confirmedBy"]=agreeing
+        if failures:
+            card["sourceErrors"]=failures
+        if len(agreeing)!=len(cards):
+            errors.append(f"SODA {venue} 出走選手の情報源不一致")
+            if card["sourceName"]!="BOAT RACE公式":
+                # With no official confirmation a disagreement must not
+                # silently choose an alternative lineup.
+                continue
+        try:
+            start_url=BOAT_START.format(venue=int(SODA_CODES[venue]))
+            card["startTime"]=parse_soda_start(
+                u.fetch(s,start_url),selected,venue,card["officialClosingTime"])
+            card["startSourceUrl"]=start_url
         except Exception as exc:
-            errors.append(f"SODA {venue} 優勝戦未確認: {exc}")
+            errors.append(f"SODA {venue} 発走時刻未確認: {exc}")
+        results[("soda",venue,12)]=card
     priority=lambda x:(0 if x["sport"]=="keirin" else
                        2 if x.get("feature")=="mori" else
                        1 if x["sport"]=="auto" else 3)

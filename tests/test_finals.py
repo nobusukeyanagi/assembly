@@ -222,8 +222,10 @@ class GradeFinalTests(unittest.TestCase):
                 out=collect(object(),DAY,sections,SimpleNamespace(fetch=fetch))
                 self.assertEqual(out["verification"]["eligibleMeetings"],1)
                 self.assertEqual(out["verification"]["sodaRaces"],0)
-                self.assertEqual(len(calls),1)
+                self.assertEqual(len(calls),3)
                 self.assertIn("jcd=17",calls[0])
+                self.assertIn("/17/12",calls[1])
+                self.assertIn("/miyajima/",calls[2])
         calls=[]
         sections={"soda":{"items":[{"name":"戸田","grade":"一般","day":"最終日"}]}}
         out=collect(object(),DAY,sections,SimpleNamespace(
@@ -231,6 +233,44 @@ class GradeFinalTests(unittest.TestCase):
         self.assertEqual(out["verification"]["eligibleMeetings"],0)
         self.assertEqual(out["items"],[])
         self.assertEqual(calls,[])
+
+    def test_soda_secondary_403_and_source_agreement(self):
+        from finals import parse_soda_ikachi,parse_soda_search,BOAT_IKACHI,BOAT_SEARCH
+        day=date(2026,11,25)
+        names=["山口裕二","森永淳","宇佐見淳","江夏満","平石和男","田村隆信"]
+        numbers=[3944,4072,4118,4136,3251,4028]
+        table="<table><tr><th>枠</th><th>選手</th></tr>"+''.join(
+            f'<tr><td>{i}</td><td><a href="/racer/{n}">{name}</a>A1</td></tr>'
+            for i,(n,name) in enumerate(zip(numbers,names),1))+"</table>"
+        ikachi="<h1>芦屋 12R 優勝戦2026年11月25日（水）・締切 14:23・マスターズリーグ第8戦</h1>"+table
+        search=("<p>マスターズリーグ第８戦6日目</p><h1>芦屋 12R 優勝戦</h1>"
+                "<p>締切 14:23</p><p>ボートレース（競艇）芦屋 11/25 12Rの出走表と過去データ</p>"
+                +"".join(f"<div><span>{i}</span><a>{name}</a><span>A1</span><p>{n} 長崎・47歳</p></div>"
+                         for i,(n,name) in enumerate(zip(numbers,names),1)))
+        one=parse_soda_ikachi(ikachi,day,"芦屋","G3")
+        two=parse_soda_search(search,day,"芦屋","G3")
+        self.assertEqual(one["riders"],two["riders"])
+        self.assertEqual([r["name"] for r in two["riders"]],names)
+        self.assertIsNone(two["startTime"])
+        for parser,html in ((parse_soda_ikachi,ikachi),(parse_soda_search,search)):
+            with self.assertRaises(ValueError):
+                parser(html,date(2026,11,24),"芦屋","G3")
+            with self.assertRaises(ValueError):
+                parser(html.replace("優勝戦","準優勝戦"),day,"芦屋","G3")
+        sections={"soda":{"items":[{"name":"芦屋","grade":"G3","day":"最終日"}]}}
+        sources={BOAT_IKACHI.format(date=day.isoformat(),venue="21"):ikachi,
+                 BOAT_SEARCH.format(date=day.isoformat(),slug="ashiya"):search}
+        def fetch(_,url):
+            if url in sources:return sources[url]
+            raise RuntimeError("403")
+        out=collect(object(),day,sections,SimpleNamespace(fetch=fetch))
+        self.assertEqual(out["verification"]["sodaRaces"],1)
+        self.assertEqual(out["items"][0]["confirmedBy"],["きょうの競艇","ボートレースサーチ"])
+        self.assertIsNone(out["items"][0]["startTime"])
+        # A missing or conflicting card must not fabricate entrants.
+        sources[BOAT_SEARCH.format(date=day.isoformat(),slug="ashiya")]=search.replace("田村隆信","山田太郎")
+        out=collect(object(),day,sections,SimpleNamespace(fetch=fetch))
+        self.assertEqual(out["verification"]["sodaRaces"],0)
 
     def test_mori_race_types(self):
         html=auto_detail(11,"準優勝戦").replace("中村　雅人","森　且行")
