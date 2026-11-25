@@ -302,6 +302,31 @@ class GradeFinalTests(unittest.TestCase):
         out=collect(object(),DAY,{'auto':{'items':[{'name':'浜松','grade':'G2','day':'最終日'}]}},SimpleNamespace(fetch=fetch))
         self.assertEqual(out['items'][0]['sourceName'],'オッズパーク')
 
+    def test_chariloto_graded_final_and_primary_403(self):
+        from finals import CHARILOTO_CARD,CHARILOTO_PREDICTION,parse_chariloto_kind,parse_chariloto_entries
+        names=["佐藤一郎","田中二郎","山本三郎","鈴木四郎","高橋五郎","山田六郎","吉田七郎","小林八郎"]
+        detail='<h1>浜松オートレース 出走表詳細（12R 2026年11月3日 最終日）</h1><h2>浜　松 2026年11月3日 最終日 SG 浜松市 優勝戦（枠番選択） 12R</h2>'
+        rows=''.join('<tr>'+('<td rowspan="8">12R</td>' if i==1 else '')+
+                     f'<td></td><td></td><td>{i}</td><td>{name}</td><td>浜　松</td></tr>'
+                     for i,name in enumerate(names,1))
+        preds='<h1>浜松オート予想</h1><p>2026年11月3日 浜松オートレース</p><table><tr><th>レース</th><th>予想</th><th>雨予想</th><th>車番</th><th>選手名</th><th>LG</th></tr>'+rows+'</table>'
+        self.assertEqual(parse_chariloto_kind(detail,DAY,"浜松",12,"SG"),"優勝戦")
+        self.assertEqual([x["name"] for x in parse_chariloto_entries(preds,DAY,"浜松",12)],names)
+        with self.assertRaises(ValueError):
+            parse_chariloto_kind(detail.replace("優勝戦","準優勝戦"),DAY,"浜松",12,"SG")
+        with self.assertRaises(ValueError):
+            parse_chariloto_entries(preds,date(2026,11,4),"浜松",12)
+        with self.assertRaises(ValueError):
+            parse_chariloto_entries(preds.replace("小林八郎","佐藤一郎"),DAY,"浜松",12)
+        params=dict(date=DAY.isoformat(),venue="004",race=12)
+        docs={CHARILOTO_CARD.format(**params):detail,CHARILOTO_PREDICTION.format(**params):preds}
+        def fetch(_,uri):
+            if uri in docs:return docs[uri]
+            raise RuntimeError("403")
+        out=collect(object(),DAY,{"auto":{"items":[{"name":"浜松","grade":"SG","day":"最終日"}]}},SimpleNamespace(fetch=fetch))
+        self.assertEqual(out["items"][0]["sourceName"],"チャリロト")
+        self.assertEqual(len(out["items"][0]["riders"]),8)
+
     def test_mori_race_types(self):
         html=auto_detail(11,"準優勝戦").replace("中村　雅人","森　且行")
         race=parse_autorace_race(html,DAY,"浜松",11,"SG",

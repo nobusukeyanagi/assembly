@@ -543,12 +543,99 @@ def parse_auto_official_card(html,selected,venue,race,grade,require_mori=False):
     raise ValueError("公式出走表が動的表示または不完全")
 
 
+
+CHARILOTO_CARD="https://www.chariloto.com/auto/athletes/{date}/{venue}/{race}"
+CHARILOTO_LIST="https://www.chariloto.com/auto/athletes/{date}/{venue}"
+CHARILOTO_PREDICTION="https://www.chariloto.com/auto/predictions/{venue}/{date}"
+CHARILOTO_CODES={name:"0"+code for name,code in AUTO_CODES.items()}
+
+
+def parse_chariloto_kind(html,selected,venue,race,grade,require_mori=False):
+    """The detail page identifies the race even when its table is client-rendered."""
+    soup=BeautifulSoup(html,"html.parser")
+    compact=lambda x:re.sub(r"\s+","",text_clean(x))
+    day=f"{selected.year}年{selected.month}月{selected.day}日"
+    expected=venue+f"オートレース出走表詳細({race}R{day}"
+    if not any(compact(h.get_text(" ",strip=True)).startswith(expected)
+               for h in soup.find_all("h1")):
+        raise ValueError("チャリロト詳細の日付・場・R不一致")
+    prefix=venue+day
+    for h in soup.find_all("h2"):
+        value=compact(h.get_text(" ",strip=True))
+        match=re.fullmatch(re.escape(prefix)+r"(最終日|初日|\d+日目)(SG|特G1|G[12])?[^0-9]*?(準優勝戦|優勝戦|特別選抜戦|選抜戦|一般戦|準決勝戦|予選)(?:\([^)]*\))?"+str(race)+r"R",value)
+        if not match:continue
+        day_label,actual_grade,kind=match.groups()
+        if actual_grade and actual_grade!=grade:raise ValueError("チャリロトグレード不一致")
+        if not require_mori and (kind!="優勝戦" or day_label!="最終日" or actual_grade!=grade):
+            raise ValueError("グレード優勝戦未確認")
+        return kind
+    raise ValueError("チャリロトのレース種別未確認")
+
+
+def parse_chariloto_entries(html,selected,venue,race):
+    """Read the explicitly numbered entries in the requested race's table."""
+    soup=BeautifulSoup(html,"html.parser")
+    compact=lambda x:re.sub(r"\s+","",text_clean(x))
+    if venue+"オート予想" not in [compact(h.get_text(" ",strip=True)) for h in soup.find_all("h1")]:
+        raise ValueError("チャリロト予想一覧の開催場不一致")
+    if f"{selected.year}年{selected.month}月{selected.day}日{venue}オートレース" not in compact(soup.get_text(" ",strip=True))[:4000]:
+        raise ValueError("チャリロト予想一覧の日付不一致")
+    rows={}
+    for table in soup.find_all("table"):
+        headers=compact(" ".join(th.get_text(" ",strip=True) for th in table.find_all("th")))
+        if not all(x in headers for x in ("レース","車番","選手名","LG")):continue
+        active=None
+        for tr in table.find_all("tr"):
+            cells=tr.find_all(["td","th"],recursive=False)
+            if not cells:continue
+            values=[text_clean(c.get_text(" ",strip=True)) for c in cells]
+            marker=re.fullmatch(r"(1[0-2]|[1-9])R",values[0])
+            if marker:active=int(marker.group(1))
+            if active!=race:continue
+            for i in range(1,len(values)-1):
+                if not re.fullmatch(r"[1-8]",values[i-1]) or not NAME_RX.fullmatch(values[i]):continue
+                if compact(values[i+1]) not in AUTO_CODES:continue
+                n=int(values[i-1])
+                if n in rows:raise ValueError("チャリロト車番重複")
+                row={"number":n,"name":values[i]}
+                if SCRATCHED.search(" ".join(values)):row["status"]="scratched"
+                rows[n]=row
+                break
+    return strict_numbered_names(rows,7,8)
+
+
+def chariloto_card(s,selected,venue,race,grade,u,require_mori=False):
+    params=dict(date=selected.isoformat(),venue=CHARILOTO_CODES[venue],race=race)
+    detail=CHARILOTO_CARD.format(**params)
+    kind=parse_chariloto_kind(u.fetch(s,detail),selected,venue,race,grade,require_mori)
+    entries=CHARILOTO_PREDICTION.format(**params)
+    riders=parse_chariloto_entries(u.fetch(s,entries),selected,venue,race)
+    if require_mori and not any(re.sub(r"\s+","",r["name"])=="森且行" for r in riders):
+        raise ValueError("チャリロト森選手未確認")
+    start=None
+    if hasattr(u,"parse_mori_chariloto_starts"):
+        try:
+            start=u.parse_mori_chariloto_starts(u.fetch(s,CHARILOTO_LIST.format(**params)),selected,venue,[race]).get(race)
+        except Exception as exc:log.info("チャリロト発走時刻: %s",exc)
+    card={"sport":"auto","venue":venue,"grade":grade,"event":venue+"オートレース",
+          "raceName":kind,"race":race,"startTime":start,"riders":riders,
+          "sourceName":"チャリロト","sourceUrl":detail,"entrySourceUrl":entries}
+    if require_mori:card["feature"]="mori"
+    return card
+
+
+def lineup_signature(card):
+    return tuple((r["number"],re.sub(r"\s+","",r["name"])) for r in card["riders"])
+
+
 def auto_alternative(s,selected,venue,race,grade,u,require_mori=False):
     """Independent race-card fallbacks; only show time if separately verified."""
+    try:return chariloto_card(s,selected,venue,race,grade,u,require_mori)
+    except Exception as exc:chariloto_error=str(exc)
     attempts=[
         (AUTO_OFFICIAL_CARD.format(slug=AUTO_SLUGS[venue],date=selected.isoformat(),race=race),parse_auto_official_card),
         (AUTO_ODDS_CARD.format(day=selected.strftime("%Y%m%d"),venue=AUTO_CODES[venue],race=race),parse_auto_odds_card)]
-    errors=[]
+    errors=['チャリロト: '+chariloto_error]
     for uri,parser in attempts:
         try:
             card=parser(u.fetch(s,uri),selected,venue,race,grade,require_mori)
@@ -588,7 +675,7 @@ def collect(s,selected,sections,u,previous=None):
         venue=meeting["name"]
         if venue not in KEIRIN_CODES or any(x["sport"]=="keirin" and x["venue"]==venue for x in found):continue
         issues=[]
-        for race in (12,11,10,9):
+        for race in (12,11,10,9,8,7):
             uri=NETKEIRIN.format(day=selected.strftime("%Y%m%d"),venue=KEIRIN_CODES[venue],race=race)
             try:
                 found.append(parse_netkeirin_final(u.fetch(s,uri),selected,venue,race,meeting["grade"]))
@@ -606,6 +693,17 @@ def collect(s,selected,sections,u,previous=None):
             try:
                 page=u.fetch(s,uri)
                 final=parse_autorace_final(page,selected,venue,race,meeting["grade"])
+                final["sourceName"]="東スポ"
+                final["confirmedBy"]=["東スポ"]
+                # Exercise the alternate on real graded finals even when the
+                # primary works. This detects parser drift before an outage.
+                try:
+                    other=chariloto_card(s,selected,venue,race,meeting["grade"],u)
+                    if lineup_signature(final)==lineup_signature(other):
+                        final["confirmedBy"].append("チャリロト")
+                    else:errors.append(f"オート {venue} {race}R 出走選手の情報源不一致")
+                except Exception as exc:
+                    final["sourceErrors"]=["チャリロト: "+str(exc)]
                 found.append(final)
                 break
             except Exception as exc:
@@ -628,14 +726,15 @@ def collect(s,selected,sections,u,previous=None):
         old=previous.get("finals",{})
         for race in old.get("items",[]) if isinstance(old,dict) else []:
             if not isinstance(race,dict):continue
+            if race.get("sport") not in ("keirin","auto") or race.get("feature")=="mori":continue
             grade_set=keirin if race.get("sport")=="keirin" else auto
             current=next((m for m in grade_set if m["name"]==race.get("venue")
                           and m["grade"]==race.get("grade")),None)
             key=(race.get("sport"),race.get("venue"),race.get("race"))
-            if current and key not in results and (
+            if current and not any(x["sport"]==race.get("sport") and x["venue"]==race.get("venue") for x in results.values()) and (
                 5<=len(race.get("riders",[]))<=9 and
-                CLOCK.fullmatch(str(race.get("startTime","")))):
-                results[key]=race
+                (race.get("startTime") is None or CLOCK.fullmatch(str(race["startTime"])))):
+                results[key]=dict(race,retainedFromSameDate=True)
         ordered=sorted(results.values(),key=lambda x:(x.get("startTime") or "99:99",x["sport"],x["venue"],x["race"]))
     # Mori's verified racecards are presented after every graded final.
     mori_section=sections.get("mori",{})

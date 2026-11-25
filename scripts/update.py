@@ -52,14 +52,27 @@ def session():
     s.headers.update({'User-Agent':'AssemblyMorningBoard/1.0 (public schedule dashboard)','Accept-Language':'ja-JP,ja;q=0.9'})
     return s
 
+# Network health is not a claim that a parser accepted the returned HTML.
+FETCH_HEALTH={}
 def fetch(s,url,params=None):
-    r=s.get(url,params=params,timeout=(10,24))
-    r.raise_for_status()
-    if r.encoding is None or r.encoding.lower() in ('iso-8859-1','ascii'):r.encoding=r.apparent_encoding
-    text=r.text
-    if len(text)<1000 or any(x in text[:4500].lower() for x in ("verify that you're not a robot","captcha","access denied")):
-        raise ValueError('自動アクセス制限または空の応答')
-    return text
+    from urllib.parse import urlsplit
+    key=urlsplit(url).netloc
+    counts=FETCH_HEALTH.setdefault(key,{'ok':0,'error':0,'reasons':{}})
+    try:
+        r=s.get(url,params=params,timeout=(10,24))
+        r.raise_for_status()
+        if r.encoding is None or r.encoding.lower() in ('iso-8859-1','ascii'):r.encoding=r.apparent_encoding
+        text=r.text
+        if len(text)<1000 or any(x in text[:4500].lower() for x in ("verify that you're not a robot","captcha","access denied")):
+            raise ValueError('自動アクセス制限または空の応答')
+        counts['ok']+=1
+        return text
+    except Exception as exc:
+        counts['error']+=1
+        response=getattr(exc,'response',None)
+        reason=str(response.status_code) if response is not None else type(exc).__name__
+        counts['reasons'][reason]=counts['reasons'].get(reason,0)+1
+        raise
 
 def grade(x):
     x=x.upper().replace(' ','').replace('　','').replace('Ⅰ','I').replace('Ⅱ','II').replace('Ⅲ','III')
@@ -961,6 +974,7 @@ def main():
         if 'finals' in patch:
             out['finals']=patch['finals']
         out['overridden']=True
+    out['fetchHealth']={k:dict(v) for k,v in sorted(FETCH_HEALTH.items())}
     dst=Path(args.output);dst.parent.mkdir(parents=True,exist_ok=True)
     dst.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     log.info('保存: %s / %s',dst,{k:(v['status'],len(v.get('items',[]))) for k,v in out['sections'].items()})

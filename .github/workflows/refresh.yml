@@ -108,6 +108,45 @@ jobs:
       - name: Retain verified daily history for future historical dates
         run: python scripts/history_cache.py --input data/today.json
 
+      - name: Retain source health history and report degraded collection
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          path=Path('data/source-health.json')
+          previous=json.loads(path.read_text(encoding='utf-8')) if path.exists() else []
+          snap=json.loads(Path('data/today.json').read_text(encoding='utf-8'))
+          fields={}
+          for sport,section in snap.get('sections',{}).items():
+              checked=section.get('verification',{})
+              fields[sport]={'status':section.get('status'),
+                             'providers':checked.get('providers',{}),
+                             'errors':checked.get('errors',[]),
+                             'crossConfirmed':checked.get('crossConfirmed',0)}
+          finals=snap.get('finals',{})
+          record={'date':snap['date'],'updatedAt':snap['updatedAt'],
+                  'network':snap.get('fetchHealth',{}),'sections':fields,
+                  'finals':{'verification':finals.get('verification',{}),
+                            'sources':[{'sport':x['sport'],'venue':x['venue'],'race':x['race'],
+                                        'source':x.get('sourceName',x.get('sourceUrl')),
+                                        'confirmedBy':x.get('confirmedBy',[]),
+                                        'errors':x.get('sourceErrors',[]),
+                                        'cached':x.get('retainedFromSameDate',False)}
+                                       for x in finals.get('items',[])]}}
+          # Keep the most recent 120 captures (about 40 regular-update days).
+          history=[r for r in previous if r.get('updatedAt')!=record['updatedAt']]+[record]
+          path.write_text(json.dumps(history[-120:],ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as out:
+              out.write('## 情報源の取得状況（通信レベル）\n\n| 情報源 | 成功 | 失敗 | 失敗理由 |\n|---|---:|---:|---|\n')
+              for host,c in record['network'].items():
+                  out.write(f"| {host} | {c['ok']} | {c['error']} | {c['reasons']} |\n")
+              out.write('\n通信成功は解析成功を意味しません。採用元と解析失敗は下記の照合結果を確認してください。\n')
+          for host,c in record['network'].items():
+              if c['error'] and not c['ok']:
+                  print(f"::warning::情報源 {host} 今回の通信が全件失敗: {c['reasons']}")
+          PY
+
       - name: Validate the configured public display
         run: python scripts/display_mode.py check
 
