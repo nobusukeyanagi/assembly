@@ -240,7 +240,21 @@ function finalRaceText(data){
     (data.startTime?'　'+data.startTime+'発走':'');
 }
 function finalEventLabel(event){
-  return String(event||'').replace(/^(?:特G[ⅠⅡⅢ123]|G[ⅠⅡⅢ123]|F[ⅠⅡ12]|SG|GP)[\s　]*/i,'').trim();
+  const value=String(event||'').trim();
+  // Strip a grade annotation, not the typography of the event name itself.
+  // Match longest Roman numerals first (GII must never leave a stray I).
+  const numeral='(?:[IＩ]{3}|[IＩ]{2}|[IＩ]|[ⅠⅡⅢ123１２３])';
+  const graded='(?:特\\s*)?(?:[PＰ]\\s*)?[GＧ]\\s*'+numeral+
+               '|[FＦ]\\s*(?:[IＩ]{2}|[IＩ]|[ⅠⅡ12１２])';
+  const grade='(?:'+graded+'|[SＳ]\\s*[GＧ]|[GＧ]\\s*[PＰ])';
+  const ascii='A-Za-z0-9Ａ-Ｚａ-ｚ０-９';
+  const wrapped=new RegExp('[（(【［\\[]\\s*'+grade+'\\s*[）)】］\\]]','gi');
+  const prefix=new RegExp('^(?:'+grade+')(?!['+ascii+']|ホールディングス)\\s*','i');
+  const inline=new RegExp('(?<!['+ascii+'])(?:'+graded+')(?!['+ascii+'])','gi');
+  const separated=new RegExp('(^|\\s)(?:[SＳ]\\s*[GＧ]|[GＧ]\\s*[PＰ])(?=\\s|$)','gi');
+  const cleaned=value.replace(wrapped,'').replace(prefix,'')
+    .replace(inline,'').replace(separated,'$1').replace(/\s{2,}/g,' ').trim();
+  return cleaned||value;
 }
 function finalRiderName(name,sport){
   const value=String(name||'').trim();
