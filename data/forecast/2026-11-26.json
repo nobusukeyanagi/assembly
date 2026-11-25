@@ -1,6 +1,6 @@
 {
   "date": "2026-11-26",
-  "createdAt": "2026-11-25T04:29+09:00",
+  "createdAt": "2026-11-25T17:24+09:00",
   "purpose": "verified-next-day-fallback",
   "sections": {
     "keirin": {
@@ -455,6 +455,7 @@
         "priorityPolicy": {
           "grade": [
             "BOAT RACE公式G3日程",
+            "BOAT RACE公式マスターズリーグ日程",
             "BOAT RACE公式",
             "きょうの競艇"
           ],
@@ -465,6 +466,7 @@
           ],
           "timeType": [
             "BOAT RACE公式",
+            "ボートレースサーチ開催一覧",
             "きょうの競艇",
             "BOAT RACE公式G3日程"
           ],
@@ -490,6 +492,10 @@
           [
             "きょうの競艇",
             "404 Client Error: Not Found for url: https://www.ikachi.org/kyotei/2026-11-26"
+          ],
+          [
+            "ボートレースサーチ開催一覧",
+            "404 Client Error: Not Found for url: https://boatrace-search.com/day/2026-11-26/"
           ]
         ]
       },
