@@ -1,6 +1,6 @@
 {
   "date": "2026-11-25",
-  "updatedAt": "2026-11-25T10:30+09:00",
+  "updatedAt": "2026-11-25T10:36+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -751,6 +751,111 @@
       "errors": [
         "SODA 芦屋 発走時刻未確認: 発走表記が公式締切時刻と同一のため採用しません"
       ]
+    }
+  },
+  "fetchHealth": {
+    "autorace.jp": {
+      "ok": 6,
+      "error": 0,
+      "reasons": {}
+    },
+    "autorace.tokyo-sports.co.jp": {
+      "ok": 1,
+      "error": 0,
+      "reasons": {}
+    },
+    "boatrace-rating.com": {
+      "ok": 1,
+      "error": 0,
+      "reasons": {}
+    },
+    "boatrace-search.com": {
+      "ok": 2,
+      "error": 0,
+      "reasons": {}
+    },
+    "ctc.gr.jp": {
+      "ok": 0,
+      "error": 1,
+      "reasons": {
+        "403": 1
+      }
+    },
+    "keirin.jp": {
+      "ok": 2,
+      "error": 0,
+      "reasons": {}
+    },
+    "keirin.kdreams.jp": {
+      "ok": 1,
+      "error": 0,
+      "reasons": {}
+    },
+    "keirinhex.jp": {
+      "ok": 1,
+      "error": 0,
+      "reasons": {}
+    },
+    "sanyoauto.jp": {
+      "ok": 2,
+      "error": 0,
+      "reasons": {}
+    },
+    "sp.atrc.jp": {
+      "ok": 0,
+      "error": 1,
+      "reasons": {
+        "403": 1
+      }
+    },
+    "sp.oddspark.com": {
+      "ok": 0,
+      "error": 6,
+      "reasons": {
+        "403": 6
+      }
+    },
+    "www.boatrace.jp": {
+      "ok": 4,
+      "error": 0,
+      "reasons": {}
+    },
+    "www.chariloto.com": {
+      "ok": 3,
+      "error": 0,
+      "reasons": {}
+    },
+    "www.hamamatsuauto.jp": {
+      "ok": 2,
+      "error": 0,
+      "reasons": {}
+    },
+    "www.iizuka-auto.jp": {
+      "ok": 2,
+      "error": 0,
+      "reasons": {}
+    },
+    "www.ikachi.org": {
+      "ok": 2,
+      "error": 0,
+      "reasons": {}
+    },
+    "www.isesaki-auto.jp": {
+      "ok": 1,
+      "error": 0,
+      "reasons": {}
+    },
+    "www.kawaguchiauto.jp": {
+      "ok": 1,
+      "error": 0,
+      "reasons": {}
+    },
+    "www.winticket.jp": {
+      "ok": 0,
+      "error": 4,
+      "reasons": {
+        "403": 4
+      }
     }
   }
 }
