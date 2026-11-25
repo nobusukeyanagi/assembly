@@ -598,5 +598,190 @@
         }
       ]
     }
+  },
+  {
+    "date": "2026-11-26",
+    "updatedAt": "2026-11-26T03:37+09:00",
+    "network": {
+      "autorace.jp": {
+        "ok": 6,
+        "error": 0,
+        "reasons": {}
+      },
+      "boatrace-rating.com": {
+        "ok": 1,
+        "error": 0,
+        "reasons": {}
+      },
+      "boatrace-search.com": {
+        "ok": 2,
+        "error": 0,
+        "reasons": {}
+      },
+      "ctc.gr.jp": {
+        "ok": 0,
+        "error": 1,
+        "reasons": {
+          "403": 1
+        }
+      },
+      "keirin.jp": {
+        "ok": 2,
+        "error": 0,
+        "reasons": {}
+      },
+      "keirin.kdreams.jp": {
+        "ok": 1,
+        "error": 0,
+        "reasons": {}
+      },
+      "keirinhex.jp": {
+        "ok": 1,
+        "error": 0,
+        "reasons": {}
+      },
+      "sanyoauto.jp": {
+        "ok": 2,
+        "error": 0,
+        "reasons": {}
+      },
+      "sp.atrc.jp": {
+        "ok": 0,
+        "error": 1,
+        "reasons": {
+          "403": 1
+        }
+      },
+      "sp.oddspark.com": {
+        "ok": 0,
+        "error": 6,
+        "reasons": {
+          "403": 6
+        }
+      },
+      "www.boatrace.jp": {
+        "ok": 4,
+        "error": 0,
+        "reasons": {}
+      },
+      "www.chariloto.com": {
+        "ok": 2,
+        "error": 0,
+        "reasons": {}
+      },
+      "www.hamamatsuauto.jp": {
+        "ok": 2,
+        "error": 0,
+        "reasons": {}
+      },
+      "www.iizuka-auto.jp": {
+        "ok": 2,
+        "error": 0,
+        "reasons": {}
+      },
+      "www.ikachi.org": {
+        "ok": 2,
+        "error": 0,
+        "reasons": {}
+      },
+      "www.isesaki-auto.jp": {
+        "ok": 1,
+        "error": 0,
+        "reasons": {}
+      },
+      "www.kawaguchiauto.jp": {
+        "ok": 1,
+        "error": 0,
+        "reasons": {}
+      },
+      "www.winticket.jp": {
+        "ok": 0,
+        "error": 3,
+        "reasons": {
+          "403": 3
+        }
+      }
+    },
+    "sections": {
+      "keirin": {
+        "status": "ok",
+        "providers": {
+          "楽天Kドリームス": 8,
+          "KEIRIN HEX": 8,
+          "KEIRIN.JP": 8,
+          "KEIRIN.JPモーニング日程": 1
+        },
+        "errors": [
+          [
+            "WINTICKET 2026年11月決勝日程",
+            "403 Client Error:  for url: https://www.winticket.jp/keirin/campaign/pK2vUymUNoU1cwWwXXQm14"
+          ],
+          [
+            "CTC開催日程",
+            "403 Client Error: Forbidden for url: https://ctc.gr.jp/schedule/"
+          ]
+        ],
+        "crossConfirmed": 8
+      },
+      "auto": {
+        "status": "ok",
+        "providers": {
+          "伊勢崎オート公式日程": 1,
+          "飯塚オート公式トップ": 1
+        },
+        "errors": [
+          [
+            "WINTICKET指定月",
+            "403 Client Error:  for url: https://www.winticket.jp/autorace/schedules/202611"
+          ]
+        ],
+        "crossConfirmed": 0
+      },
+      "soda": {
+        "status": "ok",
+        "providers": {
+          "BOAT RACE公式": 5,
+          "きょうの競艇": 5,
+          "ボートレースサーチ開催一覧": 5,
+          "BOAT RACE公式G3日程": 1
+        },
+        "errors": [],
+        "crossConfirmed": 5
+      },
+      "mori": {
+        "status": "error",
+        "providers": {},
+        "errors": [],
+        "crossConfirmed": 0
+      }
+    },
+    "finals": {
+      "verification": {
+        "targetDate": "2026-11-26",
+        "eligibleMeetings": 1,
+        "confirmedRaces": 1,
+        "moriRaces": 0,
+        "sodaRaces": 1,
+        "errors": [
+          "SODA 三国 発走時刻未確認: 発走表記が公式締切時刻と同一のため採用しません"
+        ]
+      },
+      "sources": [
+        {
+          "sport": "soda",
+          "venue": "三国",
+          "race": 12,
+          "source": "BOAT RACE公式",
+          "confirmedBy": [
+            "BOAT RACE公式",
+            "きょうの競艇"
+          ],
+          "errors": [
+            "ボートレースサーチ: 開催節名を確認できません"
+          ],
+          "cached": false
+        }
+      ]
+    }
   }
 ]
