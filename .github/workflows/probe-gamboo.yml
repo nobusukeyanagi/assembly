@@ -1,0 +1,54 @@
+name: Gamboo public page connectivity check
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/probe-gamboo.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Check public pages with production collector user agent
+        shell: python
+        run: |
+          import urllib.request, urllib.error, re, html
+          from datetime import datetime, timezone, timedelta
+          from concurrent.futures import ThreadPoolExecutor
+          urls = [
+              ('home', 'https://gamboo.jp/'),
+              ('keirin', 'https://gamboo.jp/keirin/'),
+              ('autorace', 'https://gamboo.jp/autorace/'),
+              ('mori', 'https://gamboo.jp/autorace/player?pcd=2529'),
+          ]
+          def probe(pair):
+              name, url = pair
+              req = urllib.request.Request(url, headers={
+                  'User-Agent': 'AssemblyMorningBoard/1.0 (public schedule dashboard)',
+                  'Accept-Language': 'ja-JP,ja;q=0.9'})
+              try:
+                  with urllib.request.urlopen(req, timeout=20) as r:
+                      body = r.read()
+                      charset = r.headers.get_content_charset() or 'utf-8'
+                      page = body.decode(charset, errors='replace')
+                      title = re.search(r'<title[^>]*>(.*?)</title>', page, re.I|re.S)
+                      title = html.unescape(title.group(1)).strip() if title else ''
+                      text = html.unescape(re.sub(r'<[^>]+>', ' ', re.sub(r'<(script|style)\b[^>]*>.*?</\1>', ' ', page, flags=re.I|re.S)))
+                      text = re.sub(r'\s+', ' ', text)
+                      compact = re.sub(r'\s+', '', text)
+                      keys = ['開催場','出走表','森且行','次回','出場予定','出走予定','11月30日','11/30']
+                      snippets = []
+                      if name in ('home','mori','autorace'):
+                          for m in list(re.finditer(r'次回|出場予定|出走予定|森\s*且行',text))[:8]:
+                              snippets.append(text[max(0,m.start()-25):m.end()+90])
+                      return f'PROBE {name} HTTP={r.status} bytes={len(body)} url={r.url} title={title} markers={[k for k in keys if k in compact]} snippets={snippets}'
+              except urllib.error.HTTPError as e:
+                  return f'PROBE {name} HTTP={e.code} url={e.url}'
+              except Exception as e:
+                  return f'PROBE {name} ERROR={type(e).__name__}: {e}'
+          print('Probe time', datetime.now(timezone(timedelta(hours=9))).isoformat())
+          with ThreadPoolExecutor(max_workers=2) as pool:
+              for line in pool.map(probe, urls):
+                  print(line)
