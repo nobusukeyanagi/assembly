@@ -1,6 +1,6 @@
 {
   "date": "2026-11-26",
-  "updatedAt": "2026-11-26T09:05+09:00",
+  "updatedAt": "2026-11-26T09:16+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -588,6 +588,7 @@
         "timeType": "ナイター",
         "source": "kawaguchi-featured-entrants",
         "sourceUrl": "https://www.kawaguchiauto.jp/nightrace/",
+        "verifiedOn": "2026-11-26",
         "confirmedBy": [
           "kawaguchi-featured"
         ]
@@ -602,6 +603,7 @@
           "timeType": "ナイター",
           "source": "kawaguchi-featured-entrants",
           "sourceUrl": "https://www.kawaguchiauto.jp/nightrace/",
+          "verifiedOn": "2026-11-26",
           "confirmedBy": [
             "kawaguchi-featured"
           ]
@@ -761,11 +763,18 @@
       "error": 0,
       "reasons": {}
     },
+    "www.oddspark.com": {
+      "ok": 0,
+      "error": 1,
+      "reasons": {
+        "403": 1
+      }
+    },
     "www.winticket.jp": {
       "ok": 0,
-      "error": 4,
+      "error": 5,
       "reasons": {
-        "403": 4
+        "403": 5
       }
     }
   }
