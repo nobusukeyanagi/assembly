@@ -69,6 +69,16 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: pip install --disable-pip-version-check -r requirements.txt
+      - name: Enable optional public official assignment search
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          pip install --disable-pip-version-check playwright==1.51.0
+          if command -v google-chrome >/dev/null; then
+            echo MORI_BROWSER_SEARCH=1 >> "$GITHUB_ENV"
+          else
+            echo "::warning::Chrome unavailable; ordinary assignment collectors remain enabled"
+          fi
       - name: Check JavaScript syntax
         run: |
           node --check app.js

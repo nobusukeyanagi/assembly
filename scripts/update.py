@@ -585,11 +585,16 @@ def mori_future_assignments(section,target):
         except (KeyError,TypeError,ValueError):continue
         if not 0<(dt-target).days<=45:continue
         clean={k:v for k,v in item.items() if k not in ('race','races','startTimes')}
+        try:
+            verified=date.fromisoformat(clean.get('verifiedOn',clean.get('retainedFromDate',target.isoformat())))
+        except (TypeError,ValueError):continue
+        if not 0<=(target-verified).days<=14:continue
+        clean['verifiedOn']=verified.isoformat()
         found.setdefault((item['date'],item['name']),clean)
     return sorted(found.values(),key=lambda x:(x['date'],x['name']))
 
 
-def mori_recent_assignment(target, root=None, lookback_days=14):
+def mori_recent_assignments(target, root=None, lookback_days=14):
     """Reuse a recently verified future assignment across midnight outages.
 
     Daily snapshots are keyed by their own calendar date, so a normal
@@ -611,17 +616,21 @@ def mori_recent_assignment(target, root=None, lookback_days=14):
                 continue
             future=mori_future_assignments(section,target)
             if not future:continue
-            item=future[0]
-            meeting_date=date.fromisoformat(item['date'])
-            if (meeting_date-snapshot_date).days>45:continue
-            # The preserved record is a verified assignment, not proof that
-            # the rider will start in any particular race on the event day.
-            result=dict(item)
-            result['retainedFromDate']=snapshot_date.isoformat()
-            return result
+            retained=[]
+            for item in future:
+                verified=date.fromisoformat(item.get('verifiedOn',item.get('retainedFromDate',snapshot_date.isoformat())))
+                if not 0<=(target-verified).days<=14:continue
+                if (date.fromisoformat(item['date'])-verified).days>45:continue
+                retained.append(dict(item,verifiedOn=verified.isoformat(),retainedFromDate=verified.isoformat()))
+            if retained:return retained
         except (OSError,TypeError,ValueError,AttributeError):
             continue
-    return None
+    return []
+
+
+def mori_recent_assignment(target, root=None, lookback_days=14):
+    items=mori_recent_assignments(target,root,lookback_days)
+    return items[0] if items else None
 
 
 AUTO_SITE_CODES={'川口':'02','伊勢崎':'03','浜松':'04','飯塚':'05','山陽':'06'}
@@ -860,20 +869,32 @@ def collect(today,s,previous=None):
     for url,parser,source in (
             (ASSEN,parse_assen,'official'),
             (MORI,parse_mori_calendar,'winticket'),
-            (ODDSPARK,parse_mori,'oddspark')):
+            (ODDSPARK,parse_mori,'oddspark'),
+            (mori_racecards.ODDSPARK_DESKTOP,mori_racecards.oddspark_desktop_assignments,'oddspark-desktop')):
         try:
             for item in parser(fetch(s,url),today):
                 candidate=dict(item)
                 dt=date.fromisoformat(candidate['date'])
                 if dt<today or candidate.get('name') not in AUTO_NAMES:continue
                 candidate.setdefault('type','today' if dt==today else 'next')
+                candidate.setdefault('sourceUrl',url)
+                candidate['verifiedOn']=today.isoformat()
                 candidates.setdefault((candidate['date'],candidate['name']),[]).append((source,candidate))
         except Exception as e:log.warning('森選手 %s 日程取得失敗: %s',source,e)
+    import os
+    if os.environ.get('MORI_BROWSER_SEARCH')=='1':
+        try:
+            for candidate in mori_racecards.browser_official_assignments(today):
+                candidate['verifiedOn']=today.isoformat()
+                candidates.setdefault((candidate['date'],candidate['name']),[]).append(
+                    ('official-national-search',candidate))
+        except Exception as exc:log.warning('森選手 公式全国あっせん検索: %s',exc)
     # A host's explicitly dated entrant list is independent of the three
     # blocked profile endpoints; never infer entry from a venue calendar.
     try:
         for candidate in mori_racecards.kawaguchi_night_assignment(
                 fetch(s,MORI_KAWAGUCHI_NIGHT),today):
+            candidate['verifiedOn']=today.isoformat()
             candidates.setdefault((candidate['date'],candidate['name']),[]).append(
                 ('kawaguchi-featured',candidate))
     except Exception as e:log.info('森選手 川口公式注目選手: %s',e)
@@ -899,6 +920,37 @@ def collect(today,s,previous=None):
                         ('dated-racecard',candidate))
             except Exception as exc:
                 log.warning('森選手 %s 当日出走表取得失敗: %s',venue,exc)
+    # Confirm independently listed event entrants for known future meetings.
+    # Also discover all five venues' near-term starts from an available monthly
+    # schedule when profile pages have no future entries.
+    roster_targets={}
+    for (iso,venue),records in list(candidates.items()):
+        if iso>today.isoformat():roster_targets[(iso,venue)]=None
+    if not roster_targets:
+        try:
+            import calendar
+            for monthday in (today,(today.replace(day=1)+timedelta(days=32)).replace(day=1)):
+                html=fetch(s,verified_sources.AUTO_MONTH.format(year=monthday.year,month=monthday.month))
+                for n in range(1,calendar.monthrange(monthday.year,monthday.month)[1]+1):
+                    target=monthday.replace(day=n)
+                    if not 0<(target-today).days<=21:continue
+                    for row in parse_auto_calendar(html,target):
+                        if row.get('name') in AUTO_NAMES and row.get('day')=='初日':
+                            roster_targets[(target.isoformat(),row['name'])]=row
+        except Exception as exc:log.info('森選手 開催日程一覧: %s',exc)
+    for (iso,venue),row in sorted(roster_targets.items())[:12]:
+        target=date.fromisoformat(iso)
+        uri=mori_racecards.WINTICKET_ROSTER.format(slug=mori_racecards.SLUGS[venue],
+            day=target.strftime('%Y%m%d'),code=mori_racecards.CODES[venue][-2:])
+        try:
+            candidate=mori_racecards.winticket_roster_assignment(fetch(s,uri),today,venue,target)
+            if candidate:
+                candidate['verifiedOn']=today.isoformat()
+                if row:candidate.update({k:row[k] for k in ('grade','timeType') if row.get(k)})
+                candidates.setdefault((iso,venue),[]).append(('winticket-roster',candidate))
+        except Exception as exc:
+            log.info('森選手 開催別出場者一覧 %s %s: %s',iso,venue,exc)
+            if '403' in str(exc) or 'アクセス制限' in str(exc):break
     future=[]
     if candidates:
         scored=[]
@@ -949,9 +1001,10 @@ def collect(today,s,previous=None):
             previous.get('sections',{}).get('mori',{}) if isinstance(previous,dict) else {},today)
         cached=retained[0] if retained else mori_previous_item(previous,today)
         if not cached:
-            cached=mori_recent_assignment(today)
+            retained=mori_recent_assignments(today)
+            cached=retained[0] if retained else None
         if cached:
-            sections['mori']=dict(ok(item=cached),status='cached',
+            sections['mori']=dict(ok(item=cached),status='cached',futureAssignments=retained,
                                   note='取得元が失敗したため、直近の確認済み次回予定を継続')
             log.warning('森選手: 確認済みの次回予定を継続 %s %s (元データ日付 %s)',
                         cached['date'],cached['name'],
@@ -961,14 +1014,18 @@ def collect(today,s,previous=None):
     # Fresh future assignments survive even while today's actual race is shown.
     # Do not revive stale assignments if a newer confirmed future is present.
     if future:
+        # Partial source success is not proof that other future meetings were
+        # cancelled. Keep separately verified later dates within the TTL.
+        prior=mori_future_assignments(
+            previous.get('sections',{}).get('mori',{}) if isinstance(previous,dict) else {},today)
+        if not prior:prior=mori_recent_assignments(today)
         sections['mori']['futureAssignments']=mori_future_assignments(
-            {'futureAssignments':future},today)
+            {'futureAssignments':future+prior},today)
     elif sections['mori'].get('status') in ('ok','cached','partial'):
         stored=mori_future_assignments(
             previous.get('sections',{}).get('mori',{}) if isinstance(previous,dict) else {},today)
         if not stored:
-            older=mori_recent_assignment(today)
-            if older:stored=[older]
+            stored=mori_recent_assignments(today)
         if stored:sections['mori']['futureAssignments']=stored
     out['finals']=finals.collect(s,today,sections,active,previous)
     return out

@@ -174,6 +174,37 @@ class MoriDatedRaces(unittest.TestCase):
             later=update.mori_recent_assignment(date(2026,12,1),root=root)
             self.assertEqual(later['date'],'2026-12-10')
 
+    def test_additional_future_sources(self):
+        day=date(2026,11,26)
+        desktop='<h3>森　且行 選手の 出場予定</h3><table><tr><th>年月日</th><th>開催場</th><th>R</th></tr><tr><td>2026/11/30</td><td>川口</td><td>4</td></tr></table><h3>出走履歴</h3>'
+        self.assertEqual(mori_racecards.oddspark_desktop_assignments(desktop,day)[0]['date'],'2026-11-30')
+        roster='<h1>出場者一覧</h1><p>川口オートレース 2026年11月30日〜12月3日</p><a href="/autorace/autoracer/2529/">森且行川口25期</a>'
+        result=mori_racecards.winticket_roster_assignment(roster,day,'川口',date(2026,11,30))
+        self.assertEqual(result['meetingEnd'],'2026-12-03')
+        self.assertIsNone(mori_racecards.winticket_roster_assignment(roster.replace('/2529/','/1234/'),day,'川口',date(2026,11,30)))
+        with self.assertRaises(ValueError):
+            mori_racecards.winticket_roster_assignment(roster,day,'飯塚',date(2026,11,30))
+        official='<h2>あっせん検索</h2><table><tr><th>選手名</th><th>開催場</th><th>開催期間</th></tr><tr><td>森　且行</td><td>飯塚</td><td>2026年12月5日～12月8日</td></tr><tr><td>森谷隼人</td><td>川口</td><td>2026年11月30日～12月3日</td></tr></table>'
+        items=mori_racecards.official_search_assignments(official,day)
+        self.assertEqual([(x['date'],x['name']) for x in items],[('2026-12-05','飯塚')])
+        with self.assertRaises(ValueError):
+            mori_racecards.official_search_assignments(official.replace('森　且行','別選手'),day)
+
+    def test_future_cache_keeps_multiple_and_original_verification_date(self):
+        import json
+        day=date(2026,11,26)
+        with tempfile.TemporaryDirectory() as root:
+            path=Path(root)/'data'/'history'
+            path.mkdir(parents=True)
+            items=[{'date':'2026-11-30','name':'川口','type':'next','verifiedOn':'2026-11-25'},
+                   {'date':'2026-12-10','name':'飯塚','type':'next','verifiedOn':'2026-11-25'},
+                   {'date':'2026-12-11','name':'山陽','type':'next','verifiedOn':'2026-11-01'}]
+            (path/'2026-11-25.json').write_text(json.dumps(
+                {'date':'2026-11-25','sections':{'mori':{'status':'ok','futureAssignments':items}}}),encoding='utf-8')
+            got=update.mori_recent_assignments(day,root=root)
+            self.assertEqual([x['name'] for x in got],['川口','飯塚'])
+            self.assertTrue(all(x['verifiedOn']=='2026-11-25' for x in got))
+
     def test_no_false_today_when_no_verified_entry(self):
         target=date(2026,11,24)
         with tempfile.TemporaryDirectory() as temporary,patch.object(

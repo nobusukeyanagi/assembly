@@ -154,3 +154,116 @@ def kawaguchi_night_assignment(html, selected):
                      'name':'川口','type':'next','grade':'普通','timeType':'ナイター',
                      'source':'kawaguchi-featured-entrants','sourceUrl':KAWAGUCHI_NIGHT}]
     return []
+
+
+ODDSPARK_DESKTOP='https://www.oddspark.com/autorace/PlayerDetail.do?playerCd=2529'
+OFFICIAL_SEARCH='https://autorace.jp/race_info/SearchRecommend'
+WINTICKET_ROSTER='https://www.winticket.jp/autorace/{slug}/racecard/{day}{code}/autoracers'
+SLUGS={'川口':'kawaguchi','伊勢崎':'isesaki','浜松':'hamamatsu','飯塚':'iizuka','山陽':'sanyo'}
+
+
+def oddspark_desktop_assignments(html, selected):
+    """Read only the named rider's future table, not completed results."""
+    soup=BeautifulSoup(html,'html.parser')
+    head=next((h for h in soup.find_all(['h2','h3','h4'])
+               if compact(h.get_text(' ',strip=True))=='森且行選手の出場予定'),None)
+    if head is None:raise ValueError('森選手PC版出場予定欄未確認')
+    table=head.find_next('table')
+    if table is None:raise ValueError('PC版出場予定表未確認')
+    headers=[compact(x.get_text(' ',strip=True)) for x in table.find_all('th')]
+    if not all(x in headers for x in ('年月日','開催場','R')):raise ValueError('出場予定表項目不一致')
+    result=[]
+    for row in table.find_all('tr'):
+        cells=[compact(x.get_text(' ',strip=True)) for x in row.find_all('td',recursive=False)]
+        if len(cells)<3:continue
+        dm=re.fullmatch(r'(20\d{2})[/-](\d{1,2})[/-](\d{1,2})',cells[0])
+        if not dm or cells[1] not in CODES or not re.fullmatch(r'(?:1[0-2]|[1-9])R?',cells[2]):continue
+        d=date(*map(int,dm.groups()))
+        if not 0<=(d-selected).days<=45:continue
+        item={'date':d.isoformat(),'name':cells[1],'type':'today' if d==selected else 'next',
+              'sourceUrl':ODDSPARK_DESKTOP,'source':'oddspark-desktop'}
+        if d==selected:item['race']=int(cells[2].removesuffix('R'))
+        result.append(item)
+    return result
+
+
+def winticket_roster_assignment(html, selected, venue, start):
+    """Validate event date, host and stable rider ID in the actual roster."""
+    soup=BeautifulSoup(html,'html.parser')
+    if not any(compact(h.get_text(' ',strip=True))=='出場者一覧' for h in soup.find_all('h1')):
+        raise ValueError('出場者一覧未確認')
+    text=compact(soup.get_text(' ',strip=True))
+    dm=re.search(re.escape(venue)+rf'オートレース{start.year}年{start.month}月{start.day}日[〜～~-](?:(20\d{{2}})年)?(\d{{1,2}})月(\d{{1,2}})日',text)
+    if not dm:raise ValueError('出場者一覧の開催期間不一致')
+    ey,em,ed=dm.groups()
+    end=date(int(ey or (start.year+(int(em)<start.month))),int(em),int(ed))
+    if not selected<start<=end or (end-start).days>10 or (start-selected).days>45:return None
+    exact=[a for a in soup.find_all('a',href=True)
+           if re.search(r'/autorace/autoracer/2529/?(?:[?#].*)?$',a['href'])
+           and re.fullmatch(r'森且行(?:川口25期)?',compact(a.get_text(' ',strip=True)))]
+    if not exact:return None
+    return {'date':start.isoformat(),'meetingEnd':end.isoformat(),'name':venue,'type':'next',
+            'source':'winticket-event-roster','sourceUrl':WINTICKET_ROSTER.format(
+                slug=SLUGS[venue],day=start.strftime('%Y%m%d'),code=CODES[venue][-2:])}
+
+
+def official_search_assignments(html, selected):
+    """Reject the form itself and unrelated names, dates and venue navigation."""
+    soup=BeautifulSoup(html,'html.parser')
+    if not any('あっせん検索' in compact(h.get_text(' ',strip=True))
+               for h in soup.find_all(['h1','h2','h3','title'])):
+        raise ValueError('公式あっせん検索見出し未確認')
+    rows=[]
+    for table in soup.find_all('table'):
+        headers=[compact(c.get_text(' ',strip=True)) for c in table.find_all('th')]
+        if not any('選手' in x for x in headers) or not any('開催場' in x or x=='場名' for x in headers) or not any('開催日' in x or '開催期間' in x for x in headers):
+            continue
+        for tr in table.find_all('tr'):
+            values=[compact(c.get_text(' ',strip=True)) for c in tr.find_all('td',recursive=False)]
+            if not any(v in ('森且行','モリカツユキ','森且行(川口)') or re.fullmatch(r'森且行(?:川口)?25期',v) for v in values):continue
+            hosts=[v for v in values if v in CODES]
+            if len(hosts)!=1:continue
+            for v in values:
+                dm=re.fullmatch(r'(20\d{2})[年/-](\d{1,2})[月/-](\d{1,2})日?(?:\([^)]*\))?(?:[〜～~-](?:(20\d{2})[年/-])?(?:(\d{1,2})[月/-])?(\d{1,2})日?(?:\([^)]*\))?)?',v)
+                if not dm:continue
+                y,mo,d,ey,em,ed=dm.groups()
+                try:
+                    start=date(int(y),int(mo),int(d))
+                    end=date(int(ey or (int(y)+(bool(em) and int(em)<int(mo)))),int(em or mo),int(ed or d))
+                except ValueError:continue
+                if not start<=end or (end-start).days>10 or end<selected or (start-selected).days>45:continue
+                item={'date':max(start,selected).isoformat(),'meetingEnd':end.isoformat(),
+                      'name':hosts[0],'type':'today' if start<=selected else 'next',
+                      'source':'official-national-search','sourceUrl':OFFICIAL_SEARCH}
+                rows.append(item);break
+    if not rows:raise ValueError('公式検索結果の森選手・開催日・場を照合できません')
+    return rows
+
+
+def browser_official_assignments(selected):
+    """Ordinary public browser form, not an access-control workaround."""
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as pw:
+        browser=pw.chromium.launch(channel='chrome',headless=True)
+        try:
+            page=browser.new_page(locale='ja-JP',timezone_id='Asia/Tokyo')
+            page.set_default_timeout(8000)
+            response=page.goto(OFFICIAL_SEARCH,wait_until='domcontentloaded',timeout=20000)
+            if not response or response.status>=400:raise ValueError('公式検索アクセス不可')
+            form=page.locator('form').filter(has=page.get_by_text('選手名（カタカナ）',exact=False)).filter(has=page.get_by_role('button',name='送信する'))
+            if form.count()!=1:raise ValueError('公式あっせん検索フォーム変更')
+            fields=form.locator('input:not([type]), input[type="text"], input[type="search"]')
+            field=next((fields.nth(i) for i in range(fields.count()) if fields.nth(i).is_visible() and fields.nth(i).is_editable()),None)
+            if field is None:raise ValueError('選手名入力欄未確認')
+            field.fill('モリ　カツユキ')
+            nationwide=form.get_by_label('全国',exact=True)
+            if nationwide.count()==1:nationwide.check()
+            else:
+                control=form.locator('label').filter(has_text=re.compile(r'^\s*全国\s*$'))
+                if control.count()!=1:raise ValueError('全国指定欄未確認')
+                control.click()
+            form.get_by_role('button',name='送信する').click()
+            page.wait_for_function("""() => [...document.querySelectorAll('table')].some(t => t.innerText.replace(/\\s/g,'').includes('森且行'))""",timeout=12000)
+            return official_search_assignments(page.content(),selected)
+        finally:
+            browser.close()
