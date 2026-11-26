@@ -572,6 +572,23 @@ def mori_previous_item(previous,today):
     return item
 
 
+def mori_future_assignments(section,target):
+    """Keep all independently acquired future assignments, not just the visible one."""
+    if not isinstance(section,dict):return []
+    raw=section.get('futureAssignments',[])
+    raw=list(raw) if isinstance(raw,list) else []
+    if isinstance(section.get('item'),dict):raw.append(section['item'])
+    found={}
+    for item in raw:
+        if not isinstance(item,dict) or item.get('type')!='next' or item.get('name') not in AUTO_NAMES:continue
+        try:dt=date.fromisoformat(item['date'])
+        except (KeyError,TypeError,ValueError):continue
+        if not 0<(dt-target).days<=45:continue
+        clean={k:v for k,v in item.items() if k not in ('race','races','startTimes')}
+        found.setdefault((item['date'],item['name']),clean)
+    return sorted(found.values(),key=lambda x:(x['date'],x['name']))
+
+
 def mori_recent_assignment(target, root=None, lookback_days=14):
     """Reuse a recently verified future assignment across midnight outages.
 
@@ -592,12 +609,11 @@ def mori_recent_assignment(target, root=None, lookback_days=14):
             section=saved.get('sections',{}).get('mori',{})
             if not isinstance(section,dict) or section.get('status') not in ('ok','cached','partial'):
                 continue
-            item=mori_previous_item(saved,target)
-            if not item or item.get('type')!='next':
-                continue
+            future=mori_future_assignments(section,target)
+            if not future:continue
+            item=future[0]
             meeting_date=date.fromisoformat(item['date'])
-            if meeting_date<=target or (meeting_date-snapshot_date).days>45:
-                continue
+            if (meeting_date-snapshot_date).days>45:continue
             # The preserved record is a verified assignment, not proof that
             # the rider will start in any particular race on the event day.
             result=dict(item)
@@ -853,6 +869,14 @@ def collect(today,s,previous=None):
                 candidate.setdefault('type','today' if dt==today else 'next')
                 candidates.setdefault((candidate['date'],candidate['name']),[]).append((source,candidate))
         except Exception as e:log.warning('森選手 %s 日程取得失敗: %s',source,e)
+    # A host's explicitly dated entrant list is independent of the three
+    # blocked profile endpoints; never infer entry from a venue calendar.
+    try:
+        for candidate in mori_racecards.kawaguchi_night_assignment(
+                fetch(s,MORI_KAWAGUCHI_NIGHT),today):
+            candidates.setdefault((candidate['date'],candidate['name']),[]).append(
+                ('kawaguchi-featured',candidate))
+    except Exception as e:log.info('森選手 川口公式注目選手: %s',e)
     # Dated rider entries are independent of the three profile endpoints:
     # all three often return HTTP 403 from GitHub-hosted runners.  Read only
     # confirmed meetings (and independently confirm today's name and race).
@@ -875,6 +899,7 @@ def collect(today,s,previous=None):
                         ('dated-racecard',candidate))
             except Exception as exc:
                 log.warning('森選手 %s 当日出走表取得失敗: %s',venue,exc)
+    future=[]
     if candidates:
         scored=[]
         for key,records in candidates.items():
@@ -882,6 +907,13 @@ def collect(today,s,previous=None):
             item=next((x for _,x in records if x.get('type')=='today' and isinstance(x.get('race'),int)),None)
             if item is None:item=next((x for name,x in records if name=='official'),records[0][1])
             item=dict(item)
+            # Match only same-date, same-venue evidence for grade and slot.
+            for _,evidence in records:
+                for field in ('grade','timeType','meetingEnd','sourceUrl'):
+                    if evidence.get(field):item.setdefault(field,evidence[field])
+            item['confirmedBy']=sorted(sources)
+            if item.get('type')=='next' and item['date']>today.isoformat():
+                future.append(dict(item))
             races=mori_race_numbers(records)
             if races:
                 item['races']=races
@@ -913,7 +945,9 @@ def collect(today,s,previous=None):
         else:sections['mori']=ok(item=item)
         mori_start_times(s,item,previous,today)
     else:
-        cached=mori_previous_item(previous,today)
+        retained=mori_future_assignments(
+            previous.get('sections',{}).get('mori',{}) if isinstance(previous,dict) else {},today)
+        cached=retained[0] if retained else mori_previous_item(previous,today)
         if not cached:
             cached=mori_recent_assignment(today)
         if cached:
@@ -924,6 +958,18 @@ def collect(today,s,previous=None):
                         cached.get('retainedFromDate',today.isoformat()))
         else:
             sections['mori']=bad('公式・WINTICKET・オッズパークの日程を確認できません')
+    # Fresh future assignments survive even while today's actual race is shown.
+    # Do not revive stale assignments if a newer confirmed future is present.
+    if future:
+        sections['mori']['futureAssignments']=mori_future_assignments(
+            {'futureAssignments':future},today)
+    elif sections['mori'].get('status') in ('ok','cached','partial'):
+        stored=mori_future_assignments(
+            previous.get('sections',{}).get('mori',{}) if isinstance(previous,dict) else {},today)
+        if not stored:
+            older=mori_recent_assignment(today)
+            if older:stored=[older]
+        if stored:sections['mori']['futureAssignments']=stored
     out['finals']=finals.collect(s,today,sections,active,previous)
     return out
 

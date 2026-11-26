@@ -126,6 +126,54 @@ class MoriDatedRaces(unittest.TestCase):
         self.assertEqual(entry['item']['timeType'],'ナイター')
         self.assertEqual(entry['item']['startTimes'],{'6':'20:55'})
 
+    def test_future_official_featured_entrant_cross_month(self):
+        html=('<title>川口ナイトレース 特設サイト</title>'
+              '<h2>開催日程</h2><div>2026</div><div>11/30 MON ▶ 12/3 THU</div>'
+              '<h2>注目選手</h2><ul><li><a><img alt="森 且行選手"></a></li></ul>'
+              '<h2>今後の開催日程</h2><p>12/10 ▶ 12/12</p>')
+        day=date(2026,11,26)
+        expected=mori_racecards.kawaguchi_night_assignment(html,day)
+        self.assertEqual(expected[0]['date'],'2026-11-30')
+        self.assertEqual(expected[0]['meetingEnd'],'2026-12-03')
+        self.assertEqual(expected[0]['type'],'next')
+        self.assertEqual(mori_racecards.kawaguchi_night_assignment(html,date(2026,11,30)),[])
+        self.assertEqual(mori_racecards.kawaguchi_night_assignment(
+            html.replace('森 且行選手','森谷 隼人選手')+'森 且行選手',day),[])
+        with tempfile.TemporaryDirectory() as temporary,patch.object(
+                update,'ROOT',Path(temporary)),patch.object(
+                update,'fetch',side_effect=lambda s,u,params=None:
+                    html if u==mori_racecards.KAWAGUCHI_NIGHT else
+                    (_ for _ in ()).throw(RuntimeError('403'))),patch.object(
+                verified_sources,'keirin',return_value={'status':'ok','items':[]}),patch.object(
+                verified_sources,'auto',return_value={'status':'ok','items':[]}),patch.object(
+                verified_sources,'soda',return_value={'status':'ok','items':[]}),patch.object(
+                update,'datetime') as clock,patch.object(
+                update.finals,'collect',return_value={'items':[]}):
+            clock.now.return_value=datetime(2026,11,26,9,0,tzinfo=update.TZ)
+            section=update.collect(day,object())['sections']['mori']
+        self.assertEqual(section['item']['date'],'2026-11-30')
+        self.assertEqual(section['item']['grade'],'普通')
+        self.assertEqual(section['futureAssignments'][0]['date'],'2026-11-30')
+
+    def test_future_assignments_survive_previous_days_visible_race(self):
+        import json
+        day=date(2026,11,26)
+        with tempfile.TemporaryDirectory() as root:
+            path=Path(root)/'data'/'history'
+            path.mkdir(parents=True)
+            section={'status':'ok','item':{'name':'川口','date':'2026-11-25','type':'today','race':6},
+                     'futureAssignments':[{'name':'川口','date':'2026-11-30','type':'next',
+                                           'grade':'普通','timeType':'ナイター'},
+                                          {'name':'飯塚','date':'2026-12-10','type':'next'}]}
+            (path/'2026-11-25.json').write_text(json.dumps(
+                {'date':'2026-11-25','sections':{'mori':section}}),encoding='utf-8')
+            got=update.mori_recent_assignment(day,root=root)
+            self.assertEqual(got['date'],'2026-11-30')
+            self.assertEqual(got['retainedFromDate'],'2026-11-25')
+            self.assertNotIn('race',got)
+            later=update.mori_recent_assignment(date(2026,12,1),root=root)
+            self.assertEqual(later['date'],'2026-12-10')
+
     def test_no_false_today_when_no_verified_entry(self):
         target=date(2026,11,24)
         with tempfile.TemporaryDirectory() as temporary,patch.object(

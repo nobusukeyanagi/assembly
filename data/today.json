@@ -577,9 +577,39 @@
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
     },
     "mori": {
-      "status": "error",
+      "status": "ok",
       "items": [],
-      "message": "公式・WINTICKET・オッズパークの日程を確認できません"
+      "item": {
+        "date": "2026-11-30",
+        "meetingEnd": "2026-12-03",
+        "name": "川口",
+        "type": "next",
+        "grade": "普通",
+        "timeType": "ナイター",
+        "source": "kawaguchi-featured-entrants",
+        "sourceUrl": "https://www.kawaguchiauto.jp/nightrace/",
+        "confirmedBy": [
+          "川口オート公式特設",
+          "WINTICKET出場予定"
+        ]
+      },
+      "futureAssignments": [
+        {
+          "date": "2026-11-30",
+          "meetingEnd": "2026-12-03",
+          "name": "川口",
+          "type": "next",
+          "grade": "普通",
+          "timeType": "ナイター",
+          "source": "kawaguchi-featured-entrants",
+          "sourceUrl": "https://www.kawaguchiauto.jp/nightrace/",
+          "confirmedBy": [
+            "川口オート公式特設",
+            "WINTICKET出場予定"
+          ]
+        }
+      ],
+      "note": "川口オート公式特設・WINTICKETの出場予定を照合して補完"
     }
   },
   "finals": {

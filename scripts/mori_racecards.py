@@ -115,3 +115,42 @@ def kawaguchi_night_starts(html, selected, races):
     if len(found)<6:
         raise ValueError('公式の発走予定時刻表が不足しています')
     return {n:found[n] for n in races if n in found}
+
+
+def kawaguchi_night_assignment(html, selected):
+    """The dated meeting's featured entrant roster, not the generic future calendar."""
+    soup=BeautifulSoup(html,'html.parser')
+    heads=[compact(h.get_text(' ',strip=True)) for h in soup.find_all(['h1','title'])]
+    if not any('川口ナイトレース' in h for h in heads):
+        raise ValueError('川口ナイトレース公式見出し未確認')
+    def section(label):
+        heading=next((h for h in soup.find_all('h2')
+                      if compact(h.get_text(' ',strip=True))==label),None)
+        if heading is None:raise ValueError(label+'欄未確認')
+        nodes=[]
+        for el in heading.next_elements:
+            if getattr(el,'name',None) in ('h1','h2'):break
+            nodes.append(el)
+        return nodes
+    from bs4 import NavigableString
+    dates=' '.join(str(el) for el in section('開催日程') if isinstance(el,NavigableString))
+    period=re.search(
+        r'(20\d{2})\s+(\d{1,2})/(\d{1,2})\s+[A-Za-z]{2,5}\s*'
+        r'[▶～〜~-]\s*(?:(\d{1,2})/)?(\d{1,2})\s+[A-Za-z]{2,5}',
+        normalize('NFKC',dates))
+    if not period:raise ValueError('注目選手の対象開催期間未確認')
+    year,month,first,end_month,last=period.groups()
+    start=date(int(year),int(month),int(first))
+    em=int(end_month or month)
+    end=date(int(year)+(em<int(month)),em,int(last))
+    if not (selected<start<=end and (start-selected).days<=45 and (end-start).days<=7):
+        return []
+    featured=section('注目選手')
+    for el in featured:
+        if getattr(el,'name',None) not in ('a','img'):continue
+        name=compact(el.get('alt','') if el.name=='img' else el.get_text(' ',strip=True))
+        if name in ('森且行','森且行選手'):
+            return [{'date':start.isoformat(),'meetingEnd':end.isoformat(),
+                     'name':'川口','type':'next','grade':'普通','timeType':'ナイター',
+                     'source':'kawaguchi-featured-entrants','sourceUrl':KAWAGUCHI_NIGHT}]
+    return []
