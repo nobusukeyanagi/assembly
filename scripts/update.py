@@ -572,7 +572,7 @@ def mori_previous_item(previous,today):
     return item
 
 
-def mori_future_assignments(section,target):
+def mori_future_assignments(section,target,observed_on=None):
     """Keep all independently acquired future assignments, not just the visible one."""
     if not isinstance(section,dict):return []
     raw=section.get('futureAssignments',[])
@@ -586,7 +586,7 @@ def mori_future_assignments(section,target):
         if not 0<(dt-target).days<=45:continue
         clean={k:v for k,v in item.items() if k not in ('race','races','startTimes')}
         try:
-            verified=date.fromisoformat(clean.get('verifiedOn',clean.get('retainedFromDate',target.isoformat())))
+            verified=date.fromisoformat(clean.get('verifiedOn',clean.get('retainedFromDate',(observed_on or target).isoformat())))
         except (TypeError,ValueError):continue
         if not 0<=(target-verified).days<=14:continue
         clean['verifiedOn']=verified.isoformat()
@@ -614,7 +614,7 @@ def mori_recent_assignments(target, root=None, lookback_days=14):
             section=saved.get('sections',{}).get('mori',{})
             if not isinstance(section,dict) or section.get('status') not in ('ok','cached','partial'):
                 continue
-            future=mori_future_assignments(section,target)
+            future=mori_future_assignments(section,target,snapshot_date)
             if not future:continue
             retained=[]
             for item in future:
