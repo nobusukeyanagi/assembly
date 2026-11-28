@@ -1,6 +1,6 @@
 {
   "date": "2026-11-28",
-  "updatedAt": "2026-11-28T09:01+09:00",
+  "updatedAt": "2026-11-28T16:41+09:00",
   "sources": {
     "keirin": "https://keirin.jp/sp/raceschedule",
     "keirin_archive": "https://keirin.kdreams.jp/kaisai/{year}/{month:02d}/{day:02d}/",
@@ -32,6 +32,7 @@
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
           ],
@@ -39,6 +40,7 @@
           "day": "最終日",
           "timeType": "モーニング",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "fieldSources": {
@@ -53,6 +55,7 @@
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP",
             "KEIRIN.JPモーニング日程"
           ],
@@ -70,6 +73,7 @@
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F1",
@@ -86,12 +90,14 @@
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F2",
           "day": "最終日",
           "timeType": "デイ",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "fieldSources": {
@@ -106,6 +112,7 @@
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F1",
@@ -122,6 +129,7 @@
           "girls": false,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F2",
@@ -138,12 +146,14 @@
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F2",
           "day": "最終日",
           "timeType": "ミッドナイト",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "fieldSources": {
@@ -158,12 +168,14 @@
           "girls": true,
           "confirmedBy": [
             "楽天Kドリームス",
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "grade": "F2",
           "day": "最終日",
           "timeType": "ミッドナイト",
           "girlsConfirmedBy": [
+            "KEIRIN HEX",
             "KEIRIN.JP"
           ],
           "fieldSources": {
@@ -177,6 +189,7 @@
       "verification": {
         "providers": {
           "楽天Kドリームス": 8,
+          "KEIRIN HEX": 8,
           "KEIRIN.JP": 8,
           "KEIRIN.JPモーニング日程": 2
         },
@@ -218,13 +231,55 @@
             "楽天Kドリームス"
           ]
         },
-        "conflicts": [],
+        "conflicts": [
+          {
+            "name": "松阪",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          },
+          {
+            "name": "小松島",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          },
+          {
+            "name": "富山",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          },
+          {
+            "name": "松戸",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          },
+          {
+            "name": "久留米",
+            "field": "day",
+            "primary": "最終日",
+            "selectedSource": "KEIRIN.JP",
+            "alternative": "3日目",
+            "source": "KEIRIN HEX",
+            "alternativeSource": "KEIRIN HEX"
+          }
+        ],
         "ignoredFields": [],
         "errors": [
-          [
-            "KEIRIN HEX",
-            "404 Client Error: Not Found for url: https://keirinhex.jp/races/20261128/"
-          ],
           [
             "WINTICKET 2026年11月決勝日程",
             "403 Client Error:  for url: https://www.winticket.jp/keirin/campaign/pK2vUymUNoU1cwWwXXQm14"
@@ -412,7 +467,6 @@
           "girls": false,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇",
             "ボートレースサーチ開催一覧"
           ],
           "grade": "一般",
@@ -429,7 +483,6 @@
           "girls": false,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇",
             "ボートレースサーチ開催一覧"
           ],
           "grade": "一般",
@@ -446,7 +499,6 @@
           "girls": false,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇",
             "ボートレースサーチ開催一覧"
           ],
           "grade": "一般",
@@ -463,7 +515,6 @@
           "girls": false,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇",
             "ボートレースサーチ開催一覧"
           ],
           "grade": "一般",
@@ -480,7 +531,6 @@
           "girls": false,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇",
             "ボートレースサーチ開催一覧"
           ],
           "grade": "一般",
@@ -497,7 +547,6 @@
           "girls": false,
           "confirmedBy": [
             "BOAT RACE公式",
-            "きょうの競艇",
             "ボートレースサーチ開催一覧"
           ],
           "grade": "一般",
@@ -513,12 +562,11 @@
       "verification": {
         "providers": {
           "BOAT RACE公式": 6,
-          "きょうの競艇": 6,
           "ボートレースサーチ開催一覧": 6
         },
         "crossConfirmed": 6,
         "singleSource": 0,
-        "gradeCrossConfirmed": 6,
+        "gradeCrossConfirmed": 0,
         "fieldCoverage": {
           "grade": 6,
           "day": 6,
@@ -551,7 +599,12 @@
         },
         "conflicts": [],
         "ignoredFields": [],
-        "errors": []
+        "errors": [
+          [
+            "きょうの競艇",
+            "日別ボート一覧の全場数が不一致: 11/14"
+          ]
+        ]
       },
       "note": "SODA対象場で開催。SODAライブ配信を保証するものではありません。"
     },
@@ -631,11 +684,9 @@
       "reasons": {}
     },
     "keirinhex.jp": {
-      "ok": 0,
-      "error": 1,
-      "reasons": {
-        "404": 1
-      }
+      "ok": 1,
+      "error": 0,
+      "reasons": {}
     },
     "sanyoauto.jp": {
       "ok": 2,

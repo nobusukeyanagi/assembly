@@ -1,6 +1,6 @@
 {
   "date": "2026-11-29",
-  "createdAt": "2026-11-28T03:10+09:00",
+  "createdAt": "2026-11-28T16:42+09:00",
   "purpose": "verified-next-day-fallback",
   "sections": {
     "keirin": {
@@ -295,19 +295,34 @@
             "day": "BOAT RACE公式",
             "timeType": "BOAT RACE公式"
           }
+        },
+        {
+          "name": "若松",
+          "girls": false,
+          "confirmedBy": [
+            "BOAT RACE公式"
+          ],
+          "grade": "一般",
+          "day": "最終日",
+          "timeType": "ナイター",
+          "fieldSources": {
+            "grade": "BOAT RACE公式",
+            "day": "BOAT RACE公式",
+            "timeType": "BOAT RACE公式"
+          }
         }
       ],
       "verification": {
         "providers": {
-          "BOAT RACE公式": 6
+          "BOAT RACE公式": 7
         },
         "crossConfirmed": 0,
-        "singleSource": 6,
+        "singleSource": 7,
         "gradeCrossConfirmed": 0,
         "fieldCoverage": {
-          "grade": 6,
-          "day": 6,
-          "timeType": 2,
+          "grade": 7,
+          "day": 7,
+          "timeType": 3,
           "girlsDetected": 0
         },
         "priorityPolicy": {
